@@ -1,0 +1,26 @@
+{
+  "mode": "built-in image generation",
+  "reference": "assets/mastermind/thief.webp",
+  "packaging": "256px WebP, quality 0.9; generated transparency preserved",
+  "heroes": [
+    {
+      "id": "zombie",
+      "file": "assets/mastermind/zombie.webp",
+      "source": "art-source/zombie.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent portrait token for the Vaultbound Mastermind web game. Generate one cartoon fantasy zombie bust, matching the supplied reference's polished angular painted shapes, bold silhouette, close cropped portrait and crisp lighting. Reference image is a style reference only: create a different subject. Moss-green skin, vacant pale eyes, crooked jaw, ragged brown townsfolk tunic, a little untidy hair; unmistakably undead but playful, no gore, no blood. Facing slightly right, head and shoulders centered and filling the square frame, readable at 48 pixels. No weapons, no text, no border, no scenery. Fully transparent background."
+    },
+    {
+      "id": "ale",
+      "file": "assets/mastermind/ale.webp",
+      "source": "art-source/ale.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent item token for the Vaultbound Mastermind fantasy web game. One wooden tavern mug of amber ale with a thick ivory foam head and a clearly visible handle on the right. Match the supplied reference's polished cartoon fantasy game art, angular painted shading, crisp edges, strong readable silhouette and warm highlights. Reference is style only, no character. Center the complete upright mug with a little padding, fill square frame; readable at 48px. No table, scenery, letters, border or other objects. Fully transparent background."
+    },
+    {
+      "id": "king",
+      "file": "assets/mastermind/king.webp",
+      "source": "art-source/king.png",
+      "reference": "assets/mastermind/knight.webp",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent head-and-shoulders portrait token for the Vaultbound Mastermind fantasy puzzle game. Input image is a STYLE reference only, not an edit target. Create a recognisable kindly middle-aged human KING, startled awake by a distant bell: uncovered expressive face, slightly tousled grey hair and short grey beard, small unmistakable gold crown with three broad points, rich burgundy robe with ivory fur collar, no armour, no helmet, no weapon. Match the supplied Knight portrait's polished cartoon adventure illustration, bold angular painted shading, crisp edges, strong silhouette and readable details at 48px. Head and shoulders centered, facing slightly right, crown fully inside frame with a little padding. Burgundy and ivory dominate, gold confined to crown, distinguishable from the golden Knight. No background, no throne, no bell, no text, no border. Genuine transparent background."
+    }
+  ]
+}
