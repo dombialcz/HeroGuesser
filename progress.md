@@ -3,7 +3,7 @@ Original prompt: Extract the entire hero-guessing game into /Users/dominik/Gamed
 ## 2026-10-25 — Standalone extraction
 
 - Copied the full current game, including local story extensions, victory effects, release plan, test scripts, portrait source PNGs and art provenance. Shared random utilities and the local-date helper are now independent local modules. Retained the historical seed namespace to keep daily solutions identical. Local save keys now use heroguesser.
-- Root entry is index.html. Removed cross-game links and changed visible identity to HeroGuesser. Standalone verification is complete; initial GitHub Pages publication is the next step.
+- Root entry is index.html. Removed cross-game links and changed visible identity to HeroGuesser. Standalone verification and GitHub Pages publication are complete.
 
 ## Archived development history
 
@@ -129,6 +129,13 @@ The following entries describe earlier development; current source and README ta
 
 - All 14 standalone unit tests pass (11 migrated story/tutorial tests plus three independent daily-generator/date/scoring checks). Home, tutorial, all four adventures, daily flow, feedback, mouse/touch dragging, native mobile swipes, artwork and celebration browser suites pass, including 320px, landscape, English/Polish 200% text, reduced motion, lifecycle and disabled-storage cases. Bundled game client screenshot/state and actual mobile home/final-bell screenshots inspected. No browser errors.
 - Local runtime and built-site graph checks resolve 29 independent files with no imports from the former games. Copied all ten original PNG sources and updated art manifests to relative repository paths. No production symlinks or workstation dependencies. Development uses port 4180; browser checks accept HERO_GUESSER_BASE_URL for deployed/prefixed URLs.
-- New GitHub repository dombialcz/HeroGuesser created with gh. Pages uses Actions: clean npm install, unit/dependency checks, minimal static build, artifact validation and deployment. Publication verification pending.
+- New GitHub repository dombialcz/HeroGuesser created with gh. Pages uses Actions: clean npm install, unit/dependency checks, minimal static build, artifact validation and deployment. Publication verified on GitHub Pages.
 - Original repository cleanup passes its 82 remaining unit tests, campaign roster flow on five layouts, and desktop/mobile Fantango difficulty/hint plus Vaultbound town smoke checks. Removed dedicated files, docs, journal sections, navigation and orphaned CSS; shared assets/utilities still needed there are preserved.
-- Existing gameplay rules are unchanged by extraction, including story health. The mobile-store plan retains future work; Google Fonts is still an external presentation resource. Daily local saves do not migrate across origins. No required extraction implementation TODOs remain; verify live deployment before considering publication complete.
+- Existing gameplay rules are unchanged by extraction, including story health. The mobile-store plan retains future work; Google Fonts is still an external presentation resource. Daily local saves do not migrate across origins. No required extraction implementation TODOs remain.
+
+## 2026-10-25 — Published and verified live
+
+- Pushed the independent game and the original repository cleanup. Both Pages workflows pass. Initial HeroGuesser deployment was blocked by an automatically created master-only environment rule before main existed; corrected the new repository's github-pages environment to allow main only and reran successfully. Future main pushes verify and deploy automatically.
+- Live https://dombialcz.github.io/HeroGuesser/ returns 200. On the published /HeroGuesser/ path, real mobile browser play solves every daily difficulty and all eleven story scenes; win effects, Home navigation, restored daily saves, direct tutorial entry and the adaptive failed example pass. No old-game requests or missing local resources. Inspected live home and confetti screenshots.
+- Original Fantango and Vaultbound URLs return 200; the removed /fantango/mastermind.html returns 404. Original repository commit: 166081b. Migrated old ignored Mastermind screenshots/client artifacts into output/archive-pre-extraction/ and extraction tooling into output/extraction-tooling/, preserving them outside source control.
+- Game code, tests, source artwork, build tooling and mobile-store plan now belong to /Users/dominik/Gamedev/HeroGuesser and https://github.com/dombialcz/HeroGuesser. No required migration/publishing TODOs remain.
