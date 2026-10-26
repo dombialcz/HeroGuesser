@@ -564,6 +564,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .game-dialog textarea { width: 100%; min-height: 15rem; padding: .5rem; background: #101c25; color: white; font: inherit; }
 .game-dialog :focus-visible { outline: 3px solid #ffe09a; outline-offset: 3px; }
 .settings-resets { display: grid; margin-block: 1rem; }
+.settings-music { display: grid; gap: .5rem; margin-block: 1rem; }
+.settings-music label { overflow-wrap: anywhere; }
+.settings-music output { color: #ffe09a; white-space: nowrap; }
+.settings-music input[type="range"] { width: 100%; min-height: 44px; margin: 0; accent-color: #e5bf70; }
 .save-warning { color: #ffe1a0; line-height: 1.5; padding: .6rem; }
 .save-warning:empty { display: none; }
 body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }

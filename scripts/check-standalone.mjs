@@ -36,4 +36,5 @@ for (const piece of ['thief','knight','bard','cleric','barbarian','ranger','mage
 for (const piece of ['coin','window','bell']) await visit(`assets/mastermind/${piece}.svg`);
 for (let index = 1; index <= 7; index++) await visit(`assets/audio/thud-${String(index).padStart(2, '0')}.wav`);
 for (const sound of ['correct', 'fanfare']) await visit(`music/${sound}.wav`);
+for (let index = 1; index <= 6; index++) await visit(`music/dungeon_melody_${index}.mp3`);
 console.log(`Independent runtime graph verified: ${visited.size} files under ${root}`);

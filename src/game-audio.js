@@ -11,7 +11,8 @@ const files = Object.fromEntries(Object.entries(urls).map(([kind, paths]) => [ki
   if (!response.ok) throw new Error('Unavailable sound');
   return response.arrayBuffer();
 }).catch(() => null))]));
-let context, ready, completion, previous = -1;
+let context, ready, completion;
+const previous = { placement: -1, removal: -1 };
 const playing = new Set();
 
 export const soundEnabled = () => storage.getItem(SOUND_KEY) !== 'off';
@@ -20,8 +21,7 @@ export function setSoundEnabled(enabled) {
   if (!enabled) for (const source of playing) source.stop();
 }
 
-function prepare(kind = 'placement') {
-  if (!soundEnabled()) return null;
+export function getAudioContext() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return null;
   if (!context) {
@@ -30,7 +30,26 @@ function prepare(kind = 'placement') {
       const data = await file;
       return data ? context.decodeAudioData(data).catch(() => null) : null;
     })).then(buffers => buffers.filter(Boolean))]));
+    ready.removal = ready.placement.then(buffers => buffers.map(buffer => {
+      // Trim the quiet room tail before reversing so removal responds immediately.
+      const samples = buffer.getChannelData(0);
+      let end = samples.length - 1;
+      while (end > 0 && Math.abs(samples[end]) < 0.02) end--;
+      const length = Math.min(samples.length, end + 1 + Math.round(buffer.sampleRate * 0.005));
+      const reversed = context.createBuffer(buffer.numberOfChannels, length, buffer.sampleRate);
+      const fade = Math.round(buffer.sampleRate * 0.005);
+      for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+        const input = buffer.getChannelData(channel), output = reversed.getChannelData(channel);
+        for (let i = 0; i < length; i++) output[i] = input[length - 1 - i] * Math.min(1, i / fade, (length - 1 - i) / fade);
+      }
+      return reversed;
+    })).catch(() => []);
   }
+  return context;
+}
+
+function prepare(kind = 'placement') {
+  if (!soundEnabled() || !getAudioContext()) return null;
   const resumed = context.state === 'suspended' || context.state === 'interrupted'
     ? context.resume().catch(() => {}) : Promise.resolve();
   return Promise.all([ready[kind], resumed]).then(([buffers]) => buffers);
@@ -45,29 +64,32 @@ document.addEventListener('visibilitychange', () => {
 
 function playSound(kind) {
   const requested = performance.now();
+  const piece = kind === 'placement' || kind === 'removal';
   void (async () => {
     const buffers = await prepare(kind);
     // Never replay stale input after loading, tab switching or a blocked device.
-    if (!buffers?.length || !soundEnabled() || document.hidden || context.state !== 'running' || performance.now() - requested > (kind === 'placement' ? 200 : 1000)) return;
+    if (!buffers?.length || !soundEnabled() || document.hidden || context.state !== 'running' || performance.now() - requested > (piece ? 200 : 1000)) return;
     let index = 0;
-    if (kind === 'placement') {
-      index = Math.floor(Math.random() * (buffers.length - (previous >= 0 && buffers.length > 1 ? 1 : 0)));
-      if (buffers.length > 1 && previous >= 0 && index >= previous) index++;
-      previous = index;
+    if (piece) {
+      index = Math.floor(Math.random() * (buffers.length - (previous[kind] >= 0 && buffers.length > 1 ? 1 : 0)));
+      if (buffers.length > 1 && previous[kind] >= 0 && index >= previous[kind]) index++;
+      previous[kind] = index;
     } else completion?.stop();
     const source = context.createBufferSource(), gain = context.createGain();
     source.buffer = buffers[index];
-    gain.gain.value = kind === 'placement' ? 0.55 : 0.75;
+    source.playbackRate.value = kind === 'removal' ? 1.8 : 1;
+    gain.gain.value = kind === 'removal' ? 0.5 : piece ? 0.55 : 0.75;
     source.connect(gain).connect(context.destination);
     source.onended = () => {
       playing.delete(source); source.disconnect(); gain.disconnect();
       if (completion === source) completion = null;
     };
-    if (kind !== 'placement') completion = source;
+    if (!piece) completion = source;
     playing.add(source);
     source.start();
   })().catch(() => { /* Missing/unsupported audio must not interrupt gameplay. */ });
 }
 
 export const playPlacementSound = () => playSound('placement');
+export const playRemovalSound = () => playSound('removal');
 export const playCompletionSound = (chapter = false) => playSound(chapter ? 'fanfare' : 'correct');

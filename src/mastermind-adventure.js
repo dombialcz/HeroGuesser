@@ -5,7 +5,7 @@ import { confirmAction } from "./dialog.js";
 import { ADVENTURES, actAdventure, adventureCounts, adventureScene, createAdventure } from "./mastermind-adventure-core.js";
 import { ADVENTURE_COPY, sceneCopyIndex } from "./mastermind-adventure-copy.js";
 import { installPortraitDrag } from "./mastermind-drag.js";
-import { playPlacementSound, playCompletionSound } from "./game-audio.js";
+import { playPlacementSound, playRemovalSound, playCompletionSound } from "./game-audio.js";
 
 const IMAGE = Object.fromEntries(["thief", "knight", "bard", "mage", "ale", "zombie", "king"].map(p => [p, `assets/mastermind/${p}.webp`]));
 IMAGE.coin = "assets/mastermind/coin.svg";
@@ -47,6 +47,7 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     actAdventure(state, action);
     const changed = JSON.stringify(state.draft) !== JSON.stringify(before.draft);
     if (changed && ["pick", "move"].includes(action.type)) playPlacementSound();
+    if (changed && action.type === "slot") playRemovalSound();
     if (["pick", "slot", "move", "clear"].includes(action.type) && changed) undo = { draft: before.draft, selected: before.selected };
     if ((action.type === "check" && !state.notice) || action.type === "next") undo = null;
     persist(); render();

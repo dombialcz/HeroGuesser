@@ -2,7 +2,7 @@ import { storage, shareText } from "./platform.js";
 import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
 import { showShareText } from "./dialog.js";
 import { installSettings } from "./settings.js";
-import { playPlacementSound, playCompletionSound } from "./game-audio.js";
+import { playPlacementSound, playRemovalSound, playCompletionSound } from "./game-audio.js";
 import { localDateKey } from "./date.js";
 import { CHALLENGES, HERO_CLASSES, evaluateGuess, generateChallenge } from "./mastermind-core.js";
 import { createMastermindCelebration } from "./mastermind-celebration.js";
@@ -345,7 +345,7 @@ function selectSlot(index) {
   if (dateGuard()) return;
   if (isFinished()) return;
   const draft = currentProgress().draft;
-  if (draft[index] !== null) draft[index] = null;
+  if (draft[index] !== null) { draft[index] = null; playRemovalSound(); }
   state.selectedSlot = index;
   saveProgress();
   render();
@@ -680,10 +680,7 @@ document.addEventListener("keydown", (event) => {
     submitGuess();
   } else if (event.key === "Backspace" && !isFinished()) {
     event.preventDefault();
-    if (dateGuard()) return;
-    currentProgress().draft[state.selectedSlot] = null;
-    saveProgress();
-    render();
+    selectSlot(state.selectedSlot);
   }
 });
 

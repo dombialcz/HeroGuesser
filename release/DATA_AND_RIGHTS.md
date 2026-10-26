@@ -5,6 +5,7 @@
 | Flow | Data / storage / destination | Retention and controls |
 | --- | --- | --- |
 | Language | heroguesser:language; browser localStorage / iOS Preferences | Until all-data reset, storage clearing or uninstall; OS/browser backup may include it |
+| Audio preferences | heroguesser:sound and heroguesser:music:v1; sound effects toggle, music toggle and volume; browser localStorage / iOS Preferences | Until all-data reset, storage clearing or uninstall; story/daily resets preserve them |
 | Daily progress | Existing date/difficulty keys; draft and guesses plus schema/generator version | 90-day retention, selective/all reset; no server sync |
 | Story progress | One versioned snapshot per chapter; draft, guesses, hints, phase, verified facts | Until restart/reset/uninstall or explicit incompatible-save recovery |
 | Tutorial | In-memory practice state | Exit/reload/termination discards it |

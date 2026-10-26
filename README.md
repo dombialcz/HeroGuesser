@@ -41,6 +41,10 @@ Character placement and drag moves play one of seven thuds extracted from the su
 
 Daily wins and solved tutorial/story scenes play `music/correct.wav`. Solving a chapter's final scene plays `music/fanfare.wav` instead, immediately marking chapter completion. The Sound effects setting controls all effects. Both recordings are bundled for web and offline iPhone play.
 
+Removing an individual piece plays a reversed thud at 1.8× speed across all modes. These variants are derived from the existing thuds in memory, with quiet tails trimmed and short fades. Empty-place selection and clearing the whole row stay silent.
+
+Background music shuffles through all six `music/dungeon_melody_1.mp3`–`dungeon_melody_6.mp3` tracks, starting after the first interaction. It defaults to 50% volume. Settings has a separate music toggle and 0–100% slider; both persist between runs, independently of sound effects. Music pauses in the background and resumes when returning to the game. All tracks are bundled for offline iPhone play.
+
 ## iPhone
 
 Xcode 26+ is the Capacitor baseline; this workspace has Xcode 27 and an iOS 27 simulator. The project adopts UIScene and supports **iPhone / iOS 15.4+**, portrait and landscape. Apple’s upload requirements must be rechecked at submission.

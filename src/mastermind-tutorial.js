@@ -1,7 +1,7 @@
 import { actTutorial, canEditTutorial, createTutorial, guardSlot, tutorialScene, tutorialPieces, tutorialLimits } from "./mastermind-tutorial-core.js";
 import { TUTORIAL_COPY } from "./mastermind-tutorial-copy.js";
 import { installPortraitDrag } from "./mastermind-drag.js";
-import { playPlacementSound, playCompletionSound } from "./game-audio.js";
+import { playPlacementSound, playRemovalSound, playCompletionSound } from "./game-audio.js";
 
 const IMAGE = { thief: "assets/mastermind/thief.webp", coin: "assets/mastermind/coin.svg", guard: "assets/mastermind/knight.webp", knight: "assets/mastermind/knight.webp", bard: "assets/mastermind/bard.webp" };
 const COLOR = { thief: "#69a7ff", coin: "#d1ac58", guard: "#b6c5be", knight: "#f0bd53", bard: "#ec83bd" };
@@ -49,6 +49,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     actTutorial(state, action);
     const changed = JSON.stringify(before.draft) !== JSON.stringify(state.draft);
     if (changed && ["pick", "move"].includes(action.type)) playPlacementSound();
+    if (changed && action.type === "slot") playRemovalSound();
     if (["slot", "pick", "move", "clear"].includes(action.type) && changed) {
       undoState = before; undoKind = action.type === "clear" ? "undoClear" : "undo";
     }
