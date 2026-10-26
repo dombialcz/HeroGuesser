@@ -19,7 +19,7 @@ const COPY = {
     playTutorial: "Play Tutorial", playStories: "Play Story", playDaily: "Daily Puzzles",
     tutorialKicker: "START HERE", tutorialTitle: "A thief in the treasury", tutorialDescription: "Learn one step at a time, with guided clues and unlimited tries.",
     storiesKicker: "ONE STORY · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.",
-    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Three hidden formations", dailyDescription: "Decode a party name. Choose Easy, Medium or Hard, with unlimited guesses.",
+    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Decode a party name in Easy, Medium or Hard. Try Chaos for five random slots with no count clues. Unlimited guesses.",
     brandKicker: "DAILY CHALLENGE",
     gameKicker: "THE DAILY HERO CODE",
     gameTitle: "Guild of Wits",
@@ -34,6 +34,9 @@ const COPY = {
     easy: "Easy",
     medium: "Medium",
     hard: "Hard",
+    chaos: "Chaos",
+    chaosSubtitle: "Five random slots. Any hero, any number of times.",
+    chaosRule: "Each of the five slots can hold any of the seven heroes. Repeats are unrestricted—even five of the same hero. Use the feedback to find the order. Everyone gets the same Chaos puzzle for today’s date.",
     heroes: "heroes",
     todaysParty: "TODAY’S HIDDEN PARTY",
     nameClues: "Name clues",
@@ -52,8 +55,8 @@ const COPY = {
     pickerSubtitle: "Select a class to fill the next open place.",
     keyboardPick: "quick pick",
     keyboardSubmit: "submit",
-    dailyNote: "Three new formations arrive each day.",
-    dailyFooter: "A new code every day · Three challenges",
+    dailyNote: "Four new formations arrive each day.",
+    dailyFooter: "A new code every day · Four challenges",
     ruleNote: "No prefix means no pair. No class appears four times; each named duplicate is exact, and every other hero is a singleton.",
     exactCount: (count) => `Exactly ${count}`,
     rowLabel: (number) => `Guess ${number}`,
@@ -81,7 +84,7 @@ const COPY = {
     playTutorial: "Samouczek", playStories: "Opowieść", playDaily: "Codzienne zagadki",
     tutorialKicker: "ZACZNIJ TUTAJ", tutorialTitle: "Złodziej w skarbcu", tutorialDescription: "Poznaj zasady krok po kroku, ze wskazówkami i bez limitu prób.",
     storiesKicker: "JEDNA OPOWIEŚĆ · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Zbierz drużynę i złam klątwę dzwonu. Ukończ rozdział, by odblokować następny. Bez limitu prób, z darmowymi podpowiedziami i zapisem postępu.",
-    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Trzy ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny. Wybierz poziom Łatwy, Średni lub Trudny, bez limitu prób.",
+    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny na poziomie Łatwym, Średnim lub Trudnym. W Chaosie odgadnij pięć losowych miejsc bez wskazówek o liczbie bohaterów. Bez limitu prób.",
     brandKicker: "CODZIENNE WYZWANIE",
     gameKicker: "CODZIENNY KOD BOHATERÓW",
     gameTitle: "Guild of Wits",
@@ -96,6 +99,9 @@ const COPY = {
     easy: "Łatwy",
     medium: "Średni",
     hard: "Trudny",
+    chaos: "Chaos",
+    chaosSubtitle: "Pięć losowych miejsc. Każdy bohater może się powtarzać.",
+    chaosRule: "Na każdym z pięciu miejsc może stanąć dowolny z siedmiu bohaterów. Powtórzenia są dowolne — nawet pięć razy ten sam bohater. Odkryj kolejność dzięki wynikom prób. Wszyscy mają tę samą zagadkę Chaosu dla dzisiejszej daty.",
     heroes: "bohaterów",
     todaysParty: "TAJEMNICZA DRUŻYNA DNIA",
     nameClues: "Wskazówki w nazwie",
@@ -114,8 +120,8 @@ const COPY = {
     pickerSubtitle: "Wybierz klasę, aby uzupełnić kolejne wolne miejsce.",
     keyboardPick: "wybór klas",
     keyboardSubmit: "zatwierdź",
-    dailyNote: "Każdego dnia czekają trzy nowe składy.",
-    dailyFooter: "Nowy kod każdego dnia · Trzy wyzwania",
+    dailyNote: "Każdego dnia czekają cztery nowe składy.",
+    dailyFooter: "Nowy kod każdego dnia · Cztery wyzwania",
     ruleNote: "Brak przedrostka oznacza brak pary. Żadna klasa nie występuje cztery razy; wskazane duplikaty są dokładne, a pozostałe klasy pojawiają się pojedynczo.",
     exactCount: (count) => `Dokładnie ${count}×`,
     rowLabel: (number) => `Próba ${number}`,
@@ -252,6 +258,7 @@ function localizedPlural(type) {
 }
 
 function localizedPartyName(challenge) {
+  if (challenge.id === "chaos") return copy().chaos;
   if (state.locale === "en") return challenge.title;
   const names = PARTY_NAMES[state.locale];
   const pair = challenge.clues.find((clue) => clue.kind === "pair");
@@ -387,7 +394,9 @@ function applyCopy() {
   guessHistory.setAttribute("aria-label", strings.historyLabel);
   heroPicker.setAttribute("aria-label", strings.heroClassesLabel);
   document.querySelector(".board-legend").setAttribute("aria-label", strings.feedbackLegendLabel);
-  document.querySelector("#rule-note").textContent = strings.ruleNote;
+  const chaos = currentChallenge().id === "chaos";
+  document.querySelector('[data-i18n="gameSubtitle"]').textContent = chaos ? strings.chaosSubtitle : strings.gameSubtitle;
+  document.querySelector("#rule-note").textContent = chaos ? strings.chaosRule : strings.ruleNote;
   languageButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.locale === state.locale)));
   todayDate.dateTime = dateKey;
   todayDate.textContent = new Intl.DateTimeFormat(strings.dateLocale, {
@@ -428,6 +437,9 @@ function makeCluePart(clue) {
 }
 
 function renderClues(challenge) {
+  const chaos = challenge.id === "chaos";
+  document.querySelector(".clue-area").hidden = chaos;
+  document.querySelector(".clue-divider").hidden = chaos;
   clueParts.replaceChildren(...challenge.clues.map(makeCluePart));
 }
 

@@ -15,6 +15,7 @@ export const CHALLENGES = Object.freeze([
   { id: "easy", label: "Easy", size: 5, pattern: "trio-two-singles" },
   { id: "medium", label: "Medium", size: 6, pattern: "trio-three-singles" },
   { id: "hard", label: "Hard", size: 7, pattern: "trio-pair-two-singles" },
+  { id: "chaos", label: "Chaos", size: 5, pattern: "unrestricted" },
 ]);
 
 const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]));
@@ -41,6 +42,10 @@ export function generateChallenge(dateKey, difficulty) {
   // Legacy seed namespace preserves the same daily answers; it is not an external dependency.
   const random = createRng(`vaultbound-mastermind-v1:${dateKey}:${challenge.id}`);
   const allTypes = HERO_CLASSES.map((hero) => hero.id);
+  if (challenge.id === "chaos") {
+    const code = Array.from({ length: challenge.size }, () => choose(allTypes, random));
+    return { ...challenge, dateKey, code, title: "Chaos", clues: [], counts: countTypes(code), revealedSingle: null };
+  }
   const trio = choose(allTypes, random);
   const remainingTypes = allTypes.filter((type) => type !== trio);
   const pair = challenge.id === "hard" ? choose(remainingTypes, random) : null;

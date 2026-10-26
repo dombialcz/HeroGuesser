@@ -109,7 +109,7 @@ h1, h2, h3, p { margin-top: 0; }
 .back-link span:first-child { color: var(--gold); font-size: 1.15rem; }
 .back-link:hover { color: var(--gold-light); transform: translateX(-2px); }
 
-.difficulty-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 0 0 13px; }
+.difficulty-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 0 0 13px; }
 .difficulty-tab {
   position: relative;
   display: grid;
@@ -299,7 +299,7 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
   .intro-row h1 { font-size: 2rem; }
   .intro-copy { margin-top: 4px; font-size: .85rem; }
   .back-link { font-size: .75rem; }
-  .difficulty-tabs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 5rem), 1fr)); gap: 6px; margin-bottom: 8px; }
+  .difficulty-tabs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 6px; margin-bottom: 8px; }
   .difficulty-tab { min-height: 52px; padding: 7px 10px; }
   .difficulty-name { font-size: 1rem; }
   .difficulty-meta { font-size: .75rem; }

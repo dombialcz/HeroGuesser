@@ -27,12 +27,12 @@ export const serializeDaily = progress => JSON.stringify({ schema: DAILY_SCHEMA,
 export function pruneDaily(storage, date) {
   const today = Date.parse(`${date}T00:00:00Z`);
   for (const key of storage.keys()) {
-    const match = /^heroguesser:v1:(\d{4}-\d{2}-\d{2}):(easy|medium|hard)$/.exec(key);
+    const match = /^heroguesser:v1:(\d{4}-\d{2}-\d{2}):(easy|medium|hard|chaos)$/.exec(key);
     if (match && today - Date.parse(`${match[1]}T00:00:00Z`) >= 90 * 86400000) storage.removeItem(key);
   }
 }
 export function dailyShareText(challenge, guesses, locale = 'en', name = 'Guild of Wits') {
-  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny', chaos: 'Chaos' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard', chaos: 'Chaos' };
   const solvedAt = guesses.findIndex(guess => evaluateGuess(challenge.code, guess)?.exact === challenge.size);
   if (solvedAt < 0) return null;
   const rows = guesses.slice(0, solvedAt + 1).map(guess => {

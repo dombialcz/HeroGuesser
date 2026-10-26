@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Learn Guild of Wits with a guided tutorial, follow a fantasy story in four chapters, or solve three daily hero puzzles." />
+    <meta name="description" content="Learn Guild of Wits with a guided tutorial, follow a fantasy story in four chapters, or solve four daily hero puzzles." />
     <meta name="theme-color" content="#101a23" />
     <title>Guild of Wits</title>
     <link rel="icon" type="image/webp" href="assets/mastermind/thief.webp" />
@@ -68,8 +68,8 @@
           <article class="home-choice">
             <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/knight.webp" alt=""><img class="home-companion" src="assets/mastermind/mage.webp" alt=""></div>
             <p class="eyebrow" data-i18n="dailyKicker">A FRESH CODE EVERY DAY</p>
-            <h2 data-i18n="dailyTitle">Three hidden formations</h2>
-            <p data-i18n="dailyDescription">Decode a party name. Choose Easy, Medium or Hard, with unlimited guesses.</p>
+            <h2 data-i18n="dailyTitle">Four hidden formations</h2>
+            <p data-i18n="dailyDescription">Decode a party name in Easy, Medium or Hard. Try Chaos for five random slots with no count clues. Unlimited guesses.</p>
             <button type="button" id="home-play-daily" class="story-button" data-i18n="playDaily">Daily Puzzles</button>
           </article>
         </div>
@@ -99,6 +99,11 @@
         <button class="difficulty-tab" type="button" data-challenge="hard" aria-pressed="false">
           <span class="difficulty-name" data-i18n="hard">Hard</span>
           <span class="difficulty-meta"><span data-size="hard">7</span> <span data-i18n="heroes">heroes</span></span>
+          <span class="difficulty-result" aria-hidden="true"></span>
+        </button>
+        <button class="difficulty-tab" type="button" data-challenge="chaos" aria-pressed="false">
+          <span class="difficulty-name" data-i18n="chaos">Chaos</span>
+          <span class="difficulty-meta"><span data-size="chaos">5</span> <span data-i18n="heroes">heroes</span></span>
           <span class="difficulty-result" aria-hidden="true"></span>
         </button>
       </nav>
@@ -160,14 +165,14 @@
           <div class="picker-footnote"><span class="keycap">1–7</span><span data-i18n="keyboardPick">quick pick</span><span class="footnote-separator">·</span><span class="keycap">↵</span><span data-i18n="keyboardSubmit">submit</span></div>
           <button id="share-result" class="story-button" type="button" hidden>Share result</button>
           <p class="game-message" id="game-message" role="status" aria-live="polite"></p>
-          <div class="daily-note"><span class="daily-note-icon" aria-hidden="true">◷</span><span data-i18n="dailyNote">Three new formations arrive each day.</span></div>
+          <div class="daily-note"><span class="daily-note-icon" aria-hidden="true">◷</span><span data-i18n="dailyNote">Four new formations arrive each day.</span></div>
         </aside>
       </div>
 
       </div>
 
       <footer class="page-footer" hidden>
-        <span data-i18n="dailyFooter">A new code every day · Three challenges</span>
+        <span data-i18n="dailyFooter">A new code every day · Four challenges</span>
       </footer>
     </main>
 

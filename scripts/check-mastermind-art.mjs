@@ -19,7 +19,7 @@ try {
     await page.goto(`${baseURL}/index.html?daily=1`);
     const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
     await page.waitForFunction(() => window.render_game_to_text);
-    for (const difficulty of ["easy", "medium", "hard"]) {
+    for (const difficulty of ["easy", "medium", "hard", "chaos"]) {
       await page.locator(`[data-challenge="${difficulty}"]`).click();
       const size = (await state()).partySize;
       assert.equal(await page.locator(".guess-row").count(), 1);
@@ -96,7 +96,7 @@ try {
     }
     assert.deepEqual(errors, []);
     await context.close();
-    console.log(`${name}: portraits, class colors, three difficulties, editing, guesses, clear, Polish, reload and solved state pass`);
+    console.log(`${name}: portraits, class colors, four challenges, editing, guesses, clear, Polish, reload and solved state pass`);
   }
 } finally {
   await browser.close();

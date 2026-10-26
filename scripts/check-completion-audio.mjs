@@ -43,7 +43,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       }
     }
     await page.goto(`${base}/index.html?daily=1`);
-    for (const difficulty of ['easy', 'medium', 'hard']) {
+    for (const difficulty of ['easy', 'medium', 'hard', 'chaos']) {
       await click(`[data-challenge="${difficulty}"]`);
       const code = await page.evaluate(async difficulty => {
         const { generateChallenge } = await import('./src/mastermind-core.js');
