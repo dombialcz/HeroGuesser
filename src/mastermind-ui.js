@@ -1,3 +1,8 @@
+import { storage, shareText } from "./platform.js";
+import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
+import { showShareText } from "./dialog.js";
+import { installSettings } from "./settings.js";
+import { playPlacementSound, playCompletionSound } from "./game-audio.js";
 import { localDateKey } from "./date.js";
 import { CHALLENGES, HERO_CLASSES, evaluateGuess, generateChallenge } from "./mastermind-core.js";
 import { createMastermindCelebration } from "./mastermind-celebration.js";
@@ -11,13 +16,13 @@ const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]
 const COPY = {
   en: {
     home: "Home", homeKicker: "THE PARTY IS A PUZZLE", homeSubtitle: "Read the clues. Find your party.",
-    playTutorial: "Play Tutorial", playStories: "Play Stories", playDaily: "Daily Puzzles",
+    playTutorial: "Play Tutorial", playStories: "Play Story", playDaily: "Daily Puzzles",
     tutorialKicker: "START HERE", tutorialTitle: "A thief in the treasury", tutorialDescription: "Learn one step at a time, with guided clues and unlimited tries.",
-    storiesKicker: "A LITTLE ADVENTURE", storiesTitle: "From tavern to bell tower", storiesDescription: "Follow four short stories. Solve each scene with five health and free hints.",
+    storiesKicker: "ONE STORY · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.",
     dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Three hidden formations", dailyDescription: "Decode a party name. Choose Easy, Medium or Hard, with unlimited guesses.",
     brandKicker: "DAILY CHALLENGE",
     gameKicker: "THE DAILY HERO CODE",
-    gameTitle: "HeroGuesser",
+    gameTitle: "Guild of Wits",
     gameSubtitle: "Read the party name. Rebuild the formation.",
     languageLabel: "Language",
     difficultyLabel: "Daily challenge difficulty",
@@ -73,13 +78,13 @@ const COPY = {
   },
   pl: {
     home: "Ekran główny", homeKicker: "DRUŻYNA PEŁNA ZAGADEK", homeSubtitle: "Odczytaj wskazówki. Odtwórz drużynę.",
-    playTutorial: "Samouczek", playStories: "Historie", playDaily: "Codzienne zagadki",
+    playTutorial: "Samouczek", playStories: "Opowieść", playDaily: "Codzienne zagadki",
     tutorialKicker: "ZACZNIJ TUTAJ", tutorialTitle: "Złodziej w skarbcu", tutorialDescription: "Poznaj zasady krok po kroku, ze wskazówkami i bez limitu prób.",
-    storiesKicker: "MAŁA PRZYGODA", storiesTitle: "Z karczmy do dzwonnicy", storiesDescription: "Cztery krótkie opowieści. Rozwiązuj sceny z pięcioma punktami zdrowia i darmowymi podpowiedziami.",
+    storiesKicker: "JEDNA OPOWIEŚĆ · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Zbierz drużynę i złam klątwę dzwonu. Ukończ rozdział, by odblokować następny. Bez limitu prób, z darmowymi podpowiedziami i zapisem postępu.",
     dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Trzy ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny. Wybierz poziom Łatwy, Średni lub Trudny, bez limitu prób.",
     brandKicker: "CODZIENNE WYZWANIE",
     gameKicker: "CODZIENNY KOD BOHATERÓW",
-    gameTitle: "HeroGuesser",
+    gameTitle: "Guild of Wits",
     gameSubtitle: "Odczytaj nazwę drużyny. Odtwórz jej skład.",
     languageLabel: "Język",
     difficultyLabel: "Poziom dzisiejszego wyzwania",
@@ -135,11 +140,13 @@ const COPY = {
   },
 };
 
-const dateKey = localDateKey();
-const levels = Object.fromEntries(
+let dateKey = localDateKey();
+let invalidDaily = false;
+let dailyNotice = null;
+let levels = Object.fromEntries(
   CHALLENGES.map((challenge) => [challenge.id, generateChallenge(dateKey, challenge.id)]),
 );
-const progress = Object.fromEntries(CHALLENGES.map((challenge) => [challenge.id, restoreProgress(challenge)]));
+let progress = Object.fromEntries(CHALLENGES.map((challenge) => [challenge.id, restoreProgress(challenge)]));
 const state = { screen: "home", difficulty: "easy", locale: readLocale(), selectedSlot: 0 };
 
 const todayDate = document.querySelector("#today-date");
@@ -202,11 +209,12 @@ function clearModeParams() {
 }
 function showScreen(screen) {
   celebration.clear();
-  // Leaving a short run deliberately discards it; daily progress stays in its own store.
+  // Tutorial is temporary; each adventure and daily saves independently.
   if (tutorial.active) tutorial.leave();
   if (adventures.active) adventures.leave();
   portraitDrag?.cancel();
   state.screen = screen;
+  if (screen === "daily") checkDate(false);
   if (screen === "home") clearModeParams();
   render(); focusScreen();
 }
@@ -217,7 +225,7 @@ function copy() {
 
 function readLocale() {
   try {
-    return localStorage.getItem("heroguesser:language") === "pl" ? "pl" : "en";
+    return storage.getItem("heroguesser:language") === "pl" ? "pl" : "en";
   } catch {
     return "en";
   }
@@ -228,7 +236,7 @@ function setLocale(locale) {
   if (!COPY[locale]) return;
   state.locale = locale;
   try {
-    localStorage.setItem("heroguesser:language", locale);
+    storage.setItem("heroguesser:language", locale);
   } catch {
     // Keep the selected language for this page even if storage is unavailable.
   }
@@ -256,43 +264,30 @@ function localizedPartyName(challenge) {
   ].join(" ");
 }
 
-function storageKey(challenge) {
-  return `heroguesser:v1:${dateKey}:${challenge.id}`;
-}
-
-function blankProgress(challenge) {
-  return { guesses: [], draft: Array(challenge.size).fill(null) };
-}
-
 function restoreProgress(challenge) {
-  const fallback = blankProgress(challenge);
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey(challenge)));
-    if (!saved || !Array.isArray(saved.guesses)) return fallback;
-    const guesses = [];
-    for (const guess of saved.guesses) {
-      if (!Array.isArray(guess) || guess.length !== challenge.size || guess.some((type) => !HERO_BY_ID[type])) break;
-      guesses.push([...guess]);
-      if (evaluateGuess(levels[challenge.id].code, guess)?.exact === challenge.size) break;
-    }
-    const draft = Array.isArray(saved.draft) && saved.draft.length === challenge.size
-      ? saved.draft.map((type) => (type === null || HERO_BY_ID[type] ? type : null))
-      : fallback.draft;
-    return { guesses, draft: isFinished(challenge.id, guesses) ? fallback.draft : draft };
-  } catch {
-    return fallback;
-  }
+  const restored = restoreDaily(storage.getItem(dailyKey(dateKey, challenge.id)), levels[challenge.id]);
+  if (restored.invalid) invalidDaily = true;
+  return restored.progress;
 }
-
 function saveProgress() {
-  const challenge = currentChallenge();
-  const current = currentProgress();
-  try {
-    localStorage.setItem(storageKey(challenge), JSON.stringify({ guesses: current.guesses, draft: current.draft }));
-  } catch {
-    // Continue in memory when browser storage is unavailable.
-  }
+  storage.setItem(dailyKey(dateKey, state.difficulty), serializeDaily(currentProgress()));
 }
+function checkDate(redraw = true) {
+  if (state.screen === 'adventure' || state.screen === 'tutorial') return false;
+  const nextDate = localDateKey();
+  if (nextDate === dateKey) return false;
+  saveProgress(); portraitDrag?.cancel(); celebration.clear();
+  dateKey = nextDate;
+  invalidDaily = false;
+  levels = Object.fromEntries(CHALLENGES.map(c => [c.id, generateChallenge(dateKey, c.id)]));
+  progress = Object.fromEntries(CHALLENGES.map(c => [c.id, restoreProgress(c)]));
+  state.selectedSlot = 0;
+  pruneDaily(storage, dateKey);
+  dailyNotice = 'rollover';
+  if (redraw) render();
+  return true;
+}
+function dateGuard() { return checkDate(); }
 
 function currentChallenge() {
   return levels[state.difficulty];
@@ -313,6 +308,7 @@ function isFinished(id = state.difficulty, guesses = progress[id].guesses) {
 }
 
 function chooseChallenge(id) {
+  checkDate(false);
   celebration.clear();
   if (!levels[id]) return;
   state.difficulty = id;
@@ -323,12 +319,14 @@ function chooseChallenge(id) {
 }
 
 function placeHero(type) {
+  if (dateGuard()) return;
   if (isFinished()) return;
   const draft = currentProgress().draft;
   let slot = draft.findIndex((value, index) => index >= state.selectedSlot && value === null);
   if (slot < 0) slot = draft.findIndex((value) => value === null);
   if (slot < 0) return;
   draft[slot] = type;
+  playPlacementSound();
   const nextEmpty = draft.findIndex((value, index) => index > slot && value === null);
   state.selectedSlot = nextEmpty >= 0 ? nextEmpty : Math.max(0, draft.findIndex((value) => value === null));
   if (state.selectedSlot < 0) state.selectedSlot = slot;
@@ -337,6 +335,7 @@ function placeHero(type) {
 }
 
 function selectSlot(index) {
+  if (dateGuard()) return;
   if (isFinished()) return;
   const draft = currentProgress().draft;
   if (draft[index] !== null) draft[index] = null;
@@ -346,6 +345,7 @@ function selectSlot(index) {
 }
 
 function submitGuess() {
+  if (dateGuard()) return;
   const challenge = currentChallenge();
   const current = currentProgress();
   if (isFinished() || current.draft.some((type) => type === null)) return;
@@ -354,10 +354,11 @@ function submitGuess() {
   state.selectedSlot = 0;
   saveProgress();
   render();
-  if (isFinished()) celebration.play({ kind: "daily" });
+  if (isFinished()) { celebration.play({ kind: "daily" }); playCompletionSound(); }
 }
 
 function clearDraft() {
+  if (dateGuard()) return;
   if (isFinished()) return;
   currentProgress().draft.fill(null);
   state.selectedSlot = 0;
@@ -601,6 +602,7 @@ function render() {
   const completeDraft = current.draft.every((type) => type !== null);
 
   applyCopy();
+  storageWarning();
   tutorial.render();
   adventures.render();
   document.querySelector("#mastermind-tutorial-entry").hidden = true;
@@ -612,7 +614,7 @@ function render() {
   document.querySelector(".page-footer").hidden = state.screen !== "daily";
   document.querySelector("#mastermind-home-button").hidden = state.screen === "home";
   todayDate.hidden = state.screen !== "daily";
-  if (["home", "stories"].includes(state.screen)) document.querySelector('[data-i18n="brandKicker"]').textContent = "MASTERMIND";
+  if (["home", "stories"].includes(state.screen)) document.querySelector('[data-i18n="brandKicker"]').textContent = state.locale === "pl" ? "ZAGADKI BOHATERÓW" : "HERO PUZZLES";
   partyName.textContent = localizedPartyName(challenge);
   missionLevel.textContent = strings[state.difficulty];
   guessCounter.textContent = strings.attempts(current.guesses.length);
@@ -627,6 +629,10 @@ function render() {
   renderBoard(challenge, current);
   renderPicker();
   renderMessage(challenge, current);
+  document.querySelector('#share-result').hidden = !locked;
+  document.querySelector('#share-result').textContent = state.locale === 'pl' ? 'Udostępnij wynik' : 'Share result';
+  renderDailyNotice();
+  document.querySelector('#settings-open').textContent = state.locale === 'pl' ? 'Ustawienia' : 'Settings';
   clearButton.disabled = locked || current.draft.every((type) => type === null);
   submitButton.disabled = locked || !completeDraft;
   submitButton.querySelector("[data-i18n]").textContent = locked ? strings.challengeComplete : strings.submitGuess;
@@ -643,6 +649,7 @@ document.querySelector("#home-play-daily").addEventListener("click", () => showS
 document.querySelector("#mastermind-home-button").addEventListener("click", () => showScreen("home"));
 
 document.addEventListener("keydown", (event) => {
+  if (document.querySelector("dialog[open]")) return;
   if (event.key === "Escape") celebration.clear();
   if (tutorial.active) { tutorial.keydown(event); return; }
   if (adventures.active) { adventures.keydown(event); return; }
@@ -661,6 +668,7 @@ document.addEventListener("keydown", (event) => {
     submitGuess();
   } else if (event.key === "Backspace" && !isFinished()) {
     event.preventDefault();
+    if (dateGuard()) return;
     currentProgress().draft[state.selectedSlot] = null;
     saveProgress();
     render();
@@ -671,12 +679,12 @@ window.advanceTime = ms => { celebration.advanceTime(ms); if (!tutorial.active &
 window.render_game_to_text = () => {
   if (tutorial.active) return JSON.stringify({ ...tutorial.snapshot(), celebration: celebration.snapshot() });
   if (adventures.active) return JSON.stringify({ ...adventures.snapshot(), celebration: celebration.snapshot() });
-  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "HeroGuesser", mode: state.screen, locale: state.locale, date: dateKey, choices: state.screen === "home" ? [copy().playTutorial, copy().playStories, copy().playDaily] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
+  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "Guild of Wits", mode: state.screen, locale: state.locale, date: dateKey, campaign: state.screen === "stories" ? adventures.campaignSnapshot() : undefined, choices: state.screen === "home" ? [copy().playTutorial, copy().playStories, copy().playDaily] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
   const challenge = currentChallenge();
   const current = currentProgress();
   const solvedAt = current.guesses.findIndex((guess) => currentResult(guess, challenge).exact === challenge.size);
   return JSON.stringify({
-    game: "HeroGuesser",
+    game: "Guild of Wits",
     date: dateKey,
     locale: state.locale,
     difficulty: challenge.id,
@@ -698,21 +706,68 @@ portraitDrag = installPortraitDrag({
   board: guessBoard,
   canDrag: () => state.screen === "daily" && !isFinished(),
   onDrop: ({ hero, sourceSlot, targetSlot, copy: clone }) => {
+    if (dateGuard()) return;
     const draft = currentProgress().draft;
     if (!clone && sourceSlot === targetSlot) return;
+    const changed = draft[targetSlot] !== hero;
     if (!clone) draft[sourceSlot] = draft[targetSlot];
     draft[targetSlot] = hero;
+    if (changed) playPlacementSound();
     state.selectedSlot = draft.findIndex(type => type === null);
     if (state.selectedSlot < 0) state.selectedSlot = targetSlot;
     saveProgress();
     render();
   },
 });
+pruneDaily(storage, dateKey);
+function renderDailyNotice() {
+  const messages = state.locale === 'pl' ? {
+    invalid: 'Nie można odczytać części codziennego zapisu. Te zagadki zaczynają się od nowa.',
+    rollover: 'Zmieniła się data. Wczytano dzisiejszą zagadkę; poprzedni układ został zapisany.', copied: 'Wynik skopiowany.',
+  } : {
+    invalid: 'Some daily progress could not be read. Those puzzles start fresh.',
+    rollover: 'The date changed. Today’s puzzle is ready; the previous board was saved.', copied: 'Result copied.',
+  };
+  document.querySelector('#daily-notice').textContent = messages[invalidDaily ? 'invalid' : dailyNotice] ?? '';
+}
+function storageWarning() {
+  const warning = document.querySelector('#storage-warning');
+  warning.hidden = !storage.failed;
+  warning.textContent = state.locale === 'pl' ? 'Nie można zapisać postępu. Ta rozgrywka jest tymczasowa; pozostaw grę otwartą.' : 'Progress could not be saved. This session is temporary; keep the game open.';
+}
+addEventListener('heroguesser:storage', storageWarning);
+addEventListener('heroguesser:background', () => { portraitDrag.cancel(); tutorial.cancelTransient(); adventures.cancelTransient(); celebration.clear(); });
+addEventListener('heroguesser:foreground', () => { checkDate(); storageWarning(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { dispatchEvent(new Event('heroguesser:background')); }
+  else { dispatchEvent(new Event('heroguesser:foreground')); }
+});
+setInterval(() => { if (!document.hidden) checkDate(); }, 15000);
+document.querySelector('#share-result').addEventListener('click', async () => {
+  if (dateGuard()) return;
+  const text = dailyShareText(currentChallenge(), currentProgress().guesses, state.locale);
+  if (!text) return;
+  const locale = state.locale;
+  const result = await shareText(text);
+  if (result === 'manual') showShareText(text, locale);
+  if (result === 'copied') { dailyNotice = 'copied'; renderDailyNotice(); }
+});
+installSettings({ getLocale: () => state.locale, reset: kind => {
+  for (const key of storage.keys()) {
+    if (!key.startsWith('heroguesser:')) continue;
+    if (kind === 'all' || kind === 'stories' && key.startsWith('heroguesser:story:') || kind === 'dailies' && /^heroguesser:v1:/.test(key)) storage.removeItem(key);
+  }
+  if (kind === 'stories' || kind === 'all') adventures.reset();
+  if (kind === 'dailies' || kind === 'all') { state.selectedSlot = 0; dailyNotice = null; invalidDaily = false; progress = Object.fromEntries(CHALLENGES.map(c => [c.id, restoreProgress(c)])); }
+  if (kind === 'all') { state.difficulty = 'easy'; state.locale = 'en'; tutorial.leave(); }
+  showScreen('home');
+}});
+storageWarning();
 if (new URLSearchParams(location.search).get("daily") === "1") state.screen = "daily";
 render();
 if (new URLSearchParams(location.search).get("tutorial") === "1") tutorial.start();
 
 const adventureParam = new URLSearchParams(location.search).get("adventure");
 if (!tutorial.active && ADVENTURES.some((_, index) => adventureParam === String(index + 1))) adventures.start(Number(adventureParam) - 1);
-// Both temporary modes reset on a restored browser-history page; sync entry visibility last.
+// Refresh browser-history views without discarding saved chapters.
 addEventListener("pageshow", event => { if (event.persisted) render(); });

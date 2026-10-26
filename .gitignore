@@ -4,3 +4,11 @@ output/
 test-results/
 playwright-report/
 dist/
+
+dist-ios/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/CapApp-SPM/.build/
+*.xcuserstate
+xcuserdata/

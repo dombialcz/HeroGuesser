@@ -1,0 +1,14 @@
+{
+  "appId": "com.dombialcz.guildofwits",
+  "appName": "Guild of Wits",
+  "webDir": "dist-ios",
+  "ios": {
+    "preferredContentMode": "mobile",
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "hostname": "localhost",
+    "iosScheme": "capacitor"
+  },
+  "loggingBehavior": "none"
+}

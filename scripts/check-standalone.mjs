@@ -30,7 +30,10 @@ async function visit(relative) {
   }
 }
 await visit('index.html');
+for (const page of ['privacy.html', 'support.html']) await visit(page);
 // Template-based portrait paths are not visible to a string-reference scan.
 for (const piece of ['thief','knight','bard','cleric','barbarian','ranger','mage','ale','zombie','king']) await visit(`assets/mastermind/${piece}.webp`);
 for (const piece of ['coin','window','bell']) await visit(`assets/mastermind/${piece}.svg`);
+for (let index = 1; index <= 7; index++) await visit(`assets/audio/thud-${String(index).padStart(2, '0')}.wav`);
+for (const sound of ['correct', 'fanfare']) await visit(`music/${sound}.wav`);
 console.log(`Independent runtime graph verified: ${visited.size} files under ${root}`);

@@ -1,0 +1,111 @@
+[
+  {
+    "id": "easy",
+    "label": "Easy",
+    "size": 5,
+    "pattern": "trio-two-singles",
+    "dateKey": "2026-10-25",
+    "code": [
+      "cleric",
+      "bard",
+      "bard",
+      "mage",
+      "bard"
+    ],
+    "title": "Chorus of Benevolence",
+    "clues": [
+      {
+        "kind": "trio",
+        "type": "bard",
+        "text": "Chorus means exactly three Bards."
+      },
+      {
+        "kind": "single",
+        "type": "cleric",
+        "text": "of Benevolence means exactly one Cleric."
+      }
+    ],
+    "counts": {
+      "cleric": 1,
+      "bard": 3,
+      "mage": 1
+    },
+    "revealedSingle": "cleric"
+  },
+  {
+    "id": "medium",
+    "label": "Medium",
+    "size": 6,
+    "pattern": "trio-three-singles",
+    "dateKey": "2026-10-25",
+    "code": [
+      "thief",
+      "bard",
+      "thief",
+      "thief",
+      "cleric",
+      "mage"
+    ],
+    "title": "Guild of Magic",
+    "clues": [
+      {
+        "kind": "trio",
+        "type": "thief",
+        "text": "Guild means exactly three Thieves."
+      },
+      {
+        "kind": "single",
+        "type": "mage",
+        "text": "of Magic means exactly one Mage."
+      }
+    ],
+    "counts": {
+      "thief": 3,
+      "bard": 1,
+      "cleric": 1,
+      "mage": 1
+    },
+    "revealedSingle": "mage"
+  },
+  {
+    "id": "hard",
+    "label": "Hard",
+    "size": 7,
+    "pattern": "trio-pair-two-singles",
+    "dateKey": "2026-10-25",
+    "code": [
+      "barbarian",
+      "bard",
+      "mage",
+      "knight",
+      "barbarian",
+      "bard",
+      "barbarian"
+    ],
+    "title": "Merry Clan of Oaths",
+    "clues": [
+      {
+        "kind": "pair",
+        "type": "bard",
+        "text": "Merry means exactly two Bards."
+      },
+      {
+        "kind": "trio",
+        "type": "barbarian",
+        "text": "Clan means exactly three Barbarians."
+      },
+      {
+        "kind": "single",
+        "type": "knight",
+        "text": "of Oaths means exactly one Knight."
+      }
+    ],
+    "counts": {
+      "barbarian": 3,
+      "bard": 2,
+      "mage": 1,
+      "knight": 1
+    },
+    "revealedSingle": "knight"
+  }
+]

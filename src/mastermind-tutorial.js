@@ -1,6 +1,7 @@
 import { actTutorial, canEditTutorial, createTutorial, guardSlot, tutorialScene, tutorialPieces, tutorialLimits } from "./mastermind-tutorial-core.js";
 import { TUTORIAL_COPY } from "./mastermind-tutorial-copy.js";
 import { installPortraitDrag } from "./mastermind-drag.js";
+import { playPlacementSound, playCompletionSound } from "./game-audio.js";
 
 const IMAGE = { thief: "assets/mastermind/thief.webp", coin: "assets/mastermind/coin.svg", guard: "assets/mastermind/knight.webp", knight: "assets/mastermind/knight.webp", bard: "assets/mastermind/bard.webp" };
 const COLOR = { thief: "#69a7ff", coin: "#d1ac58", guard: "#b6c5be", knight: "#f0bd53", bard: "#ec83bd" };
@@ -47,6 +48,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     const wasEditable = canEditTutorial(state);
     actTutorial(state, action);
     const changed = JSON.stringify(before.draft) !== JSON.stringify(state.draft);
+    if (changed && ["pick", "move"].includes(action.type)) playPlacementSound();
     if (["slot", "pick", "move", "clear"].includes(action.type) && changed) {
       undoState = before; undoKind = action.type === "clear" ? "undoClear" : "undo";
     }
@@ -63,7 +65,10 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     else if (!message && action.type === "hint") message = hints()[state.hint - 1];
     else if (!message && action.type === "check") message = state.guesses.length > before.guesses.length ? c.result(state.guesses.length, state.guesses.at(-1)) : c.solved;
     else if (!message && action.type === "next") message = c.steps[state.phase][1];
-    if (action.type === "check" && state.facts.length > before.facts.length) celebration?.play({ kind: "scene" });
+    if (action.type === "check" && state.facts.length > before.facts.length) {
+      celebration?.play({ kind: "scene" });
+      playCompletionSound();
+    }
     if (message) announce(message);
     if (action.type === "check" && state.guesses.length > before.guesses.length && state.phase === before.phase) focus("#tutorial-result-heading");
     else if (state.phase !== before.phase) {
@@ -104,7 +109,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     entry.innerHTML = `<div><strong>${c.entryTitle}</strong><p>${c.entryText}</p></div><button type="button" id="start-mastermind-tutorial" class="story-button">${c.start} <span aria-hidden="true">→</span></button>`;
     entry.querySelector("button").addEventListener("click", start);
     if (!active) { content.replaceChildren(); announce(""); return; }
-    document.title = `${c.titles[tutorialScene(state)]} — HeroGuesser`;
+    document.title = `${c.titles[tutorialScene(state)]} — Guild of Wits`;
     document.querySelector('[data-i18n="brandKicker"]').textContent = c.brand;
     root.dataset.phase = state.phase;
     const focused = root.contains(document.activeElement) ? document.activeElement.id : null;
@@ -147,7 +152,8 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
   addEventListener("pagehide", fresh);
   addEventListener("pageshow", event => { if (event.persisted) { fresh(); render(); } });
   return {
-    get active() { return active; }, render, start, leave,
+    get active() { return active; },
+    cancelTransient() { drag.cancel(); }, render, start, leave,
     keydown(event) {
       if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest("input, textarea, select, [contenteditable]")) return;
       if (event.key === "Escape") { drag.cancel(); dispatch({ type: "cancel" }); return; }
@@ -165,7 +171,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
       if (event.key === "Enter") { event.preventDefault(); if (canEditTutorial(state)) dispatch({ type: "check" }); else if (NEXT_PHASES.includes(state.phase)) dispatch({ type: "next" }); else if (state.phase === "complete") { leave(); onAdventureStart(); } }
     },
     snapshot() {
-      return { game: "HeroGuesser", mode: "story-tutorial", locale: getLocale(), phase: state.phase, scene: tutorialScene(state), coordinateSystem: "Places are numbered from 1, left to right; a window is outside the scored row", draft: state.draft, selectedSlot: state.selected, availablePieces: canEditTutorial(state) ? tutorialPieces(state) : [], window: state.windowSide === null ? null : { side: state.windowSide === 0 ? "left" : "right", besidePlace: state.windowSide + 1, scored: false }, fixedGuardSlot: guardSlot(state), guesses: state.guesses, facts: state.facts, quizPassed: state.quizPassed, hintsShown: state.hint, undoAvailable: !!undoState, persistence: "none", attemptLimit: null, instruction: t().steps[state.phase][1], notice: state.notice ? t()[state.notice] : null, drag: drag.snapshot(), result: state.phase === "complete" ? "solved" : "playing" };
+      return { game: "Guild of Wits", mode: "story-tutorial", locale: getLocale(), phase: state.phase, scene: tutorialScene(state), coordinateSystem: "Places are numbered from 1, left to right; a window is outside the scored row", draft: state.draft, selectedSlot: state.selected, availablePieces: canEditTutorial(state) ? tutorialPieces(state) : [], window: state.windowSide === null ? null : { side: state.windowSide === 0 ? "left" : "right", besidePlace: state.windowSide + 1, scored: false }, fixedGuardSlot: guardSlot(state), guesses: state.guesses, facts: state.facts, quizPassed: state.quizPassed, hintsShown: state.hint, undoAvailable: !!undoState, persistence: "none", attemptLimit: null, instruction: t().steps[state.phase][1], notice: state.notice ? t()[state.notice] : null, drag: drag.snapshot(), result: state.phase === "complete" ? "solved" : "playing" };
     },
   };
 }

@@ -1,3 +1,5 @@
+@font-face { font-family: "DM Sans"; src: url("assets/fonts/dmsans-DMSans[opsz,wght].ttf") format("truetype"); font-weight: 100 1000; font-style: normal; font-display: swap; }
+@font-face { font-family: "Marcellus"; src: url("assets/fonts/marcellus-Marcellus-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
 :root {
   color-scheme: dark;
   font-family: "DM Sans", Inter, ui-sans-serif, system-ui, sans-serif;
@@ -363,7 +365,7 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
 .story-entry p { margin: 5px 0 0; color: #b8c5c0; font-size: .9rem; line-height: 1.5; }
 .story-button, .story-primary { min-height: 46px; max-width: 100%; padding: 11px 16px; border: 1px solid #d1ac68; border-radius: 8px; color: #16232a; background: linear-gradient(120deg, #f1dba3, #c6a05d); cursor: pointer; font-size: 1rem; font-weight: 700; line-height: 1.4; text-align: left; white-space: normal; }
 .story-primary { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; }
-.story-button:hover, .story-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.story-button:hover:not(:disabled), .story-primary:hover:not(:disabled) { filter: brightness(1.08); }
 .story-tutorial { width: min(860px, 100%); margin: 12px auto 0; padding: clamp(10px, 2vw, 22px); border: 1px solid var(--line-bright); border-radius: 14px; background: linear-gradient(145deg, #20323af5, #111f27fa); }
 .story-tutorial *, .story-entry * { min-width: 0; overflow-wrap: anywhere; }
 .story-topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 14px; }
@@ -444,8 +446,6 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
 
 /* Authored adventures share the tutorial's board and accessible portrait controls. */
 .adventure-entry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
-.adventure-health { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; padding: 10px 12px; border: 1px solid #a7856e80; border-radius: 8px; color: #f1d9c8; background: #422b2b55; font-size: .9rem; }
-.adventure-health > span { color: #f6a399; letter-spacing: .15em; font-size: 1.25rem; }
 .adventure-landmarks { display: flex; justify-content: space-between; gap: 8px; color: #d6c799; font-size: .8rem; line-height: 1.5; }
 .adventure-landmarks span { max-width: 48%; }
 .adventure-landmarks span:last-child { text-align: right; }
@@ -453,6 +453,7 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
 .adventure-landmarks + .story-formation { margin-top: 5px; }
 .story-adventure .story-name-clue ul { margin: 8px 0; padding-left: 20px; color: #e0e5d8; font-size: .9rem; line-height: 1.6; }
 .story-adventure .story-name-clue li + li { margin-top: 6px; }
+.story-name-clue .story-lesson { color: #e0d6b9; font-weight: 600; }
 .story-instruction .adventure-premise { margin-top: 12px; }
 .adventure-feedback-help { margin-top: 12px; color: #b7ccc0; font-size: .85rem; line-height: 1.5; }
 .adventure-feedback-help summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
@@ -517,6 +518,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .adventure-story-button > span { display: grid; gap: 5px; min-width: 0; }
 #mastermind-adventure-entry .adventure-story-button strong { color: #17252c; font: inherit; line-height: 1.4; }
 .adventure-story-button small { color: #354137; font-size: .8rem; line-height: 1.4; }
+.adventure-story-button.chapter-locked { opacity: 1; background: #24363c; border-color: #6c7974; }
+#mastermind-adventure-entry .chapter-locked strong { color: #c2ccc3; }
+.chapter-locked small { color: #b2beb7; }
+.chapter-locked img { filter: grayscale(1); opacity: .65; }
+.story-entry .campaign-progress { color: #e0d6b9; }
+.campaign-locked-notice { flex-basis: 100%; }
 @media (max-width: 700px) {
   #mastermind-adventure-entry .adventure-entry-actions { grid-template-columns: minmax(0, 1fr); }
 }
@@ -543,3 +550,25 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 
 .difficulty-name, .difficulty-meta, .clue-kind { min-width: 0; overflow-wrap: anywhere; }
+
+/* Shared dialogs keep destructive actions explicit and keyboard accessible. */
+.game-dialog {
+  width: min(36rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem);
+  overflow-y: auto; border: 1px solid #bda36b; border-radius: 1rem;
+  padding: 1.5rem; background: #17252f; color: #f5ead4; line-height: 1.6;
+}
+.game-dialog::backdrop { background: #050b12c9; }
+.game-dialog h2 { margin-top: 0; }
+.game-dialog button { min-height: 44px; padding: .65rem 1rem; border: 1px solid #c5ab73; border-radius: .55rem; background: #243846; color: #fff5df; margin: .3rem; font: inherit; cursor: pointer; }
+.game-dialog a { color: #ffe09a; }
+.game-dialog textarea { width: 100%; min-height: 15rem; padding: .5rem; background: #101c25; color: white; font: inherit; }
+.game-dialog :focus-visible { outline: 3px solid #ffe09a; outline-offset: 3px; }
+.settings-resets { display: grid; margin-block: 1rem; }
+.save-warning { color: #ffe1a0; line-height: 1.5; padding: .6rem; }
+.save-warning:empty { display: none; }
+body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
+.topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+@media (max-width: 580px) { .topbar { flex-wrap: wrap; } .topbar-actions { flex-wrap: wrap; } }
+.policy-page { max-width: 52rem; line-height: 1.75; padding-block: 2rem; }
+.policy-page a { color: #ffe09a; }
+.policy-page section { margin-block: 2rem; }

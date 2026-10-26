@@ -1,7 +1,7 @@
 import { scoreGuess } from "./mastermind-core.js";
 
-export const ADVENTURE_HEALTH = 5;
-// These authored scenes have one answer each; clues are visible before any paid check.
+export const STORY_CONTENT_VERSION = 2;
+// These authored scenes have one answer each; clues are visible before checking.
 export const ADVENTURES = [
   { id: "last-round", scenes: [
     { id: "shared-drink", solution: ["thief", "ale", "knight"], pieces: ["thief", "ale", "knight"], landmark: "tavern" },
@@ -9,25 +9,25 @@ export const ADVENTURES = [
     { id: "back-door", solution: ["zombie", "zombie", "knight", "bard", "thief"], pieces: ["zombie", "knight", "bard", "thief"], landmark: "escape" },
   ] },
   { id: "sleepless-court", scenes: [
-    { id: "hedge-mage", solution: ["thief", "coin", "mage", "coin"], pieces: ["thief", "coin", "mage"], landmark: "hut" },
+    { id: "hedge-mage", solution: ["thief", "coin", "mage", "coin", "knight"], pieces: ["thief", "coin", "mage", "knight"], landmark: "hut" },
     { id: "broken-bell", solution: ["knight", "thief", "mage", "bard", "knight"], pieces: ["knight", "thief", "mage", "bard"], landmark: "court" },
   ] },
   { id: "kings-awakening", scenes: [
-    { id: "royal-awakening", solution: ["knight", "king", "knight"], pieces: ["king", "knight"], landmark: "bedchamber" },
-    { id: "enchanted-corridor", solution: ["zombie", "knight", "king", "knight"], pieces: ["zombie", "knight", "king"], landmark: "corridor" },
-    { id: "chapel-defence", solution: ["zombie", "zombie", "knight", "knight", "king"], pieces: ["zombie", "knight", "king"], landmark: "chapel" },
+    { id: "royal-awakening", solution: ["knight", "king", "coin", "mage", "knight"], pieces: ["king", "knight", "coin", "mage"], landmark: "bedchamber" },
+    { id: "enchanted-corridor", solution: ["zombie", "knight", "king", "coin", "mage", "knight"], pieces: ["zombie", "knight", "king", "coin", "mage"], landmark: "corridor" },
+    { id: "chapel-defence", solution: ["zombie", "zombie", "knight", "knight", "bard", "king"], pieces: ["zombie", "knight", "king", "bard"], landmark: "chapel" },
   ] },
   { id: "last-bell", scenes: [
-    { id: "tower-square", solution: ["zombie", "zombie", "knight", "mage", "thief"], pieces: ["zombie", "knight", "mage", "thief"], landmark: "square" },
-    { id: "sealed-stair", solution: ["knight", "mage", "coin", "thief"], pieces: ["knight", "mage", "coin", "thief"], landmark: "stairs" },
-    { id: "silence-the-bell", solution: ["knight", "thief", "mage", "bell"], pieces: ["knight", "thief", "mage", "bell"], landmark: "belfry" },
+    { id: "tower-square", solution: ["zombie", "zombie", "knight", "mage", "coin", "thief"], pieces: ["zombie", "knight", "mage", "thief", "coin"], landmark: "square" },
+    { id: "sealed-stair", solution: ["zombie", "knight", "coin", "mage", "coin", "thief"], pieces: ["knight", "mage", "coin", "thief", "zombie"], landmark: "stairs" },
+    { id: "silence-the-bell", solution: ["zombie", "knight", "thief", "bell", "coin", "mage"], pieces: ["knight", "thief", "mage", "bell", "zombie", "coin"], landmark: "belfry" },
   ] },
 ];
 export const adventureScene = state => ADVENTURES[state.adventure].scenes[state.scene];
 export const adventureCounts = state => adventureScene(state).solution.reduce((counts, piece) => ({ ...counts, [piece]: (counts[piece] || 0) + 1 }), {});
 export function createAdventure(adventure = 0) {
   const index = Number.isInteger(adventure) && adventure >= 0 && adventure < ADVENTURES.length ? adventure : 0;
-  return { adventure: index, scene: 0, phase: "intro", health: ADVENTURE_HEALTH, draft: Array(ADVENTURES[index].scenes[0].solution.length).fill(null), selected: 0, guesses: [], facts: [], hint: 0, notice: null };
+  return { adventure: index, scene: 0, phase: "intro", draft: Array(ADVENTURES[index].scenes[0].solution.length).fill(null), selected: 0, guesses: [], facts: [], hint: 0, notice: null };
 }
 function clear(state) { state.draft.fill(null); state.selected = 0; }
 export function actAdventure(state, action) {
@@ -74,8 +74,7 @@ export function actAdventure(state, action) {
       state.guesses = []; state.phase = "solved";
     } else {
       state.guesses.push({ pieces: [...state.draft], ...result });
-      state.health--; clear(state);
-      if (state.health === 0) state.phase = "failed";
+      clear(state);
     }
   }
   return state;

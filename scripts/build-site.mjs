@@ -5,7 +5,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const dist = path.join(root, 'dist');
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist);
-for (const name of ['index.html', 'mastermind.css', 'src', 'assets']) {
+for (const name of ['index.html', 'privacy.html', 'support.html', 'mastermind.css', 'src', 'assets', 'music']) {
   await cp(path.join(root, name), path.join(dist, name), {
     recursive: true,
     filter: source => !source.endsWith('.json'),

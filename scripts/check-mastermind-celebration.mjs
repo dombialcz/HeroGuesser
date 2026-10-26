@@ -4,6 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 import { generateChallenge } from "../src/mastermind-core.js";
 import { ADVENTURES } from "../src/mastermind-adventure-core.js";
+import { existingChapterSave } from "./story-test-fixtures.mjs";
 const output = "output/mastermind-celebration";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch();
@@ -14,7 +15,7 @@ try {
     ["reduced", 390, 844, true, "en", false], ["pl-large-reduced", 320, 740, true, "pl", true],
   ].filter(([name]) => !process.argv[2] || process.argv[2] === name)) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 500, isMobile: width < 500, reducedMotion: reduced ? "reduce" : "no-preference" });
-    await context.addInitScript(locale => localStorage.setItem("heroguesser:language", locale), locale);
+    await context.addInitScript(({ locale, saved }) => { localStorage.setItem("heroguesser:language", locale); localStorage.setItem(saved.key, saved.raw); }, { locale, saved: existingChapterSave(2) });
     const page = await context.newPage(), errors = [], requests = [];
     page.on("pageerror", e => errors.push(e.message));
     page.on("request", r => requests.push(r.url()));
@@ -75,7 +76,7 @@ try {
       assert.equal((await state()).celebration.active, false);
       const answer = ADVENTURES[2].scenes[index].solution;
       if (index === 0) {
-        await sceneFill(["king", "knight", "knight"]); await click("#adventure-check");
+        await sceneFill([...answer.slice(1), answer[0]]); await click("#adventure-check");
         assert.equal((await state()).celebration.active, false, "failed scenario row is quiet");
       }
       await sceneFill(answer); await click("#adventure-check");
@@ -86,7 +87,7 @@ try {
     }
     assert.equal((await state()).phase, "complete");
     // A locale change and a new run should cancel a celebration instead of replaying it.
-    await click("#adventure-restart"); await click("#adventure-next");
+    await click("#adventure-restart"); await click("#confirm-accept"); await page.waitForFunction(() => !document.querySelector(".game-dialog")); await click("#adventure-next");
     await sceneFill(ADVENTURES[2].scenes[0].solution); await click("#adventure-check");
     await page.locator(`[data-locale="${locale === "en" ? "pl" : "en"}"]`).click();
     assert.equal((await state()).celebration.active, false);

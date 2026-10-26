@@ -1,0 +1,11 @@
+import { cp, readFile, writeFile, rm } from 'node:fs/promises';
+import { build } from 'esbuild';
+import './build-site.mjs';
+await rm('dist-ios', { recursive: true, force: true });
+await cp('dist', 'dist-ios', { recursive: true });
+await build({ entryPoints: ['native/entry.js'], outfile: 'dist-ios/native.js', bundle: true, format: 'esm', target: 'safari15.4', minify: true });
+let html = await readFile('dist-ios/index.html', 'utf8');
+html = html.replace('src="src/mastermind-ui.js"', 'src="native.js"');
+html = html.replace(/\s*<aside class="launch-warning"[\s\S]*?<\/aside>/, '').replace(/\s*<script>\s*if \(window.location.protocol[\s\S]*?<\/script>/, '');
+await writeFile('dist-ios/index.html', html);
+console.log('Built offline iOS assets in dist-ios/');

@@ -3,13 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Learn HeroGuesser with a guided tutorial, follow short fantasy stories, or solve three daily hero puzzles." />
+    <meta name="description" content="Learn Guild of Wits with a guided tutorial, follow a fantasy story in four chapters, or solve three daily hero puzzles." />
     <meta name="theme-color" content="#101a23" />
-    <title>HeroGuesser</title>
+    <title>Guild of Wits</title>
     <link rel="icon" type="image/webp" href="assets/mastermind/thief.webp" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="mastermind.css" />
   </head>
   <body>
@@ -17,11 +14,12 @@
     <div class="ambient-glow ambient-glow-two" aria-hidden="true"></div>
 
     <header class="topbar">
-      <a class="brand-lockup" href="./" aria-label="HeroGuesser home">
-        <span class="brand-mark" aria-hidden="true">H</span>
-        <span class="brand-name"><strong>HEROGUESSER</strong><small data-i18n="brandKicker">HERO PUZZLES</small></span>
+      <a class="brand-lockup" href="./" aria-label="Guild of Wits home">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span class="brand-name"><strong>GUILD OF WITS</strong><small data-i18n="brandKicker">HERO PUZZLES</small></span>
       </a>
       <div class="topbar-actions">
+        <button type="button" class="home-nav-button" id="settings-open">Settings</button>
         <button type="button" class="home-nav-button" id="mastermind-home-button" data-i18n="home" hidden>Home</button>
         <time class="date-pill" id="today-date" hidden></time>
         <div class="language-switch" role="group" aria-label="Language">
@@ -32,6 +30,7 @@
     </header>
 
     <main class="app-shell">
+      <p id="storage-warning" class="save-warning" role="status" hidden></p>
       <aside class="launch-warning" id="launch-warning" role="alert" hidden>
         <strong>Start the game through a local server.</strong>
         <span>Chrome blocks the game script when this file is opened directly. In the project folder, run <code>npm run serve</code>, then visit <code>http://localhost:4180/index.html</code>.</span>
@@ -40,7 +39,7 @@
       <section class="intro-row" hidden>
         <div>
           <p class="eyebrow" data-i18n="gameKicker">THE DAILY HERO CODE</p>
-          <h1 id="daily-title" tabindex="-1" data-i18n="gameTitle">HeroGuesser</h1>
+          <h1 id="daily-title" tabindex="-1" data-i18n="gameTitle">Guild of Wits</h1>
           <p class="intro-copy" data-i18n="gameSubtitle">Read the party name. Rebuild the formation.</p>
         </div>
       </section>
@@ -48,7 +47,7 @@
       <section class="mastermind-home" id="mastermind-home" aria-labelledby="mastermind-home-title">
         <div class="home-heading">
           <p class="eyebrow" data-i18n="homeKicker">THE PARTY IS A PUZZLE</p>
-          <h1 id="mastermind-home-title" tabindex="-1">HeroGuesser</h1>
+          <h1 id="mastermind-home-title" tabindex="-1">Guild of Wits</h1>
           <p data-i18n="homeSubtitle">Read the clues. Find your party.</p>
         </div>
         <div class="home-choices">
@@ -61,10 +60,10 @@
           </article>
           <article class="home-choice">
             <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/bard.webp" alt=""><img class="home-companion" src="assets/mastermind/zombie.webp" alt=""></div>
-            <p class="eyebrow" data-i18n="storiesKicker">A LITTLE ADVENTURE</p>
-            <h2 data-i18n="storiesTitle">From tavern to bell tower</h2>
-            <p data-i18n="storiesDescription">Follow four short stories. Solve each scene with five health and free hints.</p>
-            <button type="button" id="home-play-stories" class="story-button" data-i18n="playStories">Play Stories</button>
+            <p class="eyebrow" data-i18n="storiesKicker">ONE STORY · FOUR CHAPTERS</p>
+            <h2 data-i18n="storiesTitle">The Cursed Bell</h2>
+            <p data-i18n="storiesDescription">Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.</p>
+            <button type="button" id="home-play-stories" class="story-button" data-i18n="playStories">Play Story</button>
           </article>
           <article class="home-choice">
             <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/knight.webp" alt=""><img class="home-companion" src="assets/mastermind/mage.webp" alt=""></div>
@@ -76,15 +75,16 @@
         </div>
       </section>
       <section id="mastermind-stories" class="stories-menu" aria-labelledby="stories-title" hidden>
-        <p class="eyebrow" data-i18n="storiesKicker">A LITTLE ADVENTURE</p>
-        <h1 id="stories-title" tabindex="-1" data-i18n="playStories">Play Stories</h1>
-        <section class="story-entry" id="mastermind-adventure-entry" aria-label="Short adventures"></section>
+        <p class="eyebrow" data-i18n="storiesKicker">ONE STORY · FOUR CHAPTERS</p>
+        <h1 id="stories-title" tabindex="-1" data-i18n="playStories">Play Story</h1>
+        <section class="story-entry" id="mastermind-adventure-entry" aria-label="The Cursed Bell"></section>
       </section>
       <section id="mastermind-tutorial-entry" hidden aria-hidden="true"></section>
       <section class="story-tutorial" id="mastermind-tutorial" aria-label="Story tutorial" hidden></section>
-      <section class="story-tutorial story-adventure" id="mastermind-adventure" aria-label="Short adventures" hidden></section>
+      <section class="story-tutorial story-adventure" id="mastermind-adventure" aria-label="The Cursed Bell" hidden></section>
 
       <div id="mastermind-daily" hidden>
+      <p id="daily-notice" class="save-warning" role="status" aria-live="polite"></p>
       <nav class="difficulty-tabs" aria-label="Daily challenge difficulty">
         <button class="difficulty-tab" type="button" data-challenge="easy" aria-pressed="true">
           <span class="difficulty-name" data-i18n="easy">Easy</span>
@@ -158,6 +158,7 @@
           <div class="hero-picker" id="hero-picker" role="group" aria-label="Hero classes"></div>
           <p class="drag-hint" id="drag-hint" data-i18n="dragHint">Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy. Unlimited guesses.</p>
           <div class="picker-footnote"><span class="keycap">1–7</span><span data-i18n="keyboardPick">quick pick</span><span class="footnote-separator">·</span><span class="keycap">↵</span><span data-i18n="keyboardSubmit">submit</span></div>
+          <button id="share-result" class="story-button" type="button" hidden>Share result</button>
           <p class="game-message" id="game-message" role="status" aria-live="polite"></p>
           <div class="daily-note"><span class="daily-note-icon" aria-hidden="true">◷</span><span data-i18n="dailyNote">Three new formations arrive each day.</span></div>
         </aside>
@@ -170,11 +171,11 @@
       </footer>
     </main>
 
-    <noscript>HeroGuesser needs JavaScript enabled to generate today’s party.</noscript>
+    <noscript>Guild of Wits needs JavaScript enabled to generate today’s party.</noscript>
     <script>
       if (window.location.protocol === "file:") {
         document.querySelector("#launch-warning").hidden = false;
-        document.querySelector("#party-name").textContent = "Open HeroGuesser through the local server";
+        document.querySelector("#party-name").textContent = "Open Guild of Wits through the local server";
         document.querySelector("#rule-note").textContent = "Chrome blocks JavaScript modules on directly opened files. Follow the steps in the notice above.";
       }
     </script>

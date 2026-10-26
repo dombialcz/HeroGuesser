@@ -1,65 +1,68 @@
-# HeroGuesser
+# Guild of Wits
 
-A standalone fantasy deduction game with a guided tutorial, four short story chapters and three daily puzzles. English and Polish; mouse, touch and keyboard; no ads or runtime dependency on the original games.
+A fantasy deduction game: arrange heroes from clues, learn through three tutorial scenes, follow The Cursed Bell through four chapters and eleven puzzles, and solve three fresh daily formations. Free, EN/PL, mouse/touch/keyboard, no ads or accounts.
 
-**Play:** https://dombialcz.github.io/HeroGuesser/
-**Repository:** https://github.com/dombialcz/HeroGuesser
+Previously named HeroGuesser. [Play on the existing website](https://dombialcz.github.io/HeroGuesser/) · [Repository](https://github.com/dombialcz/HeroGuesser). The repository URL, local save namespace and daily seeds remain stable through the rename. Local development changes reach the hosted website when deployed from main.
 
-## Run locally
+Mobile monetization is planned separately in [the scenario and implementation checklist](release/MONETIZATION.md): a free daily with a rewarded unlock for the other two, chapter unlocks and an optional one-time purchase. This is not implemented; the current build remains free with no ads or purchases. Open product choices and release timing are recorded in that checklist.
+
+## Develop and verify
+
+Node 22+, Python 3. The browser game is static HTML/CSS/JavaScript; fonts and artwork are bundled. No backend or network resource is needed for core installed gameplay.
 
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium webkit
 npm run serve
-```
-
-Open http://127.0.0.1:4180/. Node 22 or later and Python 3 are used by the development tooling. The game itself is static HTML/CSS/JavaScript and needs no backend. Google Fonts is the only external presentation resource; fallback fonts remain usable if it is unavailable.
-
-## Verify and publish
-
-```sh
+# http://127.0.0.1:4180/
 npm test
 npm run check:standalone
 npm run build
-node scripts/check-mastermind-home.mjs
-node scripts/check-mastermind-tutorial.mjs
-node scripts/check-mastermind-adventures.mjs
-node scripts/check-mastermind-celebration.mjs
+npm run test:browser
 ```
 
-Browser scripts expect the local server on port 4180; set `HERO_GUESSER_BASE_URL` to target another server or a deployed site. Additional check-mastermind scripts cover art, feedback, dragging and mobile scrolling. Internal module/test names retain the familiar Mastermind terminology.
+The browser suite starts a preview server if needed and exercises existing gameplay plus Chromium/WebKit release scenarios. Use HERO_GUESSER_BASE_URL for an already-running alternate server. `npm run serve -- --directory dist --port 4174` previews the exact web build. GitHub Actions verifies pull requests and deploys main to Pages.
 
-GitHub Actions runs unit/dependency checks, builds a minimal site into `dist/` and deploys it to GitHub Pages on pushes to `main`. Site output excludes tests, development scripts, original PNGs and planning documents. Use `npm run serve -- --directory dist --port 4174` to preview that exact output after building.
+## Play and saves
 
-## Project structure
+- **Tutorial:** three guided scenes, unlimited attempts; intentionally temporary across exit/reload.
+- **Story:** The Cursed Bell is one campaign in four chapters, with unlimited attempts and hints. Chapter 1 starts open; solving the last scene unlocks the next chapter. Begin/Continue Story follows the campaign, including pending chapter endings. Unlocked chapters can be revisited from the chapter menu. Home/reload/background/closure preserve progress. Restart and reset require confirmation. Chapter replay preserves earned unlocks; Reset Story Progress clears chapter saves and locks chapters 2–4 again. Existing valid saves from later chapters retain access. Wrong checks clear the draft and keep history; solving keeps the verified scene fact and drops its attempts.
+- **Daily:** ordered parties of five, six or seven heroes. Green means correct place; yellow means included elsewhere; grey means absent or excess copy. Feedback is a total for the entire row. Unlimited guesses, date/difficulty-specific local saves and spoiler-free result sharing.
 
-- `index.html`, `mastermind.css`, `src/`: independent game and local utilities.
-- `assets/`: shipped portraits, props and background; art prompt manifests.
-- `art-source/`: original PNGs and source prompt, retained for future art iteration.
-- `test/`, `scripts/`: unit tests, browser checks, build and preview tooling.
-- `MASTERMIND_APP_STORE_PLAN.md`: prioritized mobile store release roadmap.
-- `progress.md`: extraction notes and relevant earlier development history.
+The story learning curve grows from a three-place adjacency puzzle to six-place deductions using ordering, gaps, repeated pieces and exclusions. Free hints teach a next step; solved scenes offer an optional explanation. See [the scene-by-scene progression](release/STORY_PROGRESSION.md). Content edition 2 preserves original chapter-1 saves; older saves in revised chapters 2–4 require a confirmed restart.
 
-Daily save keys use `heroguesser:`. Browser saves on the former site do not automatically transfer to this different origin. The seed namespace is deliberately preserved so the daily formations themselves are unchanged by extraction.
+New daily puzzles follow the device's calendar date, including resume/date changes. Previous boards save before the date switches; stories are not interrupted. Saves older than 90 days are pruned, with no archive browser in v1. Dates/timezones changed backwards restore matching retained progress. Web and iPhone saves are separate; clearing browser data or uninstalling can remove them. Storage failures visibly mark the session temporary.
 
-## Gameplay
+Tap to place/clear, hold-drag to move/swap, copy earlier daily portraits and use keyboard shortcuts. EN/PL, enlarged text, descriptive feedback, focus announcements and reduced-motion celebration are supported. Home removes direct-mode query parameters. Existing `?tutorial=1`, `?adventure=1` through `4`, and `?daily=1` links continue to work; adventure links resume their chapter.
 
-See the [mobile app store release plan](MASTERMIND_APP_STORE_PLAN.md) for prioritized iOS/Android packaging, product, privacy, testing and submission tasks.
+Settings includes About, privacy, support and separate story/daily/all-data resets. Public development pages are privacy.html and support.html; final publisher contact remains a store-release gate.
 
-Opening `index.html` shows a home screen with **Play Tutorial**, **Play Stories** and **Daily Puzzles**. Stories opens a separate four-adventure selection, with every chapter shown as a matching illustrated button. The **Home** button returns from any mode; daily difficulty, guesses and unfinished arrangements stay intact, while leaving a short tutorial or story drops that run. Home removes direct-mode parameters so reloading it stays on the home screen. Existing tutorial/adventure links still open their modes, and `index.html?daily=1` opens the daily board directly. Home and navigation support English, Polish, touch and keyboard. Run `node scripts/check-mastermind-home.mjs` for navigation, saved daily progress and responsive/enlarged-text checks.
+Character placement and drag moves play one of seven thuds extracted from the supplied recording, avoiding consecutive repeats. Daily puzzles, tutorial and story mode share the effects. Toggle sound effects in Settings; the preference is saved on the device. The standalone WAVs are in `assets/audio/`; regenerate them with `python3 scripts/split-placement-thuds.py '/path/to/Single Thud.wav'`.
 
-Solving a daily, story or tutorial puzzle shows a brief gold victory badge with flying confetti. The decoration leaves controls usable and preserves keyboard focus; reduced-motion settings show a static badge without particles. Opening an already solved daily puzzle does not replay the effect. Mastermind has no per-attempt ads. Run `node scripts/check-mastermind-celebration.mjs` for win triggers, navigation cleanup, reduced motion and responsive layouts.
+Daily wins and solved tutorial/story scenes play `music/correct.wav`. Solving a chapter's final scene plays `music/fanfare.wav` instead, immediately marking chapter completion. The Sound effects setting controls all effects. Both recordings are bundled for web and offline iPhone play.
 
-Choose **Play Tutorial** on the home screen, or open `index.html?tutorial=1`, for three short practice scenes in English or Polish. All placements use explicit **Check arrangement**. In the treasury, choose one thief and two piles of coins. Checking the first valid row creates the adaptive worked-example answer: a fixed window appears opposite the first thief (random side for a middle thief), giving one correct place and two elsewhere. The checked example sits immediately beneath each explanation, with a short comprehension question before the window clue. Next, infer the thief's escape from a fixed guard, using optional progressive hints. Finally reconstruct a four-place **Order of Coin / Zakon Monety** using the same exact class-count names as daily play: three Knights and one Thief. A Bard distractor teaches pieces that contribute neither correct-place nor elsewhere feedback. The last formation is a fixed, independent puzzle rather than a supplied solution.
+## iPhone
 
-Tap a filled place to clear it; choose an empty place and then a piece to refill. Hold and drag to move or swap, using the same pointer implementation as the daily game. Number shortcuts work while slots are focused; Undo recovers a last edit, clear or restart. Keyboard focus follows the instruction, checked result and editable row in document order. Accessible names identify the window's side and adjacent place, and announcements report placements and scores. Feedback has descriptive labels as well as colour. Fixed guards are labelled static pieces, outside the edit controls. Layouts reflow at 200% text size in both languages, and reduced-motion preferences disable entry animations.
+Xcode 26+ is the Capacitor baseline; this workspace has Xcode 27 and an iOS 27 simulator. The project adopts UIScene and supports **iPhone / iOS 15.4+**, portrait and landscape. Apple’s upload requirements must be rechecked at submission.
 
-Failed checks clear movable places for a fresh row; the latest checked attempt appears above it and earlier attempts remain below. A solved scene discards all its attempts and adds only its verified arrangement and story fact. Tutorial runs are memory-only: exiting, navigating away, reloading or closing the browser drops the run, including back/forward cache restores. Obsolete tutorial saves are removed; daily challenge saves and the selected language retain their existing behaviour. This is practice with unlimited attempts and no health cost. The tutorial ends with a direct link to the first adventure, with the daily Easy puzzle available as a second choice. Run `node scripts/check-mastermind-tutorial.mjs` for the full responsive, keyboard, focus, pointer, Undo, text-enlargement, lesson and lifecycle checks.
+```sh
+npm run ios:run   # Build, install and launch in Simulator
+npm run ios       # Build, sync and open Xcode
+npm run ios:test  # Native UI test
+```
 
-Choose **Play Stories → The Last Round** (`index.html?adventure=1`) for three tavern scenes: share ale, recruit the Bard and escape two Zombies. **The Court That Would Not Sleep** (`adventure=2`) follows the party to a hedge Mage, then uses a royal coin at the empty throne to reveal that the curse targets the King. The bell remains active. **The King’s Awakening** (`adventure=3`) introduces the King in three scenes: wake in his guarded bedchamber, escape an enchanted corridor, and take refuge while guards fight Zombies at the chapel doors. **The Last Bell** (`adventure=4`) sends the Thief, Mage and Knight through the tower square, past a sealed stair and into the belfry to silence the bell and save the King; the Bard stays with him in the chapel. Each chapter links to the next and starts with fresh health. All eleven scenes have exactly one answer under their clues.
+The native build bundles an esbuild entry and uses Capacitor Preferences, App, Browser and Share plugins. Browser code has no bare npm imports. Preferences load before boards initialize; writes are serialized. The bundle ID is `com.dombialcz.guildofwits`; native origin stays `capacitor://localhost`. Choose your own signing team in Xcode for a physical iPhone. Run/test select a booted iPhone simulator or one from the newest installed runtime. Use `-- --simulator "iPhone 18 Pro"` (or a UDID) to choose one. See [the short iPhone workflow](IOS.md).
 
-The King is the only new character; royal guards reuse Knight pieces with an explicit explanation. The final Cursed Bell is a scored, movable piece, distinct from earlier unscored landmarks. King, ale and zombie artwork generation prompts/source paths are recorded in `assets/mastermind/ADVENTURE_ART.json`; the bell is a small SVG matching existing prop icons.
+The iOS simulator test verifies a real chapter edit, backgrounding, force-close/relaunch, Preferences restore and solving. Device/VoiceOver/offline/update testing, paid enrollment and TestFlight are still required before publishing. See release/PUBLISHING.md.
 
-Each adventure starts with **five health**. A complete incorrect Check costs one health; edits, duplicate-placement corrections, incomplete rows and the two progressive hints cost nothing. Health carries between scenes and refreshes for the next adventure. At zero, the board locks and offers a fresh adventure retry. Scene introductions explain the story and rules before play; clues stay visible alongside the active puzzle. “Next to” means immediate horizontal adjacency, with no wraparound. Doors, windows and distant towers are labelled landmarks outside the scored row; the final scene explicitly introduces the Cursed Bell inside the row. Every authored scene has exactly one answer under its clues. Failed checks clear the current row and keep immutable scored attempts, separated from the verified story facts. Solving removes those attempts. Adventure progress lives only in memory; exit/reload/navigation/BFCache discard it, while daily saves remain isolated. Tap, hold-drag, keyboard picks, focus, announcements and edit/clear/restart Undo match tutorial controls; Undo cannot refund a checked health loss. All four stories and controls are translated into English and Polish. Run `node scripts/check-mastermind-adventures.mjs` for full responsive playthroughs, health/retry, hints, lifecycle, storage isolation and real pointer/keyboard checks.
+## Repository map
 
-HeroGuesser is a standalone daily hero-code puzzle game. Easy, Medium, and Hard use ordered parties of five, six, and seven classes, with unlimited guesses. The party name identifies one triplet, an optional pair, and one exact singleton; class portraits and the decoded clue words remain visible while playing. Feedback reports green for heroes in the correct position, yellow for matches in another position, and grey for heroes not included in the hidden formation (a wrong class or an excess copy). These are totals for the entire row; the three counts always add up to the party size, including a visible grey zero for a correct formation. The legend and accessible descriptions explain all three results in English and Polish. Checked guesses appear beneath the active formation in newest-first order, preserving all earlier attempts, and the interface can be switched between English and Polish. Hold a portrait for a moment to drag it: dropping on an occupied active slot swaps heroes, while dragging from a checked row makes a copy. Dropping outside or pressing Escape cancels. Touch drags can scroll the page at its edges. Tap a filled active slot to clear it, or tap an earlier portrait to copy into the next open slot. Daily answers are generated from the browser’s local date and each challenge’s difficulty, with all guesses and the current row saved locally, including old ten-attempt saves. Run `node scripts/check-mastermind-drag.mjs` for mouse/touch and unlimited-history checks, and `node scripts/check-mastermind-flow.mjs` for stationary controls, newest-first history and the static selector. Run `node scripts/check-mastermind-feedback.mjs` for grey counts, duplicate handling, legacy saved rows and responsive feedback layouts.
+- `index.html`, `mastermind.css`, `src/`: shared game and platform adapters.
+- `assets/`, `art-source/`: shipped art/fonts with provenance, licenses and source images.
+- `native/`, `ios/`: native entry, Xcode/SPM project and native UI test.
+- `scripts/`, `test/`: build and verification tools.
+- `release/`: naming choice, listing drafts, data inventory, playtests and publisher gates.
+- `release/MONETIZATION.md`: proposed player flows, access rules, open decisions and implementation checkboxes for mobile monetization.
+- `MASTERMIND_APP_STORE_PLAN.md`: authoritative roadmap; `progress.md`: development history.
+
+Internal Mastermind module filenames are retained to avoid unrelated churn. `npm run baseline` reproduces the original pre-release-work commit; current testing excludes that archived checkout.

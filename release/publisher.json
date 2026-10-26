@@ -1,0 +1,20 @@
+{
+  "appName": "Guild of Wits",
+  "bundleId": "com.dombialcz.guildofwits",
+  "territories": ["PL"],
+  "accountType": "individual",
+  "publisherName": null,
+  "supportEmail": null,
+  "appleTeamId": null,
+  "appStoreNameConfirmed": false,
+  "publicPolicyFinalized": false,
+  "assetRightsReviewed": false,
+  "physicalDeviceEvidence": null,
+  "voiceOverEvidence": null,
+  "upgradeOfflineEvidence": null,
+  "observedPlaytests": 0,
+  "testFlightEvidence": null,
+  "disclosuresReviewed": false,
+  "releaseCommit": null,
+  "publisherSubmissionApproval": false
+}

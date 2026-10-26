@@ -53,7 +53,7 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement.id), "stories-title"); await shot("stories");
     await click("#start-adventure-0"); await click("#adventure-next"); await click("#adventure-pick-thief");
     await home(); await click("#home-play-stories"); await click("#start-adventure-0");
-    assert.equal((await state()).health, 5); assert.ok((await state()).draft.every(p => p === null));
+    assert.equal((await state()).phase, "play"); assert.equal((await state()).draft[0], "thief");
     await click("#adventure-exit"); assert.equal((await state()).mode, "stories");
     await home(); await click("#home-play-tutorial"); assert.equal((await state()).phase, "setup");
     await click("#tutorial-pick-thief"); await click("#tutorial-exit"); assert.equal((await state()).mode, "home");
@@ -65,7 +65,7 @@ try {
     assert.deepEqual(errors, []); await context.close(); console.log(`${name}: home, daily resume, stories/tutorial cleanup, focus, keyboard isolation, language/reflow passed`);
   }
   const page = await browser.newPage();
-  for (const [param, mode] of [["daily=1", undefined], ["tutorial=1", "story-tutorial"], ["adventure=2", "story-adventure"]]) {
+  for (const [param, mode] of [["daily=1", undefined], ["tutorial=1", "story-tutorial"], ["adventure=2", "stories"]]) {
     await page.goto(`${BASE_URL}/index.html?${param}`); await page.waitForFunction(() => window.render_game_to_text);
     assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), mode);
     await page.locator("#mastermind-home-button").click(); assert.equal(new URL(page.url()).search, "");
