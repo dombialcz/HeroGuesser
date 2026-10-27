@@ -13,7 +13,7 @@ try {
     if (!ready) throw Error('Preview server did not start');
   }
   await mkdir('output/browser-suite', { recursive: true });
-  for (const name of ['home', 'tutorial', 'adventures', 'story-campaign', 'flow', 'chaos', 'feedback', 'drag', 'mobile-scroll', 'art', 'celebration', 'release', 'placement-audio', 'completion-audio', 'background-music']) {
+  for (const name of ['home', 'tutorial', 'adventures', 'story-campaign', 'flow', 'party-roll', 'feedback', 'drag', 'mobile-scroll', 'art', 'celebration', 'release', 'placement-audio', 'completion-audio', 'background-music']) {
     const script = { release: 'scripts/check-release.mjs', 'story-campaign': 'scripts/check-story-campaign.mjs', 'placement-audio': 'scripts/check-placement-audio.mjs', 'completion-audio': 'scripts/check-completion-audio.mjs', 'background-music': 'scripts/check-background-music.mjs' }[name] ?? `scripts/check-mastermind-${name}.mjs`;
     let output = '';
     const code = await new Promise((resolve, reject) => {

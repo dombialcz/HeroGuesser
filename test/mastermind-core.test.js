@@ -25,7 +25,7 @@ test('duplicate scoring does not overcount excess copies', () => {
   assert.equal(evaluateGuess(['knight'], ['coin']), null);
   assert.equal(evaluateGuess(['knight'], []), null);
 });
-test('Chaos is a shared date-seeded five-slot code with all heroes and unrestricted repeats', () => {
+test('Party Roll is a shared date-seeded five-slot code with all heroes and unrestricted repeats', () => {
   assert.equal(CHALLENGES.length, 4);
   const patterns = new Set();
   const slotHeroes = Array.from({ length: 5 }, () => new Set());
@@ -37,7 +37,7 @@ test('Chaos is a shared date-seeded five-slot code with all heroes and unrestric
     assert.equal(puzzle.code.length, 5);
     assert.deepEqual(puzzle.clues, []);
     assert.equal(puzzle.revealedSingle, null);
-    assert.equal(puzzle.title, 'Chaos');
+    assert.equal(puzzle.title, 'Party Roll');
     assert.equal(puzzle.pattern, 'unrestricted');
     puzzle.code.forEach((hero, slot) => {
       assert.ok(HERO_CLASSES.some(h => h.id === hero));
@@ -50,7 +50,7 @@ test('Chaos is a shared date-seeded five-slot code with all heroes and unrestric
   slotHeroes.forEach(heroes => assert.equal(heroes.size, HERO_CLASSES.length));
   assert.ok(answers.size > 10000, 'daily codes vary in both heroes and order');
 });
-test('Chaos feedback handles four or five copies without overcounting', () => {
+test('Party Roll feedback handles four or five copies without overcounting', () => {
   assert.deepEqual(evaluateGuess(Array(5).fill('mage'), ['mage', 'mage', 'thief', 'thief', 'thief']), { exact: 2, misplaced: 0 });
   assert.deepEqual(evaluateGuess(['mage', 'mage', 'mage', 'mage', 'thief'], ['thief', 'mage', 'mage', 'mage', 'mage']), { exact: 3, misplaced: 2 });
 });

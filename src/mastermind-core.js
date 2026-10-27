@@ -15,7 +15,8 @@ export const CHALLENGES = Object.freeze([
   { id: "easy", label: "Easy", size: 5, pattern: "trio-two-singles" },
   { id: "medium", label: "Medium", size: 6, pattern: "trio-three-singles" },
   { id: "hard", label: "Hard", size: 7, pattern: "trio-pair-two-singles" },
-  { id: "chaos", label: "Chaos", size: 5, pattern: "unrestricted" },
+  // Keep the original ID for stable daily seeds and existing saves.
+  { id: "chaos", label: "Party Roll", size: 5, pattern: "unrestricted" },
 ]);
 
 const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]));
@@ -44,7 +45,7 @@ export function generateChallenge(dateKey, difficulty) {
   const allTypes = HERO_CLASSES.map((hero) => hero.id);
   if (challenge.id === "chaos") {
     const code = Array.from({ length: challenge.size }, () => choose(allTypes, random));
-    return { ...challenge, dateKey, code, title: "Chaos", clues: [], counts: countTypes(code), revealedSingle: null };
+    return { ...challenge, dateKey, code, title: "Party Roll", clues: [], counts: countTypes(code), revealedSingle: null };
   }
   const trio = choose(allTypes, random);
   const remainingTypes = allTypes.filter((type) => type !== trio);

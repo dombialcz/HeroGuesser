@@ -19,7 +19,7 @@ const COPY = {
     playTutorial: "Play Tutorial", playStories: "Play Story", playDaily: "Daily Puzzles",
     tutorialKicker: "START HERE", tutorialTitle: "A thief in the treasury", tutorialDescription: "Learn one step at a time, with guided clues and unlimited tries.",
     storiesKicker: "ONE STORY · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.",
-    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Decode a party name in Easy, Medium or Hard. Try Chaos for five random slots with no count clues. Unlimited guesses.",
+    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Decode a party name in Easy, Medium or Hard. Try Party Roll for five random slots with no count clues. Unlimited guesses.",
     brandKicker: "DAILY CHALLENGE",
     gameKicker: "THE DAILY HERO CODE",
     gameTitle: "Guild of Wits",
@@ -34,9 +34,9 @@ const COPY = {
     easy: "Easy",
     medium: "Medium",
     hard: "Hard",
-    chaos: "Chaos",
-    chaosSubtitle: "Five random slots. Any hero, any number of times.",
-    chaosRule: "Each of the five slots can hold any of the seven heroes. Repeats are unrestricted—even five of the same hero. Use the feedback to find the order. Everyone gets the same Chaos puzzle for today’s date.",
+    chaos: "Party Roll",
+    partyRollSubtitle: "Five random slots. Any hero, any number of times.",
+    partyRollRule: "Each of the five slots can hold any of the seven heroes. Repeats are unrestricted—even five of the same hero. Use the feedback to find the order. Everyone gets the same Party Roll puzzle for today’s date.",
     heroes: "heroes",
     todaysParty: "TODAY’S HIDDEN PARTY",
     nameClues: "Name clues",
@@ -84,7 +84,7 @@ const COPY = {
     playTutorial: "Samouczek", playStories: "Opowieść", playDaily: "Codzienne zagadki",
     tutorialKicker: "ZACZNIJ TUTAJ", tutorialTitle: "Złodziej w skarbcu", tutorialDescription: "Poznaj zasady krok po kroku, ze wskazówkami i bez limitu prób.",
     storiesKicker: "JEDNA OPOWIEŚĆ · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Zbierz drużynę i złam klątwę dzwonu. Ukończ rozdział, by odblokować następny. Bez limitu prób, z darmowymi podpowiedziami i zapisem postępu.",
-    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny na poziomie Łatwym, Średnim lub Trudnym. W Chaosie odgadnij pięć losowych miejsc bez wskazówek o liczbie bohaterów. Bez limitu prób.",
+    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny na poziomie Łatwym, Średnim lub Trudnym. Wybierz „Drużynę z przypadku”, aby odgadnąć pięć losowych miejsc bez wskazówek o liczbie bohaterów. Bez limitu prób.",
     brandKicker: "CODZIENNE WYZWANIE",
     gameKicker: "CODZIENNY KOD BOHATERÓW",
     gameTitle: "Guild of Wits",
@@ -99,9 +99,9 @@ const COPY = {
     easy: "Łatwy",
     medium: "Średni",
     hard: "Trudny",
-    chaos: "Chaos",
-    chaosSubtitle: "Pięć losowych miejsc. Każdy bohater może się powtarzać.",
-    chaosRule: "Na każdym z pięciu miejsc może stanąć dowolny z siedmiu bohaterów. Powtórzenia są dowolne — nawet pięć razy ten sam bohater. Odkryj kolejność dzięki wynikom prób. Wszyscy mają tę samą zagadkę Chaosu dla dzisiejszej daty.",
+    chaos: "Drużyna z przypadku",
+    partyRollSubtitle: "Pięć losowych miejsc. Każdy bohater może się powtarzać.",
+    partyRollRule: "Na każdym z pięciu miejsc może stanąć dowolny z siedmiu bohaterów. Powtórzenia są dowolne — nawet pięć razy ten sam bohater. Odkryj kolejność dzięki wynikom prób. Dzisiejsza „Drużyna z przypadku” jest taka sama dla wszystkich.",
     heroes: "bohaterów",
     todaysParty: "TAJEMNICZA DRUŻYNA DNIA",
     nameClues: "Wskazówki w nazwie",
@@ -394,9 +394,9 @@ function applyCopy() {
   guessHistory.setAttribute("aria-label", strings.historyLabel);
   heroPicker.setAttribute("aria-label", strings.heroClassesLabel);
   document.querySelector(".board-legend").setAttribute("aria-label", strings.feedbackLegendLabel);
-  const chaos = currentChallenge().id === "chaos";
-  document.querySelector('[data-i18n="gameSubtitle"]').textContent = chaos ? strings.chaosSubtitle : strings.gameSubtitle;
-  document.querySelector("#rule-note").textContent = chaos ? strings.chaosRule : strings.ruleNote;
+  const isPartyRoll = currentChallenge().id === "chaos";
+  document.querySelector('[data-i18n="gameSubtitle"]').textContent = isPartyRoll ? strings.partyRollSubtitle : strings.gameSubtitle;
+  document.querySelector("#rule-note").textContent = isPartyRoll ? strings.partyRollRule : strings.ruleNote;
   languageButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.locale === state.locale)));
   todayDate.dateTime = dateKey;
   todayDate.textContent = new Intl.DateTimeFormat(strings.dateLocale, {
@@ -437,9 +437,9 @@ function makeCluePart(clue) {
 }
 
 function renderClues(challenge) {
-  const chaos = challenge.id === "chaos";
-  document.querySelector(".clue-area").hidden = chaos;
-  document.querySelector(".clue-divider").hidden = chaos;
+  const isPartyRoll = challenge.id === "chaos";
+  document.querySelector(".clue-area").hidden = isPartyRoll;
+  document.querySelector(".clue-divider").hidden = isPartyRoll;
   clueParts.replaceChildren(...challenge.clues.map(makeCluePart));
 }
 

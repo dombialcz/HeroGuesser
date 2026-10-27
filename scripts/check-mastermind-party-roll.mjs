@@ -4,7 +4,7 @@ import { chromium, webkit } from 'playwright';
 import { generateChallenge, HERO_CLASSES, scoreGuess } from '../src/mastermind-core.js';
 
 const base = (process.env.HERO_GUESSER_BASE_URL ?? 'http://127.0.0.1:4180').replace(/\/$/, '');
-await mkdir('output/mastermind-chaos', { recursive: true });
+await mkdir('output/mastermind-party-roll', { recursive: true });
 for (const [engine, type] of Object.entries({ chromium, webkit })) {
   const browser = await type.launch();
   try {
@@ -27,12 +27,15 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       const click = selector => page.locator(selector).click();
       const state = () => page.evaluate(() => JSON.parse(render_game_to_text()));
       const fill = async heroes => { for (const hero of heroes) await click(`.hero-choice[data-hero="${hero}"]`); };
-      const chaos = () => click('[data-challenge="chaos"]');
+      const partyRoll = () => click('[data-challenge="chaos"]');
       await click('#home-play-daily');
       assert.equal(await page.locator('[data-challenge]').count(), 4);
       await click('.hero-choice[data-hero="thief"]');
       const easyDraft = (await state()).draft;
-      await chaos();
+      await partyRoll();
+      const localizedName = locale === 'pl' ? 'Drużyna z przypadku' : 'Party Roll';
+      assert.equal((await state()).partyName, localizedName);
+      assert.equal(await page.locator('[data-challenge="chaos"] .difficulty-name').innerText(), localizedName);
       assert.equal((await state()).partySize, 5);
       assert.deepEqual((await state()).clues, []);
       assert.equal('solution' in await state(), false);
@@ -46,7 +49,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal((await state()).difficulty, 'chaos');
       assert.equal((await state()).draft[0], 'mage');
       await page.reload(); await page.waitForFunction(() => window.render_game_to_text);
-      await click('#home-play-daily'); await chaos();
+      await click('#home-play-daily'); await partyRoll();
       assert.equal((await state()).draft[0], 'mage');
       await click('#current-guess [data-slot="0"]');
       assert.equal((await state()).draft[0], null);
@@ -64,7 +67,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await click('[data-challenge="easy"]');
       assert.deepEqual((await state()).draft, easyDraft);
       assert.equal(await page.locator('.clue-area').isVisible(), true);
-      await chaos();
+      await partyRoll();
       await click(`[data-locale="${locale === 'pl' ? 'en' : 'pl'}"]`);
       assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /seven heroes/ : /siedmiu bohaterów/);
       await click(`[data-locale="${locale}"]`);
@@ -74,12 +77,12 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal(await page.locator('#submit-button').isDisabled(), true);
       await page.evaluate(() => Object.defineProperty(navigator, 'share', { configurable: true, value: async data => { window.sharedResult = data.text; } }));
       await click('#share-result');
-      assert.match(await page.evaluate(() => window.sharedResult), /2026-10-26 · Chaos\n/);
+      assert.ok((await page.evaluate(() => window.sharedResult)).includes(`2026-10-26 · ${localizedName}\n`));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       await page.evaluate(async () => { await document.fonts.ready; document.getAnimations().forEach(a => a.finish()); window.scrollTo(0, 0); });
-      await page.screenshot({ path: `output/mastermind-chaos/${engine}-${name}.png`, fullPage: true });
+      await page.screenshot({ path: `output/mastermind-party-roll/${engine}-${name}.png`, fullPage: true });
       await page.reload(); await page.waitForFunction(() => window.render_game_to_text);
-      await click('#home-play-daily'); await chaos();
+      await click('#home-play-daily'); await partyRoll();
       assert.equal((await state()).result, 'solved');
       await page.clock.setFixedTime(new Date('2026-10-27T00:00:05+01:00'));
       await page.evaluate(() => dispatchEvent(new Event('heroguesser:foreground')));
@@ -93,12 +96,12 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal((await state()).result, 'solved', 'previous date restores its solved board');
       await click('#settings-open'); await click('#reset-dailies'); await click('#confirm-accept');
       await page.waitForFunction(() => !document.querySelector('#settings-dialog'));
-      await click('#home-play-daily'); await chaos();
+      await click('#home-play-daily'); await partyRoll();
       assert.equal((await state()).guesses.length, 0);
       assert.equal(await page.evaluate(() => Object.keys(localStorage).filter(key => /^heroguesser:v1:/.test(key)).length), 0);
       assert.deepEqual(errors, []);
       await context.close();
-      console.log(`${engine}/${name}: Chaos play, repeats, feedback, save isolation, translation, sharing, rollover, reset and layout pass`);
+      console.log(`${engine}/${name}: Party Roll play, repeats, feedback, save isolation, translation, sharing, rollover, reset and layout pass`);
     }
   } finally { await browser.close(); }
 }

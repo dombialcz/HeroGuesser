@@ -98,7 +98,7 @@ test('native storage initializes before reads and serializes writes/removal', as
   installNativePlatform({ set: async () => { throw Error('disk'); } }, {});
   storage.setItem('a', 'in memory'); await storage.flush(); assert.equal(storage.failed, true); assert.equal(storage.getItem('a'), 'in memory');
 });
-test('Chaos saves, sharing and retention are independent of the original dailies', () => {
+test('Party Roll saves, sharing and retention are independent of the original dailies', () => {
   const c = generateChallenge('2026-10-25', 'chaos');
   const draft = ['mage', null, 'mage', null, null];
   const partial = { guesses: [Array(5).fill('knight')], draft };
@@ -106,7 +106,7 @@ test('Chaos saves, sharing and retention are independent of the original dailies
   const complete = restoreDaily(serializeDaily({ guesses: [c.code], draft }), c);
   assert.equal(complete.invalid, false);
   assert.deepEqual(complete.progress.draft, Array(5).fill(null));
-  for (const locale of ['en', 'pl']) assert.match(dailyShareText(c, [c.code], locale), /Chaos\n/);
+  for (const locale of ['en', 'pl']) assert.ok(dailyShareText(c, [c.code], locale).includes(`${locale === 'pl' ? 'Drużyna z przypadku' : 'Party Roll'}\n`));
   assert.notEqual(dailyKey(c.dateKey, 'chaos'), dailyKey(c.dateKey, 'easy'));
   const keys = new Set([dailyKey('2026-07-27', 'chaos'), dailyKey('2026-10-25', 'chaos'), dailyKey('2026-10-25', 'easy')]);
   pruneDaily({ keys: () => [...keys], removeItem: key => keys.delete(key) }, '2026-10-25');

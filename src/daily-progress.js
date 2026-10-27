@@ -32,7 +32,7 @@ export function pruneDaily(storage, date) {
   }
 }
 export function dailyShareText(challenge, guesses, locale = 'en', name = 'Guild of Wits') {
-  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny', chaos: 'Chaos' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard', chaos: 'Chaos' };
+  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny', chaos: 'Drużyna z przypadku' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard', chaos: 'Party Roll' };
   const solvedAt = guesses.findIndex(guess => evaluateGuess(challenge.code, guess)?.exact === challenge.size);
   if (solvedAt < 0) return null;
   const rows = guesses.slice(0, solvedAt + 1).map(guess => {
