@@ -14,7 +14,7 @@ Description:
 
 Build the party one place at a time. Guild of Wits combines fantasy stories with deduction puzzles: choose heroes, test a formation and use the feedback to discover who belongs where.
 
-Learn through three guided tutorial scenes, then follow The Cursed Bell, one story in four chapters from a tavern to a cursed bell tower. Complete each chapter to unlock the next. Every chapter saves independently on your iPhone, so you can leave and continue later. Unlimited attempts and free hints let you reason at your own pace.
+Begin The Cursed Bell with a three-scene guided prelude, then follow the Thief through four chapters from a tavern to a cursed bell tower. At the end of the prelude, venture forth into the story or choose daily puzzles; the game remembers your completed prelude. Complete each chapter to unlock the next. Every chapter saves independently on your iPhone, so you can leave and continue later. Unlimited attempts and free hints let you reason at your own pace.
 
 Return each day for Easy, Medium and Hard formations. A party name reveals class-count clues; green, yellow and grey totals tell you how your whole attempt compares. Share a solved result without revealing the heroes or their order.
 
@@ -44,7 +44,7 @@ Słowa kluczowe: logika,zagadki,fantasy,bohaterowie,przygoda,codzienne,układ,sz
 
 ## Reviewer notes draft
 
-No login or credentials. Launch at Home. Choose Play Tutorial for the three-scene lesson. Choose Play Stories and any of the four chapters; all are available. Choose Daily Puzzles for Easy/Medium/Hard. Wrong guesses are unlimited and require an explicit Check.
+No login or credentials. Launch at Home: Daily Puzzles is first, Story second. On a fresh installation, Play tutorial opens the three-scene prelude; Skip for now dismisses the invitation and briefly points to Story → Prelude. The choice is saved locally. Choose Play Story, then Begin Story to start the prelude unless it was skipped. Its ending offers story or daily paths. The chapter menu includes prelude replay and Chapter 1; later chapters unlock in sequence. Existing chapter saves resume directly. Choose Daily Puzzles for all four daily challenges. Wrong guesses are unlimited and require an explicit Check.
 
 Stories resume through Continue after Home or relaunch; Restart and Settings resets ask for confirmation. Tutorial runs intentionally restart after closure. Dailies follow the device's local date; previous progress is saved before switching. Web and native saves are separate.
 

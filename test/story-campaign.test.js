@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ADVENTURES, createAdventure, actAdventure } from '../src/mastermind-adventure-core.js';
 import { serializeStory, storyKey } from '../src/story-progress.js';
-import { campaignKey, restoreCampaign, loadCampaign, resumeChapter } from '../src/story-campaign.js';
+import { campaignKey, restoreCampaign, loadCampaign, resumeChapter, completePrelude, needsPrelude } from '../src/story-campaign.js';
 
 function finished(index) {
   const state = createAdventure(index);
@@ -60,4 +60,29 @@ test('Continue includes an unfinished chapter ending before moving to an untouch
   assert.equal(resumeChapter(store, loadCampaign(store)), 0);
   actAdventure(chapter, { type: 'next' }); store.setItem(storyKey(0), serializeStory(chapter));
   assert.equal(resumeChapter(store, loadCampaign(store)), 1);
+});
+
+test('prelude completion persists independently of chapters and is cleared by story reset', () => {
+  const store = memory();
+  assert.equal(loadCampaign(store).preludeCompleted, false);
+  completePrelude(store);
+  assert.equal(loadCampaign(store).preludeCompleted, true);
+  assert.equal(store.getItem(storyKey(0)), null);
+  assert.deepEqual(loadCampaign(store).completed, [false, false, false, false]);
+  assert.equal(resumeChapter(store, loadCampaign(store)), 0);
+  store.data.clear();
+  assert.equal(loadCampaign(store).preludeCompleted, false);
+});
+
+test('existing chapter players bypass the prelude; empty and invalid saves do not', () => {
+  const store = memory([[storyKey(0), serializeStory(createAdventure(0))]]);
+  assert.equal(needsPrelude(store), false);
+  assert.equal(loadCampaign(store).preludeCompleted, false, 'skipping the lesson does not earn completion');
+  const previous = store.getItem(storyKey(0));
+  completePrelude(store);
+  assert.equal(store.getItem(storyKey(0)), previous);
+  assert.equal(restoreCampaign(JSON.stringify({ schema: 1, unlockedThrough: 0, completed: [false, false, false, false] })).preludeCompleted, false);
+  assert.equal(needsPrelude(memory(), restoreCampaign(JSON.stringify({ schema: 1, unlockedThrough: 1, completed: [true, false, false, false] }))), false);
+  assert.equal(needsPrelude(memory()), true);
+  assert.equal(needsPrelude(memory([[storyKey(0), '{']])), true);
 });

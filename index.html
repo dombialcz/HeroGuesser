@@ -50,21 +50,8 @@
           <h1 id="mastermind-home-title" tabindex="-1">Guild of Wits</h1>
           <p data-i18n="homeSubtitle">Read the clues. Find your party.</p>
         </div>
+        <p id="home-tutorial-note" class="home-tutorial-note" role="status" hidden></p>
         <div class="home-choices">
-          <article class="home-choice">
-            <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/thief.webp" alt=""><img class="home-prop" src="assets/mastermind/coin.svg" alt=""></div>
-            <p class="eyebrow" data-i18n="tutorialKicker">START HERE</p>
-            <h2 data-i18n="tutorialTitle">A thief in the treasury</h2>
-            <p data-i18n="tutorialDescription">Learn one step at a time, with guided clues and unlimited tries.</p>
-            <button type="button" id="home-play-tutorial" class="story-button" data-i18n="playTutorial">Play Tutorial</button>
-          </article>
-          <article class="home-choice">
-            <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/bard.webp" alt=""><img class="home-companion" src="assets/mastermind/zombie.webp" alt=""></div>
-            <p class="eyebrow" data-i18n="storiesKicker">ONE STORY · FOUR CHAPTERS</p>
-            <h2 data-i18n="storiesTitle">The Cursed Bell</h2>
-            <p data-i18n="storiesDescription">Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.</p>
-            <button type="button" id="home-play-stories" class="story-button" data-i18n="playStories">Play Story</button>
-          </article>
           <article class="home-choice">
             <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/knight.webp" alt=""><img class="home-companion" src="assets/mastermind/mage.webp" alt=""></div>
             <p class="eyebrow" data-i18n="dailyKicker">A FRESH CODE EVERY DAY</p>
@@ -72,10 +59,17 @@
             <p data-i18n="dailyDescription">Decode a party name in Easy, Medium or Hard. Try Party Roll for five random slots with no count clues. Unlimited guesses.</p>
             <button type="button" id="home-play-daily" class="story-button" data-i18n="playDaily">Daily Puzzles</button>
           </article>
+          <article class="home-choice">
+            <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/bard.webp" alt=""><img class="home-companion" src="assets/mastermind/zombie.webp" alt=""></div>
+            <p class="eyebrow" data-i18n="storiesKicker">A PRELUDE · FOUR CHAPTERS</p>
+            <h2 data-i18n="storiesTitle">The Cursed Bell</h2>
+            <p data-i18n="storiesDescription">Begin with a guided escape from the royal treasury. Follow the Thief to the tavern, gather a party and break the bell’s curse. Unlimited attempts and free hints.</p>
+            <button type="button" id="home-play-stories" class="story-button" data-i18n="playStories">Play Story</button>
+          </article>
         </div>
       </section>
       <section id="mastermind-stories" class="stories-menu" aria-labelledby="stories-title" hidden>
-        <p class="eyebrow" data-i18n="storiesKicker">ONE STORY · FOUR CHAPTERS</p>
+        <p class="eyebrow" data-i18n="storiesKicker">A PRELUDE · FOUR CHAPTERS</p>
         <h1 id="stories-title" tabindex="-1" data-i18n="playStories">Play Story</h1>
         <section class="story-entry" id="mastermind-adventure-entry" aria-label="The Cursed Bell"></section>
       </section>

@@ -1,3 +1,4 @@
+import { seedFirstRunHandled } from './story-test-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium, webkit } from 'playwright';
@@ -19,6 +20,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
         if (large) addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '200%'; });
       }, { locale, large });
       const page = await context.newPage(), errors = [];
+      await seedFirstRunHandled(page);
       page.on('pageerror', error => errors.push(error.message));
       page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
       await page.clock.install({ time: new Date('2026-10-26T12:00:00+01:00') });

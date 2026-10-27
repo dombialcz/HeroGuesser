@@ -8,7 +8,7 @@ const COLOR = { thief: "#69a7ff", coin: "#d1ac58", guard: "#b6c5be", knight: "#f
 const FEEDBACK_PHASES = ["green", "yellow", "quiz"];
 const NEXT_PHASES = ["green", "yellow", "quiz", "window", "treasury-solved", "guard-intro", "guard-solved", "practice-intro"];
 
-export function installMastermindTutorial({ root, entry, getLocale, onModeChange, onAdventureStart, celebration }) {
+export function installMastermindTutorial({ root, entry, getLocale, onModeChange, onComplete, onAdventureStart, onDailyStart, celebration }) {
   let active = false;
   let state = createTutorial();
   let undoState = null;
@@ -23,9 +23,13 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
   const fresh = () => { celebration?.clear(); state = createTutorial(); undoState = null; drag?.cancel(); };
   function start() { active = true; fresh(); onModeChange(true); render(); focus("#tutorial-slot-0"); }
   function leave() {
-    const completed = state.phase === "complete";
-    active = false; fresh(); render(); onModeChange(false, completed);
+    active = false; fresh(); render(); onModeChange(false);
 
+  }
+  function finish(path) {
+    leave();
+    if (path === "story") onAdventureStart();
+    else onDailyStart();
   }
   function undo() {
     celebration?.clear();
@@ -47,6 +51,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     const before = structuredClone(state);
     const wasEditable = canEditTutorial(state);
     actTutorial(state, action);
+    if (state.phase === "complete" && before.phase !== "complete") onComplete();
     const changed = JSON.stringify(before.draft) !== JSON.stringify(state.draft);
     if (changed && ["pick", "move"].includes(action.type)) playPlacementSound();
     if (changed && action.type === "slot") playRemovalSound();
@@ -121,7 +126,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     const inPractice = state.phase === "practice" || state.phase === "practice-intro";
     const next = NEXT_PHASES.includes(state.phase);
     content.innerHTML = `
-      <div class="story-topline"><p class="eyebrow">${c.scene} ${tutorialScene(state)} ${c.stage}</p><button type="button" id="tutorial-exit" class="story-text-button">${c.back}</button></div>
+      <div class="story-topline"><p class="eyebrow">${c.prelude} · ${c.scene} ${tutorialScene(state)} ${c.stage}</p><button type="button" id="tutorial-exit" class="story-text-button">${c.back}</button></div>
       <h1 class="story-title">${c.titles[tutorialScene(state)]}</h1>
       <section class="story-instruction" aria-labelledby="tutorial-guide-title"><h2 id="tutorial-guide-title" tabindex="-1">${title}</h2><p id="tutorial-step-copy">${instruction}</p></section>
       ${state.windowSide !== null && !editable && state.phase === "window" ? `<p class="story-evidence">${c.byWindow(state.windowSide + 1)}</p>` : ""}
@@ -130,19 +135,19 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
       ${inPractice ? `<aside class="story-name-clue"><h3>${c.practiceName}</h3><p>${c.practiceClues}</p></aside>` : ""}
       ${editable ? `<section class="story-room" aria-labelledby="story-current-heading"><h3 id="story-current-heading">${c.current}</h3><p class="story-current-hint">${c.currentHint}</p>${state.windowSide === null ? "" : `<p id="tutorial-window-desc" class="story-window-description">${c.byWindow(state.windowSide + 1)}</p>`}${lineup(state.draft, state.windowSide, true)}${tutorialLimits(state) ? `<p class="story-counts">${c.count(state.draft.filter(p => p === "thief").length, state.draft.filter(p => p === "coin").length, tutorialLimits(state).coin)}</p>` : ""}<div class="story-picker" role="group" aria-label="${c.choose}">${tutorialPieces(state).map((piece, index) => `<button type="button" id="tutorial-pick-${piece}" data-tutorial-piece="${piece}" aria-label="${c.add} ${c[piece]}, ${c.shortcut} ${index + 1}" aria-keyshortcuts="${index + 1}">${image(piece)}<span>${c[piece]}</span><kbd aria-hidden="true">${index + 1}</kbd></button>`).join("")}</div><p class="story-ready" id="tutorial-ready">${complete ? c.ready : c.incomplete}</p></section>` : ""}
       <p class="story-notice${state.notice ? " has-notice" : ""}">${state.notice ? c[state.notice] : ""}</p>
-      <div class="story-primary-actions">${editable ? `<button type="button" id="tutorial-check" class="story-primary" aria-describedby="tutorial-ready" ${complete ? "" : "disabled"}>${c.check} <span aria-hidden="true">→</span></button>` : next ? `<button type="button" id="tutorial-next" class="story-primary" ${state.phase === "quiz" && !state.quizPassed ? "disabled" : ""}>${c.next} <span aria-hidden="true">→</span></button>` : state.phase === "complete" ? `<button type="button" id="tutorial-adventure" class="story-primary">${getLocale() === "pl" ? "Pierwsza przygoda: Ostatnia kolejka" : "First adventure: The Last Round"} →</button>` : ""}</div>
-      ${state.phase === "complete" ? `<button type="button" id="tutorial-finish" class="story-text-button">${c.finish} →</button>` : ""}
+      <div class="story-primary-actions">${editable ? `<button type="button" id="tutorial-check" class="story-primary" aria-describedby="tutorial-ready" ${complete ? "" : "disabled"}>${c.check} <span aria-hidden="true">→</span></button>` : next ? `<button type="button" id="tutorial-next" class="story-primary" ${state.phase === "quiz" && !state.quizPassed ? "disabled" : ""}>${c.next} <span aria-hidden="true">→</span></button>` : ""}</div>
+      ${state.phase === "complete" ? `<section class="prelude-paths" aria-label="${c.choosePath}"><div><button type="button" id="tutorial-finish" class="story-primary" aria-describedby="prelude-daily-path">${c.daily} →</button><p id="prelude-daily-path">${c.dailyPath}</p></div><div><button type="button" id="tutorial-adventure" class="story-primary" aria-describedby="prelude-story-path">${c.venture} →</button><p id="prelude-story-path">${c.storyPath}</p></div></section>` : ""}
       <div class="story-edit-actions">${editable ? `<button type="button" id="tutorial-clear" class="story-text-button" ${state.draft.some((p, index) => p && index !== guardSlot(state)) ? "" : "disabled"}>${c.clear}</button>` : ""}${undoState ? `<button type="button" id="tutorial-undo" class="story-text-button">${c[undoKind]}</button>` : ""}${["deduce", "guard", "practice"].includes(state.phase) ? `<button type="button" id="tutorial-hint" class="story-text-button" ${state.hint === 2 ? "disabled" : ""}>${state.hint === 0 ? c.hint : state.hint === 1 ? c.moreHint : c.hintsShown}</button>` : ""}</div>
       ${state.hint ? `<aside class="story-hint"><h3>${c.hintHeading}</h3>${hints().slice(0, state.hint).map(hint => `<p>${hint}</p>`).join("")}</aside>` : ""}
       ${editable ? `<p class="story-drag-hint">${c.dragHint}</p>` : ""}
       ${state.guesses.length > 1 ? `<section class="story-history" aria-labelledby="story-history-heading"><h3 id="story-history-heading">${c.earlier}</h3><ol class="story-attempts" reversed start="${state.guesses.length - 1}">${state.guesses.slice(0, -1).map((guess, index) => `<li class="story-attempt" value="${index + 1}" aria-label="${c.attempt} ${index + 1}"><span class="attempt-number">${String(index + 1).padStart(2, "0")}</span><div>${lineup(guess.pieces, state.windowSide)}${scores(guess)}<p>${c.hypotheses}</p></div></li>`).reverse().join("")}</ol></section>` : ""}
       ${state.facts.length ? `<section class="story-facts" aria-labelledby="story-facts-heading"><h3 id="story-facts-heading">${c.facts}</h3>${state.facts.map(fact => `<article class="story-fact"><h4>${c.verified} ${fact.scene} · ${c.titles[fact.scene]}</h4><p>${c.factText[fact.scene]}</p>${lineup(fact.pieces, fact.windowSide)}</article>`).join("")}</section>` : ""}
-      <div class="story-bottom"><p>${c.noSave}</p><button type="button" id="tutorial-restart" class="story-text-button">${state.phase === "complete" ? c.replay : c.restart}</button></div>`;
+      <div class="story-bottom"><p>${state.phase === "complete" ? c.completionSave : c.noSave}</p><button type="button" id="tutorial-restart" class="story-text-button">${state.phase === "complete" ? c.replay : c.restart}</button></div>`;
     const bind = (id, callback) => root.querySelector(`#${id}`)?.addEventListener("click", callback);
     bind("tutorial-exit", leave); bind("tutorial-restart", restart); bind("tutorial-undo", undo);
     bind("tutorial-next", () => dispatch({ type: "next" })); bind("tutorial-check", () => dispatch({ type: "check" }));
-    bind("tutorial-adventure", () => { leave(); onAdventureStart(); });
-    bind("tutorial-finish", leave); bind("tutorial-clear", () => dispatch({ type: "clear" })); bind("tutorial-hint", () => dispatch({ type: "hint" }));
+    bind("tutorial-adventure", () => finish("story"));
+    bind("tutorial-finish", () => finish("daily")); bind("tutorial-clear", () => dispatch({ type: "clear" })); bind("tutorial-hint", () => dispatch({ type: "hint" }));
     for (const answer of ["elsewhere", "absent"]) bind(`tutorial-answer-${answer}`, () => dispatch({ type: "answer", answer }));
     root.querySelectorAll("[data-slot]").forEach(button => button.addEventListener("click", () => dispatch({ type: "slot", slot: Number(button.dataset.slot) })));
     root.querySelectorAll("[data-tutorial-piece]").forEach(button => button.addEventListener("click", () => dispatch({ type: "pick", piece: button.dataset.tutorialPiece })));
@@ -169,10 +174,10 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
         return;
       }
       if (event.target.closest("button, a")) return;
-      if (event.key === "Enter") { event.preventDefault(); if (canEditTutorial(state)) dispatch({ type: "check" }); else if (NEXT_PHASES.includes(state.phase)) dispatch({ type: "next" }); else if (state.phase === "complete") { leave(); onAdventureStart(); } }
+      if (event.key === "Enter") { event.preventDefault(); if (canEditTutorial(state)) dispatch({ type: "check" }); else if (NEXT_PHASES.includes(state.phase)) dispatch({ type: "next" }); }
     },
     snapshot() {
-      return { game: "Guild of Wits", mode: "story-tutorial", locale: getLocale(), phase: state.phase, scene: tutorialScene(state), coordinateSystem: "Places are numbered from 1, left to right; a window is outside the scored row", draft: state.draft, selectedSlot: state.selected, availablePieces: canEditTutorial(state) ? tutorialPieces(state) : [], window: state.windowSide === null ? null : { side: state.windowSide === 0 ? "left" : "right", besidePlace: state.windowSide + 1, scored: false }, fixedGuardSlot: guardSlot(state), guesses: state.guesses, facts: state.facts, quizPassed: state.quizPassed, hintsShown: state.hint, undoAvailable: !!undoState, persistence: "none", attemptLimit: null, instruction: t().steps[state.phase][1], notice: state.notice ? t()[state.notice] : null, drag: drag.snapshot(), result: state.phase === "complete" ? "solved" : "playing" };
+      return { game: "Guild of Wits", mode: "story-tutorial", chapter: 0, locale: getLocale(), phase: state.phase, scene: tutorialScene(state), coordinateSystem: "Places are numbered from 1, left to right; a window is outside the scored row", draft: state.draft, selectedSlot: state.selected, availablePieces: canEditTutorial(state) ? tutorialPieces(state) : [], window: state.windowSide === null ? null : { side: state.windowSide === 0 ? "left" : "right", besidePlace: state.windowSide + 1, scored: false }, fixedGuardSlot: guardSlot(state), guesses: state.guesses, facts: state.facts, quizPassed: state.quizPassed, hintsShown: state.hint, undoAvailable: !!undoState, persistence: "none", completionPersistence: "local", attemptLimit: null, instruction: t().steps[state.phase][1], notice: state.notice ? t()[state.notice] : null, drag: drag.snapshot(), result: state.phase === "complete" ? "solved" : "playing" };
     },
   };
 }

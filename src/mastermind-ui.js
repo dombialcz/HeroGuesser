@@ -10,15 +10,16 @@ import { installPortraitDrag } from "./mastermind-drag.js";
 import { installMastermindTutorial } from "./mastermind-tutorial.js";
 import { installMastermindAdventures } from "./mastermind-adventure.js";
 import { ADVENTURES } from "./mastermind-adventure-core.js";
+import { completePrelude } from "./story-campaign.js";
+import { installFirstRun } from "./first-run.js";
 import { PARTY_NAMES } from "./mastermind-names.js";
 
 const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]));
 const COPY = {
   en: {
     home: "Home", homeKicker: "THE PARTY IS A PUZZLE", homeSubtitle: "Read the clues. Find your party.",
-    playTutorial: "Play Tutorial", playStories: "Play Story", playDaily: "Daily Puzzles",
-    tutorialKicker: "START HERE", tutorialTitle: "A thief in the treasury", tutorialDescription: "Learn one step at a time, with guided clues and unlimited tries.",
-    storiesKicker: "ONE STORY · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Gather a party and break the bell’s curse. Complete each chapter to unlock the next, with unlimited attempts, free hints and saved progress.",
+    playStories: "Play Story", playDaily: "Daily Puzzles", tutorialReminder: "The tutorial is always in Stories → Prelude.",
+    storiesKicker: "A PRELUDE · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Begin with a guided escape from the royal treasury. Follow the Thief to the tavern, gather a party and break the bell’s curse. Unlimited attempts and free hints.",
     dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Decode a party name in Easy, Medium or Hard. Try Party Roll for five random slots with no count clues. Unlimited guesses.",
     brandKicker: "DAILY CHALLENGE",
     gameKicker: "THE DAILY HERO CODE",
@@ -81,9 +82,8 @@ const COPY = {
   },
   pl: {
     home: "Ekran główny", homeKicker: "DRUŻYNA PEŁNA ZAGADEK", homeSubtitle: "Odczytaj wskazówki. Odtwórz drużynę.",
-    playTutorial: "Samouczek", playStories: "Opowieść", playDaily: "Codzienne zagadki",
-    tutorialKicker: "ZACZNIJ TUTAJ", tutorialTitle: "Złodziej w skarbcu", tutorialDescription: "Poznaj zasady krok po kroku, ze wskazówkami i bez limitu prób.",
-    storiesKicker: "JEDNA OPOWIEŚĆ · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Zbierz drużynę i złam klątwę dzwonu. Ukończ rozdział, by odblokować następny. Bez limitu prób, z darmowymi podpowiedziami i zapisem postępu.",
+    playStories: "Opowieść", playDaily: "Codzienne zagadki", tutorialReminder: "Samouczek znajdziesz w Opowieści → Prolog.",
+    storiesKicker: "PROLOG · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Ucieknij z królewskiego skarbca, poznając zasady krok po kroku. Rusz za Złodziejem do karczmy, zbierz drużynę i złam klątwę dzwonu. Bez limitu prób, z darmowymi podpowiedziami.",
     dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny na poziomie Łatwym, Średnim lub Trudnym. Wybierz „Drużynę z przypadku”, aby odgadnąć pięć losowych miejsc bez wskazówek o liczbie bohaterów. Bez limitu prób.",
     brandKicker: "CODZIENNE WYZWANIE",
     gameKicker: "CODZIENNY KOD BOHATERÓW",
@@ -169,20 +169,23 @@ const heroPicker = document.querySelector("#hero-picker");
 const clearButton = document.querySelector("#clear-button");
 const submitButton = document.querySelector("#submit-button");
 const gameMessage = document.querySelector("#game-message");
-let portraitDrag;
+let portraitDrag, firstRun;
+let tutorialReminder = false;
 const celebration = createMastermindCelebration({ getLocale: () => state.locale });
 const tutorial = installMastermindTutorial({
   root: document.querySelector("#mastermind-tutorial"),
   entry: document.querySelector("#mastermind-tutorial-entry"),
   getLocale: () => state.locale,
   celebration,
-  onAdventureStart: () => adventures.start(0),
-  onModeChange: (active, completed) => {
+  onComplete: () => completePrelude(storage),
+  onAdventureStart: () => adventures.continueStory(),
+  onDailyStart: () => { showScreen("daily"); chooseChallenge("easy"); },
+  onModeChange: active => {
+    if (active) firstRun?.recordTutorial();
     portraitDrag?.cancel();
     celebration.clear();
-    state.screen = active ? "tutorial" : completed ? "daily" : "home";
-    if (completed) chooseChallenge("easy");
-    else render();
+    state.screen = active ? "tutorial" : "home";
+    render();
     if (!active) {
       if (state.screen === "home") clearModeParams();
       focusScreen();
@@ -195,6 +198,7 @@ const adventures = installMastermindAdventures({
   entry: document.querySelector("#mastermind-adventure-entry"),
   getLocale: () => state.locale,
   celebration,
+  onPreludeStart: () => tutorial.start(),
   onModeChange: active => {
     portraitDrag?.cancel();
     celebration.clear();
@@ -220,6 +224,7 @@ function showScreen(screen) {
   if (adventures.active) adventures.leave();
   portraitDrag?.cancel();
   state.screen = screen;
+  tutorialReminder = false;
   if (screen === "daily") checkDate(false);
   if (screen === "home") clearModeParams();
   render(); focusScreen();
@@ -375,6 +380,9 @@ function clearDraft() {
 
 function applyCopy() {
   const strings = copy();
+  const reminder = document.querySelector('#home-tutorial-note');
+  reminder.hidden = !tutorialReminder;
+  reminder.textContent = tutorialReminder ? strings.tutorialReminder : '';
   document.documentElement.lang = state.locale;
   document.title = strings.gameTitle;
   document.querySelectorAll("[data-i18n]").forEach((element) => {
@@ -655,7 +663,6 @@ languageButtons.forEach((button) => button.addEventListener("click", () => setLo
 clearButton.addEventListener("click", clearDraft);
 submitButton.addEventListener("click", submitGuess);
 
-document.querySelector("#home-play-tutorial").addEventListener("click", () => tutorial.start());
 document.querySelector("#home-play-stories").addEventListener("click", () => showScreen("stories"));
 document.querySelector("#home-play-daily").addEventListener("click", () => showScreen("daily"));
 document.querySelector("#mastermind-home-button").addEventListener("click", () => showScreen("home"));
@@ -688,7 +695,7 @@ window.advanceTime = ms => { celebration.advanceTime(ms); if (!tutorial.active &
 window.render_game_to_text = () => {
   if (tutorial.active) return JSON.stringify({ ...tutorial.snapshot(), celebration: celebration.snapshot() });
   if (adventures.active) return JSON.stringify({ ...adventures.snapshot(), celebration: celebration.snapshot() });
-  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "Guild of Wits", mode: state.screen, locale: state.locale, date: dateKey, campaign: state.screen === "stories" ? adventures.campaignSnapshot() : undefined, choices: state.screen === "home" ? [copy().playTutorial, copy().playStories, copy().playDaily] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
+  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "Guild of Wits", mode: state.screen, locale: state.locale, date: dateKey, firstRun: firstRun?.snapshot(), campaign: state.screen === "stories" ? adventures.campaignSnapshot() : undefined, choices: state.screen === "home" ? [copy().playDaily, copy().playStories] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
   const challenge = currentChallenge();
   const current = currentProgress();
   const solvedAt = current.guesses.findIndex((guess) => currentResult(guess, challenge).exact === challenge.size);
@@ -771,6 +778,11 @@ installSettings({ getLocale: () => state.locale, reset: kind => {
   if (kind === 'all') { state.difficulty = 'easy'; state.locale = 'en'; tutorial.leave(); }
   showScreen('home');
 }});
+firstRun = installFirstRun({
+  store: storage, getLocale: () => state.locale,
+  onTutorial: () => tutorial.start(),
+  onSkip: () => { tutorialReminder = true; render(); focusScreen(); },
+});
 storageWarning();
 if (new URLSearchParams(location.search).get("daily") === "1") state.screen = "daily";
 render();
@@ -778,5 +790,10 @@ if (new URLSearchParams(location.search).get("tutorial") === "1") tutorial.start
 
 const adventureParam = new URLSearchParams(location.search).get("adventure");
 if (!tutorial.active && ADVENTURES.some((_, index) => adventureParam === String(index + 1))) adventures.start(Number(adventureParam) - 1);
+// Direct mode links keep their destination. Offer onboarding on a normal launch.
+const modeParams = new URLSearchParams(location.search);
+const directMode = modeParams.get("tutorial") === "1" || modeParams.get("daily") === "1" ||
+  ADVENTURES.some((_, index) => modeParams.get("adventure") === String(index + 1));
+if (!directMode) firstRun.offer();
 // Refresh browser-history views without discarding saved chapters.
 addEventListener("pageshow", event => { if (event.persisted) render(); });

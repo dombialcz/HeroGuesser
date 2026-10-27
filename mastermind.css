@@ -433,6 +433,11 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
 .story-fact { margin-top: 10px; padding: 12px; border: 1px solid #89bd9660; border-radius: 8px; background: #24463033; }
 .story-fact h4 { margin: 0; color: #b6dcc0; font-size: .86rem; line-height: 1.5; }
 .story-fact p { margin: 7px 0; color: #d2dfce; font-size: .9rem; line-height: 1.5; }
+.prelude-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 12px 0 24px; }
+.prelude-paths > div { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(5, 15, 21, .3); }
+.prelude-paths p { margin: 10px 0 0; color: var(--dim); font-size: .9rem; line-height: 1.5; }
+.prelude-paths button { min-height: 48px; }
+@media (max-width: 600px) { .prelude-paths { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
 .story-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
 .story-bottom p { flex: 1 1 220px; margin: 0; color: #a6bdb0; font-size: .78rem; line-height: 1.5; }
 @media (max-width: 700px) {
@@ -472,7 +477,7 @@ noscript { position: fixed; z-index: 20; inset: auto 1rem 1rem; padding: 1rem; b
 .home-heading { max-width: 680px; margin: 0 auto 30px; text-align: center; }
 .home-heading h1 { margin: 8px 0 12px; color: #f4e3bb; font: clamp(2.6rem, 7vw, 4.5rem)/1.1 var(--serif); }
 .home-heading > p:last-child { margin: 0; color: #c4d3c9; font-size: 1.15rem; line-height: 1.5; }
-.home-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.home-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .home-choice { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 22px; border: 1px solid var(--line-bright); border-radius: 14px; background: linear-gradient(145deg, #263b43f5, #15232bf5); }
 .home-choice-art { position: relative; display: flex; height: 110px; margin: 0 0 18px; gap: 0; }
 .home-choice-art img { width: 104px; height: 110px; object-fit: contain; }
@@ -580,3 +585,8 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
 .policy-page { max-width: 52rem; line-height: 1.75; padding-block: 2rem; }
 .policy-page a { color: #ffe09a; }
 .policy-page section { margin-block: 2rem; }
+
+.home-tutorial-note { max-width: 680px; margin: -10px auto 24px; text-align: center; color: var(--gold-light); line-height: 1.5; }
+.first-run-actions { display: grid; gap: 10px; margin-top: 20px; }
+.game-dialog .first-run-actions button { width: 100%; margin: 0; }
+.game-dialog #first-run-tutorial { background: linear-gradient(135deg, #eddaaa, #c69d58); color: #1b211e; font-weight: 700; }

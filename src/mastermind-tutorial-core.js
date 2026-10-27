@@ -23,7 +23,7 @@ function finishScene(state, result) {
   state.phase = state.phase === "practice" ? "complete" : state.phase === "guard" ? "guard-solved" : "treasury-solved";
 }
 
-// Practice lives only in memory. No action log, save replay, or health penalties.
+// Practice stays in memory, without an action log or saved replay.
 export function actTutorial(state, action) {
   state.notice = null;
   if (action.type === "hint" && ["deduce", "guard", "practice"].includes(state.phase)) {

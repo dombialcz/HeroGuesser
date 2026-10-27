@@ -1,3 +1,4 @@
+import { seedFirstRunHandled } from './story-test-fixtures.mjs';
 const BASE_URL = (process.env.HERO_GUESSER_BASE_URL ?? "http://127.0.0.1:4180").replace(/\/$/, "");
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -18,6 +19,7 @@ try {
   ].filter(() => !handoffOnly && !controlsOnly)) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 500, isMobile: width < 500, reducedMotion: "reduce" });
     const page = await context.newPage(), errors = [];
+    await seedFirstRunHandled(page);
     page.on("pageerror", e => errors.push(e.message));
     page.on("response", r => { if (r.url().startsWith(`${BASE_URL}/`) && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
     await page.addInitScript(locale => localStorage.setItem("heroguesser:language", locale), locale);
@@ -45,14 +47,14 @@ try {
     };
     const dailyBefore = await page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([k]) => k.startsWith("heroguesser:v1:"))));
     await click("#home-play-stories");
-    assert.equal(await page.locator("#mastermind-adventure-entry .story-button").count(), 4);
+    assert.equal(await page.locator("#mastermind-adventure-entry .story-button").count(), 5);
     assert.equal(await page.locator("#mastermind-adventure-entry .story-text-button").count(), 0);
     const buttonStyles = await page.locator(".adventure-story-button").evaluateAll(buttons => buttons.map(b => ({ border: getComputedStyle(b).borderRadius, minHeight: getComputedStyle(b).minHeight })));
     assert.ok(buttonStyles.every(style => JSON.stringify(style) === JSON.stringify(buttonStyles[0])), "all story choices have identical button styling");
     await page.waitForFunction(() => [...document.querySelectorAll(".adventure-story-button img")].every(i => i.complete && i.naturalWidth));
     await page.screenshot({ path: `${output}/${name}-four-story-menu.png`, fullPage: true });
     for (let i = 1; i < 4; i++) assert.equal(await page.locator(`#start-adventure-${i}`).isDisabled(), true);
-    await click("#campaign-continue");
+    await click("#start-adventure-0");
     assert.equal((await state()).phase, "intro");
     assert.equal(await page.locator("#mastermind-tutorial-entry").isVisible(), false);
     await next(); assert.equal(await page.evaluate(() => document.activeElement.id), "adventure-slot-0");
@@ -214,13 +216,15 @@ try {
     if ((await state()).phase === "complete") break;
   }
   assert.equal(await handoff.locator("#tutorial-adventure").isVisible(), true);
-  await handoff.keyboard.press("Enter"); assert.equal((await state()).adventure, "last-round");
+  await handoff.locator("#tutorial-adventure").focus(); await handoff.keyboard.press("Enter"); assert.equal((await state()).adventure, "last-round");
   assert.equal(await handoff.locator("#mastermind-tutorial").isVisible(), false);
   assert.equal(await handoff.locator("#mastermind-tutorial-entry").isVisible(), false);
   await click("adventure-next"); await click("adventure-pick-thief");
   await handoff.locator('[data-locale="pl"]').click(); assert.equal((await state()).locale, "pl"); assert.equal((await state()).draft[0], "thief");
-  await handoff.reload(); assert.equal((await state()).phase, "setup");
-  await handoff.close(); console.log("Tutorial-to-adventure handoff, locale switch and reload reset passed");
+  await handoff.reload(); assert.equal((await state()).mode, "home");
+  await click("home-play-stories"); await click("campaign-continue");
+  assert.equal((await state()).adventure, "last-round"); assert.equal((await state()).draft[0], "thief");
+  await handoff.close(); console.log("Prelude-to-chapter handoff, locale switch and saved chapter continuation after reload passed");
 } finally { await browser.close(); }
 
 }

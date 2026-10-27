@@ -6,9 +6,10 @@
 | --- | --- | --- |
 | Language | heroguesser:language; browser localStorage / iOS Preferences | Until all-data reset, storage clearing or uninstall; OS/browser backup may include it |
 | Audio preferences | heroguesser:sound and heroguesser:music:v1; sound effects toggle, music toggle and volume; browser localStorage / iOS Preferences | Until all-data reset, storage clearing or uninstall; story/daily resets preserve them |
+| First-launch tutorial choice | heroguesser:onboarding:v1; browser localStorage / iOS Preferences | Until all-data reset, storage clearing or uninstall; story/daily resets preserve it; existing saved players migrate as returning |
 | Daily progress | Existing date/difficulty keys; draft and guesses plus schema/generator version | 90-day retention, selective/all reset; no server sync |
 | Story progress | One versioned snapshot per chapter; draft, guesses, hints, phase, verified facts | Until restart/reset/uninstall or explicit incompatible-save recovery |
-| Tutorial | In-memory practice state | Exit/reload/termination discards it |
+| Prelude | In-memory lesson state; completion flag in heroguesser:story:campaign:v1 | Exit/reload discards unfinished runs; completion remains until story/all-data reset, storage clearing or uninstall |
 | Shared result | Name/date/difficulty/attempt total and aggregate row scores, website link | User explicitly invokes native/browser share; selected destination controls further handling |
 | Clipboard fallback | Same spoiler-free result | User/device clipboard behavior; manual selectable text if blocked |
 | Website/policy/support requests | Public GitHub Pages URLs; host receives requests | GitHub's hosting/privacy policy; no embedded font CDN anymore |

@@ -2,7 +2,8 @@ import { ADVENTURES } from "./mastermind-adventure-core.js";
 
 export const ADVENTURE_COPY = {
   en: {
-    brand: "THE CURSED BELL", entryTitle: "The Cursed Bell", entryText: "A stolen coin, an unlikely party and a bell that wakes the dead. Follow one story in four chapters, from the tavern to the palace tower. Complete each chapter to unlock the next. Progress saves on this device.",
+    brand: "THE CURSED BELL", entryTitle: "The Cursed Bell", entryText: "A stolen coin, an unlikely party and a bell that wakes the dead. Learn the clues in the prelude, then follow the Thief from the tavern to the palace tower. Complete each chapter to unlock the next. Chapter progress and prelude completion save on this device.",
+    preludeTitle: "Prelude · A thief in the treasury", guidedPrelude: "Learn to play", replayPrelude: "Completed · Replay prelude",
     chapters: "Chapters", beginStory: "Begin story", continueStory: "Continue story", revisitStory: "Revisit the ending", completed: "Completed", storyComplete: "Story complete", progress: (n, total) => `${n} of ${total} chapters completed`, lockedAfter: n => `Locked · Complete Chapter ${n} to unlock.`,
     start: "The Last Round", second: "The Court That Would Not Sleep", back: "Back to chapters", chapter: "Chapter", scene: "Scene", of: "of",
     play: "Play", resume: "Continue", viewEnding: "View ending", recovery: "This chapter save cannot be read or belongs to a different story version. Restart this chapter to play; other chapters and dailies are safe.", restartConfirm: "Restart this chapter? Its saved progress will be replaced. Unlocked chapters stay available.", begin: "Arrange this scene", next: "Continue the story", finish: "Return to chapters", continue: "Next chapter", replay: "Replay chapter", restart: "Restart chapter",
@@ -266,7 +267,8 @@ export const ADVENTURE_COPY = {
     ],
   },
   pl: {
-    brand: "PRZEKLĘTY DZWON", entryTitle: "Przeklęty dzwon", entryText: "Skradziona moneta, niespodziewana drużyna i dzwon, który budzi umarłych. Jedna opowieść w czterech rozdziałach: od karczmy po pałacową wieżę. Ukończ rozdział, by odblokować następny. Postęp zapisuje się na tym urządzeniu.",
+    brand: "PRZEKLĘTY DZWON", entryTitle: "Przeklęty dzwon", entryText: "Skradziona moneta, niespodziewana drużyna i dzwon, który budzi umarłych. Poznaj zasady w prologu, a potem rusz za Złodziejem z karczmy do pałacowej wieży. Ukończ rozdział, by odblokować następny. Gra zapamiętuje ukończenie prologu i postęp rozdziałów na tym urządzeniu.",
+    preludeTitle: "Prolog · Złodziej w skarbcu", guidedPrelude: "Poznaj zasady gry", replayPrelude: "Ukończony · Powtórz prolog",
     chapters: "Rozdziały", beginStory: "Rozpocznij opowieść", continueStory: "Kontynuuj opowieść", revisitStory: "Wróć do zakończenia", completed: "Ukończony", storyComplete: "Opowieść ukończona", progress: (n, total) => `Ukończone rozdziały: ${n} z ${total}`, lockedAfter: n => `Zablokowany · Ukończ rozdział ${n}, by odblokować.`,
     start: "Ostatnia kolejka", second: "Dwór, który nie mógł zasnąć", back: "Wróć do rozdziałów", chapter: "Rozdział", scene: "Scena", of: "z",
     play: "Zagraj", resume: "Kontynuuj", viewEnding: "Zobacz zakończenie", recovery: "Nie można odczytać zapisu tego rozdziału albo pochodzi on z innej wersji opowieści. Zacznij ten rozdział od nowa. Pozostałe rozdziały i codzienne zagadki zachowają postęp.", restartConfirm: "Zacząć ten rozdział od nowa? Jego zapisany postęp zostanie zastąpiony. Odblokowane rozdziały pozostaną dostępne.", begin: "Ułóż tę scenę", next: "Dalszy ciąg opowieści", finish: "Wróć do rozdziałów", continue: "Następny rozdział", replay: "Powtórz rozdział", restart: "Zacznij rozdział od nowa",

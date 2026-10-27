@@ -1,3 +1,4 @@
+import { seedFirstRunHandled } from './story-test-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium, webkit } from 'playwright';
@@ -32,6 +33,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       };
     });
     const page = await context.newPage(), errors = [], requests = [];
+    await seedFirstRunHandled(page);
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => requests.push(request.url()));
     page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
@@ -98,9 +100,9 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await page.evaluate(() => dispatchEvent(new Event('heroguesser:foreground'))); await playing();
     assert.equal((await status()).src, track, 'foreground resumes the same track');
     if (await page.locator('#mastermind-home-button').isVisible()) await click('#mastermind-home-button');
-    await click('#home-play-tutorial');
+    await click('#home-play-stories'); await click('#home-play-tutorial');
     assert.equal((await status()).src, track, 'game modes share uninterrupted music');
-    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#campaign-continue');
+    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#start-adventure-0');
     assert.equal((await status()).src, track);
     await click('[data-locale="pl"]'); await click('#settings-open');
     assert.match(await page.locator('.settings-music').innerText(), /Muzyka w tle.*Głośność muzyki/s);
@@ -121,7 +123,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     // Malformed saved settings recover to the requested defaults.
     const invalid = await browser.newContext();
     await invalid.addInitScript(() => localStorage.setItem('heroguesser:music:v1', '{broken'));
-    const recovery = await invalid.newPage(); await recovery.goto(`${base}/index.html`);
+    const recovery = await invalid.newPage(); await seedFirstRunHandled(recovery); await recovery.goto(`${base}/index.html`);
     await recovery.locator('#settings-open').click();
     assert.equal(await recovery.locator('#settings-music-volume').inputValue(), '50');
     assert.equal(await recovery.locator('#settings-music').isChecked(), true);

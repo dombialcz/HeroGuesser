@@ -59,7 +59,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       await checkSound(() => click('[data-locale="pl"]'), 0, 'rerender solved daily');
       await checkSound(async () => { await page.reload(); await page.waitForFunction(() => window.render_game_to_text); }, 0, 'restore daily');
     }
-    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#campaign-continue');
+    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#start-adventure-0');
     for (let chapter = 0; chapter < ADVENTURES.length; chapter++) {
       const scenes = ADVENTURES[chapter].scenes;
       for (let index = 0; index < scenes.length; index++) {

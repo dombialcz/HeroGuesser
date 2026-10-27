@@ -1,10 +1,11 @@
 import { ADVENTURES } from './mastermind-adventure-core.js';
 import { restoreStory, storyKey } from './story-progress.js';
+import { readFirstRun } from './first-run.js';
 
 // Keep earned access separate from the chapter being replayed. Story resets
 // remove this key along with chapter saves; restarting a chapter leaves it.
 export const campaignKey = 'heroguesser:story:campaign:v1';
-const initial = () => ({ schema: 1, unlockedThrough: 0, completed: ADVENTURES.map(() => false) });
+const initial = () => ({ schema: 1, preludeCompleted: false, unlockedThrough: 0, completed: ADVENTURES.map(() => false) });
 export const chapterFinished = state => state.scene === ADVENTURES[state.adventure].scenes.length - 1 && ['solved', 'complete'].includes(state.phase);
 
 export function restoreCampaign(raw, chapters = []) {
@@ -13,7 +14,7 @@ export function restoreCampaign(raw, chapters = []) {
     const saved = JSON.parse(raw);
     if (saved?.schema === 1 && Number.isInteger(saved.unlockedThrough) && saved.unlockedThrough >= 0 && saved.unlockedThrough < ADVENTURES.length &&
         Array.isArray(saved.completed) && saved.completed.length === ADVENTURES.length && saved.completed.every(x => typeof x === 'boolean')) {
-      campaign = { schema: 1, unlockedThrough: saved.unlockedThrough, completed: [...saved.completed] };
+      campaign = { schema: 1, preludeCompleted: saved.preludeCompleted === true, unlockedThrough: saved.unlockedThrough, completed: [...saved.completed] };
     }
   } catch { /* Invalid metadata falls back to validated chapter saves. */ }
   chapters.forEach((state, index) => {
@@ -27,6 +28,21 @@ export function restoreCampaign(raw, chapters = []) {
     if (done) campaign.unlockedThrough = Math.max(campaign.unlockedThrough, Math.min(index + 1, ADVENTURES.length - 1));
   });
   return campaign;
+}
+
+export function completePrelude(store) {
+  const campaign = loadCampaign(store);
+  campaign.preludeCompleted = true;
+  store.setItem(campaignKey, JSON.stringify(campaign));
+}
+
+export function needsPrelude(store, campaign = loadCampaign(store)) {
+  if (readFirstRun(store) === 'skipped') return false;
+  if (campaign.preludeCompleted || campaign.unlockedThrough > 0 || campaign.completed.some(Boolean)) return false;
+  const raw = store.getItem(storyKey(0));
+  // Existing players and players who explicitly skip the lesson keep their
+  // chapter continuation without receiving an unearned prelude completion.
+  return raw === null || restoreStory(raw, 0).invalid;
 }
 
 export function loadCampaign(store) {

@@ -1,6 +1,6 @@
 import { storage } from "./platform.js";
 import { restoreStory, serializeStory, storyKey } from "./story-progress.js";
-import { loadCampaign, resumeChapter } from "./story-campaign.js";
+import { loadCampaign, resumeChapter, needsPrelude } from "./story-campaign.js";
 import { confirmAction } from "./dialog.js";
 import { ADVENTURES, actAdventure, adventureCounts, adventureScene, createAdventure } from "./mastermind-adventure-core.js";
 import { ADVENTURE_COPY, sceneCopyIndex } from "./mastermind-adventure-copy.js";
@@ -12,7 +12,7 @@ IMAGE.coin = "assets/mastermind/coin.svg";
 IMAGE.bell = "assets/mastermind/bell.svg";
 const COLOR = { thief: "#69a7ff", knight: "#f0bd53", bard: "#ec83bd", mage: "#b69aff", ale: "#d99e50", zombie: "#aabd73", coin: "#d1ac58", king: "#d77b8c", bell: "#c4a0e4" };
 
-export function installMastermindAdventures({ root, entry, getLocale, onModeChange, celebration }) {
+export function installMastermindAdventures({ root, entry, getLocale, onModeChange, onPreludeStart, celebration }) {
   let active = false, state = createAdventure(), undo = null, drag, recovery = false, lockedRequest = null;
   const t = () => ADVENTURE_COPY[getLocale()];
   const sceneText = () => t().scenes[sceneCopyIndex(state)];
@@ -35,6 +35,11 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     state = restored.state; recovery = restored.invalid;
     if (!recovery) persist();
     onModeChange(true); render(); focus("#adventure-guide-title");
+  }
+  function continueStory() {
+    const campaign = loadCampaign(storage);
+    if (needsPrelude(storage, campaign)) onPreludeStart();
+    else start(resumeChapter(storage, campaign));
   }
   function leave() {
     persist(); active = false; drag?.cancel(); celebration?.clear(); undo = null; render(); onModeChange(false);
@@ -94,6 +99,8 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     const c = t();
     const campaign = loadCampaign(storage);
     const resumeIndex = resumeChapter(storage, campaign);
+    const continuing = !needsPrelude(storage, campaign) && (campaign.preludeCompleted ||
+      storage.getItem(storyKey(0)) !== null || campaign.unlockedThrough > 0);
     const endingRead = restoreStory(storage.getItem(storyKey(resumeIndex)), resumeIndex).state.phase === 'complete';
     const entryStatus = index => {
       const raw = storage.getItem(storyKey(index));
@@ -104,13 +111,14 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     root.setAttribute("aria-label", c.brand);
     entry.setAttribute("aria-label", c.entryTitle);
     entry.innerHTML = `<div><strong>${c.entryTitle}</strong><p>${c.entryText}</p><p class="campaign-progress">${c.progress(campaign.completed.filter(Boolean).length, ADVENTURES.length)}</p></div>
-      <button id="campaign-continue" class="story-primary" type="button">${campaign.completed.every(Boolean) && endingRead ? c.revisitStory : storage.getItem(storyKey(0)) || campaign.unlockedThrough > 0 ? c.continueStory : c.beginStory} →</button>
+      <button id="campaign-continue" class="story-primary" type="button">${campaign.completed.every(Boolean) && endingRead ? c.revisitStory : continuing ? c.continueStory : c.beginStory} →</button>
       ${lockedRequest !== null ? `<p class="campaign-locked-notice" role="status">${c.lockedAfter(lockedRequest)}</p>` : ''}
-      <div class="adventure-entry-actions" role="group" aria-label="${c.chapters}">${ADVENTURES.map((adventure, index) => {
+      <div class="adventure-entry-actions" role="group" aria-label="${c.chapters}"><button class="story-button adventure-story-button" id="home-play-tutorial" type="button"><img src="${IMAGE.thief}" alt=""><span><strong>${c.preludeTitle}</strong><small>${c.sceneCount(3)} · ${campaign.preludeCompleted ? c.replayPrelude : c.guidedPrelude}</small></span></button>${ADVENTURES.map((adventure, index) => {
         const locked = index > campaign.unlockedThrough;
         return `<button class="story-button adventure-story-button${locked ? ' chapter-locked' : ''}" id="start-adventure-${index}" type="button" ${locked ? 'disabled' : ''}><img src="${[IMAGE.thief, IMAGE.mage, IMAGE.king, IMAGE.bell][index]}" alt=""><span><strong>${c.chapter} ${index + 1} · ${c.adventures[index].title}</strong><small>${c.sceneCount(adventure.scenes.length)} · ${locked ? c.lockedAfter(index) : `${campaign.completed[index] ? `${c.completed} · ` : ''}${entryStatus(index)}`}</small></span></button>`;
       }).join("")}</div>`;
-    entry.querySelector('#campaign-continue').addEventListener('click', () => start(resumeIndex));
+    entry.querySelector('#campaign-continue').addEventListener('click', continueStory);
+    entry.querySelector('#home-play-tutorial').addEventListener('click', onPreludeStart);
     ADVENTURES.forEach((_, index) => entry.querySelector(`#start-adventure-${index}`).addEventListener("click", () => start(index)));
     if (!active) { content.replaceChildren(); announce(""); return; }
     if (recovery) {
@@ -169,12 +177,12 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
   addEventListener("pagehide", () => { if (active) persist(); drag.cancel(); });
   addEventListener("heroguesser:background", () => drag.cancel());
   return {
-    get active() { return active; }, render, start, leave,
+    get active() { return active; }, render, start, leave, continueStory,
     cancelTransient() { drag.cancel(); },
     reset() { active = false; recovery = false; lockedRequest = null; fresh(); render(); },
     campaignSnapshot() {
       const progress = loadCampaign(storage);
-      return { title: t().entryTitle, unlockedThrough: progress.unlockedThrough + 1, completed: progress.completed,
+      return { title: t().entryTitle, preludeCompleted: progress.preludeCompleted, unlockedThrough: progress.unlockedThrough + 1, completed: progress.completed,
         chapters: ADVENTURES.map((a, index) => ({ id: a.id, title: t().adventures[index].title, locked: index > progress.unlockedThrough })) };
     },
     keydown(event) {

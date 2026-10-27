@@ -1,3 +1,4 @@
+import { seedFirstRunHandled } from './story-test-fixtures.mjs';
 const BASE_URL = (process.env.HERO_GUESSER_BASE_URL ?? "http://127.0.0.1:4180").replace(/\/$/, "");
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -15,6 +16,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 500, isMobile: width < 500, reducedMotion: "reduce" });
     await context.addInitScript(locale => localStorage.setItem("heroguesser:language", locale), locale);
     const page = await context.newPage(), errors = [];
+    await seedFirstRunHandled(page);
     page.on("pageerror", e => errors.push(e.message));
     page.on("response", r => { if (r.url().startsWith(`${BASE_URL}/`) && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
     await page.goto(`${BASE_URL}/index.html`);
@@ -33,7 +35,8 @@ try {
       await page.screenshot({ path: `${output}/${name}-${suffix}.png`, fullPage: true });
     };
     assert.equal((await state()).mode, "home");
-    assert.equal(await page.locator(".home-choices button:visible").count(), 3);
+    assert.equal(await page.locator(".home-choices button:visible").count(), 2);
+    assert.equal(await page.locator(".home-choices button").first().getAttribute("id"), "home-play-daily");
     assert.equal(await page.locator("#mastermind-daily").isVisible(), false);
     assert.equal(await page.locator("#mastermind-home-button").isVisible(), false);
     const initial = await stored(); await page.keyboard.press("1"); await page.keyboard.press("Enter"); assert.equal(await stored(), initial);
@@ -55,9 +58,9 @@ try {
     await home(); await click("#home-play-stories"); await click("#start-adventure-0");
     assert.equal((await state()).phase, "play"); assert.equal((await state()).draft[0], "thief");
     await click("#adventure-exit"); assert.equal((await state()).mode, "stories");
-    await home(); await click("#home-play-tutorial"); assert.equal((await state()).phase, "setup");
+    await home(); await click("#home-play-stories"); await click("#home-play-tutorial"); assert.equal((await state()).phase, "setup");
     await click("#tutorial-pick-thief"); await click("#tutorial-exit"); assert.equal((await state()).mode, "home");
-    await click("#home-play-tutorial"); assert.ok((await state()).draft.every(p => p === null));
+    await click("#home-play-stories"); await click("#home-play-tutorial"); assert.ok((await state()).draft.every(p => p === null));
     await home(); await page.reload(); assert.equal((await state()).mode, "home");
     assert.equal(await stored(), saved);
     await page.locator(`[data-locale="${locale === "en" ? "pl" : "en"}"]`).click();

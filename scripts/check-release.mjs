@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium, webkit } from 'playwright';
 import { ADVENTURES } from '../src/mastermind-adventure-core.js';
-import { seedExistingChapter } from './story-test-fixtures.mjs';
+import { seedExistingChapter, seedFirstRunHandled } from './story-test-fixtures.mjs';
 import { generateChallenge } from '../src/mastermind-core.js';
 const base = (process.env.HERO_GUESSER_BASE_URL ?? 'http://127.0.0.1:4180').replace(/\/$/, '');
 await mkdir('output/release', { recursive: true });
@@ -15,6 +15,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
     ]) {
       const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 500, timezoneId: 'Europe/Warsaw', reducedMotion: 'reduce' });
       const page = await context.newPage(), errors = [], external = [];
+      await seedFirstRunHandled(page);
       page.on('pageerror', e => errors.push(e.message));
       await page.route('**/*', route => {
         if (route.request().url().startsWith(`${base}/`)) return route.continue();

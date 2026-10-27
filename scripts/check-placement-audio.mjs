@@ -101,7 +101,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await expectSilence(() => click('#tutorial-slot-0'), 'empty tutorial place');
     await expectSound(() => click('#tutorial-pick-thief'), 'tutorial refill');
     await page.screenshot({ path: `output/placement-audio/${name}-tutorial.png`, fullPage: true });
-    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#campaign-continue'); await click('#adventure-next');
+    await click('#mastermind-home-button'); await click('#home-play-stories'); await click('#start-adventure-0'); await click('#adventure-next');
     await expectSound(() => click('#adventure-pick-thief'), 'story placement');
     await expectSilence(() => click('#adventure-pick-thief'), 'rejected story duplicate');
     await expectSound(() => click('#adventure-pick-knight'), 'story knight');

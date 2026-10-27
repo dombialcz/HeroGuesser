@@ -1,3 +1,4 @@
+import { seedFirstRunHandled } from './story-test-fixtures.mjs';
 const BASE_URL = (process.env.HERO_GUESSER_BASE_URL ?? "http://127.0.0.1:4180").replace(/\/$/, "");
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -13,6 +14,7 @@ try {
   ]) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 500, isMobile: width < 500, reducedMotion: "reduce" });
     const page = await context.newPage();
+    await seedFirstRunHandled(page);
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     page.on("requestfailed", request => { if (request.url().startsWith(`${BASE_URL}/`)) errors.push(`${request.url()}: ${request.failure()?.errorText}`); });
@@ -25,7 +27,10 @@ try {
     const dailyStorage = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => key.startsWith("heroguesser:v1:"))));
     const dailyBefore = await dailyStorage();
     const click = async selector => {
-      if (selector === "#home-play-tutorial" && !await page.locator(selector).isVisible()) await page.locator("#mastermind-home-button").click();
+      if (selector === "#home-play-tutorial" && !await page.locator(selector).isVisible()) {
+        if (await page.locator("#mastermind-home-button").isVisible()) await page.locator("#mastermind-home-button").click();
+        await page.locator("#home-play-stories").click();
+      }
       return width < 500 ? page.locator(selector).tap() : page.locator(selector).click();
     };
     const pick = piece => click(`#tutorial-pick-${piece}`);

@@ -14,10 +14,18 @@ final class ReleaseTests: XCTestCase {
             for _ in 0..<5 where !element.isHittable { app.swipeUp() }
             element.tap()
         }
+        if button("Skip for now").waitForExistence(timeout: 2) { tap("Skip for now") }
         tap("Settings"); tap("Reset all local data"); app.buttons["Confirm"].tap()
+        XCTAssertTrue(app.staticTexts["Settings & About"].waitForNonExistence(timeout: 10))
+        app.terminate(); app.launch()
+        tap("Skip for now")
+        XCTAssertTrue(app.staticTexts["The tutorial is always in Stories → Prelude."].waitForExistence(timeout: 10))
         tap("Play Story")
         XCTAssertFalse(button("Chapter 2").isEnabled, "The next chapter starts locked")
-        tap("Begin story"); tap("Arrange this scene"); tap("Add Thief")
+        tap("Prelude · A thief in the treasury")
+        XCTAssertTrue(app.staticTexts["The royal treasury"].waitForExistence(timeout: 10), "The skipped tutorial stays available from Stories")
+        tap("Back to home"); tap("Play Story"); tap("Begin story")
+        tap("Arrange this scene"); tap("Add Thief")
         let placed = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Place 1: Thief")).firstMatch
         XCTAssertTrue(placed.waitForExistence(timeout: 10))
         XCUIDevice.shared.press(.home)

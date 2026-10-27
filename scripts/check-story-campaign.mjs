@@ -36,7 +36,8 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.ok(await page.locator('.campaign-locked-notice').textContent());
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       await page.screenshot({ path: `${output}/${engine}-${locale}-locked.png`, fullPage: true });
-      await click('#campaign-continue');
+      // Explicit chapter selection can skip the guided prelude.
+      await click('#start-adventure-0');
       for (let i = 0; i < ADVENTURES[0].scenes.length; i++) {
         await click('#adventure-next');
         for (const piece of ADVENTURES[0].scenes[i].solution) await click(`#adventure-pick-${piece}`);
