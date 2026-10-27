@@ -543,6 +543,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .celebration-copy > span { color: #dce8cd; font-size: .85rem; line-height: 1.4; }
 .celebration-spark { flex: none; color: #e8c476; font-size: 28px; }
 .celebration-confetti { position: absolute; top: 0; left: 0; border-radius: 1px; }
+.celebration-trumpet { --trumpet-width: clamp(185px, 25vw, 360px); position: absolute; top: 76%; width: var(--trumpet-width); transform: translateY(-50%); }
+.celebration-trumpet-left { left: calc(var(--trumpet-width) * -.28); }
+.celebration-trumpet-right { right: calc(var(--trumpet-width) * -.28); transform: translateY(-50%) scaleX(-1); }
+.celebration-trumpet img { display: block; width: 100%; height: auto; transform: rotate(-24deg); transform-origin: 25% 50%; filter: drop-shadow(0 5px 7px #080d1466); }
 @media (max-width: 480px) {
   .celebration-card { gap: 9px; padding: 12px; }
   .celebration-emblem { width: 40px; height: 40px; font-size: 32px; }

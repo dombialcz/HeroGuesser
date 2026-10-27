@@ -34,6 +34,25 @@ export function createMastermindCelebration({ getLocale }) {
     document.body.append(layer);
     started = performance.now(); advanced = 0;
     if (!motion.matches) {
+      for (const side of ["left", "right"]) {
+        const trumpet = document.createElement("div");
+        trumpet.className = `celebration-trumpet celebration-trumpet-${side}`;
+        trumpet.innerHTML = '<div class="celebration-trumpet-motion"><img src="assets/mastermind/trumpet.png" alt="" width="1983" height="793" draggable="false"></div>';
+        layer.append(trumpet);
+        animations.push(trumpet.firstElementChild.animate([
+          { transform: "translateX(-90px)", opacity: 0 },
+          { transform: "translateX(0)", opacity: 1, offset: .09 },
+          { transform: "translateX(0)", opacity: 1, offset: .79 },
+          { transform: "translateX(-90px)", opacity: 0 },
+        ], { duration: DURATION, easing: "ease-out", fill: "both" }));
+        // Two short notes, then a longer final swell: poom-poom-pooooo.
+        const note = (offset, x = 1, y = 1) => ({ offset, easing: "ease-in-out", transform: `rotate(-24deg) scale(${x}, ${y})` });
+        animations.push(trumpet.querySelector("img").animate([
+          note(0), note(.09), note(.13, .8, 1.2), note(.2),
+          note(.25, .8, 1.2), note(.32),
+          note(.4, .77, 1.24), note(.56, .82, 1.18), note(.65), note(1),
+        ], { duration: DURATION, fill: "both" }));
+      }
       const card = layer.querySelector(".celebration-card");
       animations.push(card.animate([
         { opacity: 0, transform: "translateY(-14px) scale(.88)" },
@@ -87,6 +106,6 @@ export function createMastermindCelebration({ getLocale }) {
       animations.forEach(animation => { animation.currentTime = (animation.currentTime ?? 0) + ms; });
       scheduleClear();
     },
-    snapshot() { return { active: !!layer, kind, reducedMotion: motion.matches, particles: layer?.querySelectorAll(".celebration-confetti").length ?? 0 }; },
+    snapshot() { return { active: !!layer, kind, reducedMotion: motion.matches, particles: layer?.querySelectorAll(".celebration-confetti").length ?? 0, trumpets: layer?.querySelectorAll(".celebration-trumpet").length ?? 0 }; },
   };
 }

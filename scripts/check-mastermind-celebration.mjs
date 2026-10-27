@@ -1,13 +1,14 @@
 const BASE_URL = (process.env.HERO_GUESSER_BASE_URL ?? "http://127.0.0.1:4180").replace(/\/$/, "");
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { generateChallenge } from "../src/mastermind-core.js";
 import { ADVENTURES } from "../src/mastermind-adventure-core.js";
 import { existingChapterSave } from "./story-test-fixtures.mjs";
-const output = "output/mastermind-celebration";
+const engine = process.env.HERO_GUESSER_BROWSER ?? "chromium";
+const output = `output/mastermind-celebration${engine === "chromium" ? "" : `-${engine}`}`;
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch();
+const browser = await ({ chromium, webkit }[engine]).launch();
 try {
   for (const [name, width, height, reduced, locale, large] of [
     ["desktop", 1440, 1000, false, "en", false], ["phone", 390, 844, false, "en", false],
@@ -33,6 +34,7 @@ try {
       assert.equal(snapshot.active, true); assert.equal(snapshot.kind, kind);
       assert.equal(snapshot.reducedMotion, reduced);
       assert.equal(snapshot.particles, reduced ? 0 : width < 700 ? 42 : 68);
+      assert.equal(snapshot.trumpets, reduced ? 0 : 2);
       assert.equal(await page.locator(".mastermind-celebration").count(), 1);
       assert.equal(await page.locator(".mastermind-celebration").getAttribute("aria-hidden"), "true");
       assert.equal(await page.locator(".mastermind-celebration").evaluate(e => getComputedStyle(e).pointerEvents), "none");
@@ -42,6 +44,41 @@ try {
         document.querySelector(".mastermind-celebration").getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = 800; });
       });
       else assert.equal(await page.locator(".mastermind-celebration").evaluate(e => e.getAnimations({ subtree: true }).length), 0);
+      if (!reduced) {
+        const horns = await page.locator(".celebration-trumpet").evaluateAll(async elements => {
+          await Promise.all(elements.map(e => e.querySelector("img").decode()));
+          return elements.map(e => {
+            const img = e.querySelector("img"), bounds = img.getBoundingClientRect();
+            const pulse = new DOMMatrix(getComputedStyle(img).transform);
+            return { src: img.getAttribute("src"), loaded: img.naturalWidth > 0,
+              mirrored: new DOMMatrix(getComputedStyle(e).transform).a < 0,
+              x: bounds.x, right: bounds.right,
+              visible: (Math.min(innerWidth, bounds.right) - Math.max(0, bounds.x)) / bounds.width,
+              size: e.clientWidth,
+              length: Math.hypot(pulse.a, pulse.b), width: Math.hypot(pulse.c, pulse.d) };
+          });
+        });
+        assert.equal(horns[0].src, horns[1].src, "one shared trumpet asset");
+        assert.equal(horns[0].src, "assets/mastermind/trumpet.png", "uses the generated transparent illustration");
+        assert.deepEqual(horns.map(h => h.mirrored), [false, true]);
+        assert.ok(horns[0].x < 0 && horns[0].right > 25 && horns[0].right < width / 2, "left bell peeks in from the edge");
+        assert.ok(horns[1].x > width / 2 && horns[1].x < width - 25 && horns[1].right > width, "right bell peeks in from the edge");
+        assert.ok(horns.every(h => h.visible > .6 && h.size <= 360), "smaller trumpets show their necks as well as bells");
+        assert.ok(horns.every(h => h.loaded && h.length < .85 && h.width > 1.15), "both trumpets shorten and widen on a note");
+        // Check the whole three-note phrase, including the sustained final note and return.
+        const phrase = await page.locator(".celebration-trumpet img").first().evaluate(img => {
+          const animation = img.getAnimations()[0];
+          const scales = [0, 416, 640, 800, 1024, 1280, 1792, 2080].map(time => {
+            animation.currentTime = time;
+            const m = new DOMMatrix(getComputedStyle(img).transform);
+            return Math.hypot(m.a, m.b);
+          });
+          animation.currentTime = 800;
+          return scales;
+        });
+        for (const index of [0, 2, 4, 7]) assert.ok(Math.abs(phrase[index] - 1) < .01, "trumpet returns to normal between notes");
+        for (const index of [1, 3, 5, 6]) assert.ok(phrase[index] < .85, "trumpet plays two short notes and a sustained third");
+      }
       await page.screenshot({ path: `${output}/${name}-${suffix}.png` });
       const bounds = await page.locator(".celebration-card").boundingBox();
       assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width + 1, `${name}: badge fits viewport ${JSON.stringify(bounds)}`);
