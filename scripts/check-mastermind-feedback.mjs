@@ -34,7 +34,8 @@ try {
         assert.equal(await feedback.locator(".feedback-score").count(), 3);
         assert.equal(await feedback.locator(".absent-score b").textContent(), String(result.absent));
         assert.match(await feedback.getAttribute("aria-label"), /not included/);
-        assert.equal(await feedback.getAttribute("role"), "img");
+        assert.equal(await feedback.getAttribute("role"), "group");
+        assert.equal(await feedback.getByRole('button').count(), 1, 'row copy remains exposed to assistive technology');
         const fits = await feedback.evaluate(el => {
           const row = el.closest(".guess-row").getBoundingClientRect(), box = el.getBoundingClientRect();
           return box.left >= row.left && box.right <= row.right && [...el.children].every(child => { const r = child.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1; });

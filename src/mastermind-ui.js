@@ -1,3 +1,4 @@
+import { applyLocks, copyPastRow, toggleLock } from './daily-row-tools.js';
 import { createPortrait, animatePlacement, animateResultStamp } from "./portraits.js";
 import { storage, shareText } from "./platform.js";
 import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
@@ -45,7 +46,7 @@ const COPY = {
     nameClues: "Name clues",
     nameCluesHint: "Each word reveals an exact class count.",
     guessBoard: "Guess board",
-    boardSubtitle: "Build the party one row at a time.",
+    boardSubtitle: "Lock a hero to keep it in later attempts.",
     formation: "FORMATION",
     feedback: "FEEDBACK",
     submitGuess: "Check guess",
@@ -72,7 +73,12 @@ const COPY = {
     dateLocale: "en-GB",
     unsolvedMessage: "Choose a hero to fill the highlighted row. Select a filled place to change it.",
     solvedMessage: (attempts, party) => `Solved in ${attempts} ${attempts === 1 ? "guess" : "guesses"}. The hidden party was ${party}.`,
-    dragHint: "Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy. Unlimited guesses.",
+    dragHint: "Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy a hero, or use Copy row for the whole attempt. Padlocks keep heroes in place after checking, clearing or copying. Unlock above a slot to edit it. Unlimited guesses.",
+    copyRow: 'Copy row', copyRowLabel: n => `Copy guess ${n}; keep locked heroes`,
+    lockPlace: (n, hero) => `Lock ${hero} in place ${n} for later attempts`,
+    unlockPlace: (n, hero) => `Unlock ${hero} in place ${n}`,
+    emptyLock: n => `Place a hero in slot ${n} before locking it`,
+    lockedPlace: (n, hero) => `Place ${n}: ${hero}, locked. Unlock using the padlock above.`,
     copyHero: (hero) => `Copy ${hero} to the next open place, or hold and drag to a place.`,
     heroNames: {
       knight: "Knight", thief: "Thief", bard: "Bard", cleric: "Cleric",
@@ -111,7 +117,7 @@ const COPY = {
     nameClues: "Wskazówki w nazwie",
     nameCluesHint: "Każde słowo wskazuje dokładną liczbę klas.",
     guessBoard: "Twoje próby",
-    boardSubtitle: "Odtwarzaj skład, po jednym wierszu.",
+    boardSubtitle: "Zablokuj bohatera, aby zachować go w kolejnych próbach.",
     formation: "SKŁAD",
     feedback: "WYNIK",
     submitGuess: "Sprawdź skład",
@@ -138,7 +144,12 @@ const COPY = {
     dateLocale: "pl-PL",
     unsolvedMessage: "Wybierz klasę, aby wypełnić podświetlony wiersz. Naciśnij zajęte miejsce, aby je zmienić.",
     solvedMessage: (attempts, party) => `Rozszyfrowano w ${attempts} ${attempts === 1 ? "próbie" : "próbach"}. Ukryta drużyna: ${party}.`,
-    dragHint: "Przytrzymaj portret i przeciągnij, aby przenieść lub zamienić bohaterów. Z wcześniejszej próby kopiujesz. Bez limitu prób.",
+    dragHint: "Przytrzymaj portret i przeciągnij, aby przenieść lub zamienić bohaterów. Kopiuj wiersz odtwarza całą próbę, zachowując zablokowanych bohaterów. Kłódka zachowuje bohatera po sprawdzeniu i czyszczeniu. Odblokuj miejsce, aby je zmienić. Bez limitu prób.",
+    copyRow: 'Kopiuj wiersz', copyRowLabel: n => `Skopiuj próbę ${n}; zachowaj zablokowanych bohaterów`,
+    lockPlace: (n, hero) => `Zablokuj: ${hero}, na miejscu ${n} w kolejnych próbach`,
+    unlockPlace: (n, hero) => `Odblokuj: ${hero}, na miejscu ${n}`,
+    emptyLock: n => `Umieść bohatera na miejscu ${n}, aby go zablokować`,
+    lockedPlace: (n, hero) => `Miejsce ${n}: ${hero}, zablokowane. Odblokuj kłódką powyżej.`,
     copyHero: (hero) => `Skopiuj: ${hero}, na kolejne wolne miejsce lub przytrzymaj i przeciągnij.`,
     heroNames: {
       knight: "Rycerz", thief: "Złodziej", bard: "Bard", cleric: "Kleryk",
@@ -330,7 +341,7 @@ function chooseChallenge(id) {
   if (!levels[id]) return;
   state.difficulty = id;
   const draft = currentProgress().draft;
-  const emptyIndex = draft.findIndex((type) => type === null);
+  const emptyIndex = draft.findIndex((type, index) => type === null && !currentProgress().locks?.[index]);
   state.selectedSlot = emptyIndex >= 0 ? emptyIndex : Math.max(0, draft.length - 1);
   render();
 }
@@ -339,8 +350,8 @@ function placeHero(type) {
   if (dateGuard()) return;
   if (isFinished()) return;
   const draft = currentProgress().draft;
-  let slot = draft.findIndex((value, index) => index >= state.selectedSlot && value === null);
-  if (slot < 0) slot = draft.findIndex((value) => value === null);
+  let slot = draft.findIndex((value, index) => index >= state.selectedSlot && value === null && !currentProgress().locks?.[index]);
+  if (slot < 0) slot = draft.findIndex((value, index) => value === null && !currentProgress().locks?.[index]);
   if (slot < 0) return;
   draft[slot] = type;
   playPlacementSound();
@@ -354,7 +365,7 @@ function placeHero(type) {
 
 function selectSlot(index) {
   if (dateGuard()) return;
-  if (isFinished()) return;
+  if (isFinished() || !Number.isInteger(index) || index < 0 || index >= currentChallenge().size || currentProgress().locks?.[index]) return;
   const draft = currentProgress().draft;
   if (draft[index] !== null) { draft[index] = null; playRemovalSound(); }
   state.selectedSlot = index;
@@ -368,19 +379,40 @@ function submitGuess() {
   const current = currentProgress();
   if (isFinished() || current.draft.some((type) => type === null)) return;
   current.guesses.push([...current.draft]);
-  current.draft = Array(challenge.size).fill(null);
-  state.selectedSlot = 0;
+  current.draft = applyLocks(Array(challenge.size).fill(null), current.locks);
+  state.selectedSlot = current.draft.findIndex(type => type === null);
   saveProgress();
   render();
   animateResultStamp(guessHistory.firstElementChild?.querySelector(".row-feedback"));
   if (isFinished()) { celebration.play({ kind: "daily" }); playCompletionSound(); }
 }
 
+function copyGuess(index) {
+  if (dateGuard() || isFinished()) return;
+  const row = copyPastRow(currentProgress(), index);
+  if (!row) return;
+  currentProgress().draft = row;
+  state.selectedSlot = row.findIndex((_, slot) => !currentProgress().locks?.[slot]);
+  saveProgress(); render();
+  const focus = currentGuess.querySelector('.guess-tile:not(:disabled)') ?? currentGuess.querySelector('.slot-lock-button');
+  focus?.focus();
+  document.querySelector('#daily-guess-tools-status').textContent = state.locale === 'pl'
+    ? `Próba ${index + 1} skopiowana. Zablokowani bohaterowie pozostali na swoich miejscach.`
+    : `Guess ${index + 1} copied. Locked heroes stay in place.`;
+}
+
+function lockSlot(slot) {
+  if (dateGuard() || isFinished() || !toggleLock(currentProgress(), slot)) return;
+  state.selectedSlot = currentProgress().draft.findIndex((piece, index) => !piece && !currentProgress().locks?.[index]);
+  saveProgress(); render();
+  currentGuess.querySelector(`[data-lock-slot="${slot}"]`)?.focus({ preventScroll: true });
+}
+
 function clearDraft() {
   if (dateGuard()) return;
   if (isFinished()) return;
-  currentProgress().draft.fill(null);
-  state.selectedSlot = 0;
+  currentProgress().draft = applyLocks(Array(currentChallenge().size).fill(null), currentProgress().locks);
+  state.selectedSlot = currentProgress().draft.findIndex(type => type === null);
   saveProgress();
   render();
 }
@@ -459,7 +491,7 @@ function renderClues(challenge) {
 function renderFeedback(result) {
   const feedback = document.createElement("span");
   feedback.className = "row-feedback";
-  feedback.setAttribute("role", "img");
+  feedback.setAttribute("role", "group");
   const label = copy().feedbackCount(result.exact, result.misplaced, result.absent);
   feedback.setAttribute("aria-label", label);
   feedback.title = label;
@@ -470,6 +502,7 @@ function renderFeedback(result) {
   ]) {
     const score = document.createElement("span");
     score.className = `feedback-score ${kind}-score`;
+    score.setAttribute('aria-hidden', 'true');
     score.title = `${count} · ${legend}`;
     const dot = document.createElement("i");
     dot.className = `feedback-dot ${kind}`;
@@ -518,11 +551,12 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
     if (currentRow) {
       tile.type = "button";
       tile.dataset.slot = String(index);
-      tile.setAttribute("aria-current", String(index === state.selectedSlot));
+      tile.setAttribute("aria-current", String(index === state.selectedSlot && !current.locks?.[index]));
       tile.setAttribute("aria-label", type
         ? copy().filledPlace(index + 1, localizedHero(type))
         : copy().emptyPlace(index + 1));
-      tile.disabled = isFinished();
+      tile.disabled = isFinished() || !!current.locks?.[index];
+      if (current.locks?.[index]) { tile.dataset.locked = 'true'; tile.setAttribute('aria-label', copy().lockedPlace(index + 1, localizedHero(type))); }
       tile.addEventListener("click", () => selectSlot(index));
     } else {
       tile.setAttribute("aria-hidden", "true");
@@ -539,7 +573,18 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
       }
     }
     tile.append(makePlaceTab(index));
-    lineup.append(tile);
+    if (currentRow) {
+      const cell = document.createElement('span'); cell.className = 'guess-slot';
+      const lock = document.createElement('button'); lock.type = 'button'; lock.className = 'slot-lock-button'; lock.dataset.lockSlot = String(index);
+      lock.disabled = !type || isFinished(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
+      const label = type ? (current.locks?.[index] ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
+      lock.setAttribute('aria-label', label); lock.title = label;
+      const icon = document.createElement('img'); icon.src = current.locks?.[index] ? 'assets/decor/slot-lock-steel-v2.png' : 'assets/decor/slot-unlock-steel-v2.png'; icon.alt = ''; icon.width = 20; icon.height = 20; icon.draggable = false;
+      const fallback = document.createElement('span'); fallback.className = 'lock-fallback'; fallback.textContent = current.locks?.[index] ? '🔒' : '🔓'; fallback.setAttribute('aria-hidden', 'true');
+      icon.addEventListener('error', () => { icon.hidden = true; });
+      lock.append(icon, fallback); lock.addEventListener('click', () => lockSlot(index));
+      cell.append(lock, tile); lineup.append(cell);
+    } else lineup.append(tile);
   }
   return lineup;
 }
@@ -564,7 +609,11 @@ function renderBoard(challenge, current) {
       row.classList.add("row-submitted");
       if (solved) row.classList.add("row-solved");
       row.append(makeLineup(challenge, guess, false, index));
-      row.append(renderFeedback(result));
+      const feedback = renderFeedback(result);
+      const clone = document.createElement('button'); clone.type = 'button'; clone.className = 'guess-copy-row'; clone.dataset.copyGuess = String(index);
+      clone.textContent = copy().copyRow; clone.setAttribute('aria-label', copy().copyRowLabel(index + 1)); clone.disabled = locked;
+      clone.addEventListener('click', () => copyGuess(index)); feedback.append(clone);
+      row.append(feedback);
     } else if (index === current.guesses.length && !locked) {
       row.classList.add("row-active");
       row.append(makeLineup(challenge, null, true, index, current));
@@ -579,6 +628,7 @@ function renderBoard(challenge, current) {
   currentGuess.replaceChildren(...rows.filter(row => row.classList.contains("row-active")));
   guessHistory.replaceChildren(...rows.filter(row => row.classList.contains("row-submitted")).reverse());
   guessHistory.start = current.guesses.length;
+
 }
 
 function renderPicker() {
@@ -654,7 +704,7 @@ function render() {
   document.querySelector('#share-result').textContent = state.locale === 'pl' ? 'Udostępnij wynik' : 'Share result';
   renderDailyNotice();
   document.querySelector('#settings-open').textContent = state.locale === 'pl' ? 'Ustawienia' : 'Settings';
-  clearButton.disabled = locked || current.draft.every((type) => type === null);
+  clearButton.disabled = locked || current.draft.every((type, slot) => type === null || current.locks?.[slot]);
   submitButton.disabled = locked || !completeDraft;
   submitButton.querySelector("[data-i18n]").textContent = locked ? strings.challengeComplete : strings.submitGuess;
 }
@@ -710,6 +760,7 @@ window.render_game_to_text = () => {
     partySize: challenge.size,
     clues: challenge.clues.map((clue) => ({ kind: clue.kind, hero: localizedHero(clue.type) })),
     draft: current.draft,
+    locks: current.locks ?? Array(challenge.size).fill(null),
     guesses: current.guesses.map((guess) => ({ heroes: guess, ...currentResult(guess, challenge) })),
     guessLimit: null,
     guessesRemaining: null,
@@ -725,6 +776,7 @@ portraitDrag = installPortraitDrag({
   onDrop: ({ hero, sourceSlot, targetSlot, copy: clone }) => {
     if (dateGuard()) return;
     const draft = currentProgress().draft;
+    if (currentProgress().locks?.[targetSlot] || (!clone && currentProgress().locks?.[sourceSlot])) return;
     if (!clone && sourceSlot === targetSlot) return;
     const changed = draft[targetSlot] !== hero;
     if (!clone) draft[sourceSlot] = draft[targetSlot];

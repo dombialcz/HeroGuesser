@@ -1,0 +1,8 @@
+{
+  "created": "2026-10-30",
+  "generator": "Built-in image_gen tool",
+  "source": "slot-lock-v1.png",
+  "runtime": "../../assets/decor/slot-lock-v1.png",
+  "packaging": "Original transparent PNG preserved unchanged. Runtime transparent PNG downscaled to 96px with macOS sips; displayed at 24 CSS pixels.",
+  "prompt": "Use case: stylized-concept\nAsset type: small transparent UI icon for the fantasy puzzle game Guild of Wits.\nPrimary request: a single closed padlock icon, straight-on, stout antique gold/brass lock body with a strong arched shackle and one simple dark keyhole. Restrained hand-painted fantasy game material, warm gold highlights, dark walnut outlines, clean bold silhouette that stays recognizable at 20–24 pixels.\nComposition: centered square icon, lock fills about 85% of the canvas, generous clean transparent margin, front view, no perspective tilt.\nConstraints: actual transparent background, isolated padlock only. No ground, cast shadow, glow, border, ornament frame, text, letters, watermark or other objects. Avoid tiny engraving and intricate detail; clarity as a small UI control is essential."
+}

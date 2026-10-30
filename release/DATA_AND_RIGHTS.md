@@ -37,3 +37,7 @@ The app includes PrivacyInfo.xcprivacy declaring no tracking or app-collected da
 Apple distinguishes on-device processing from collected data; the final answers must account for actual network behavior, SDK partners and support flows. See [App privacy details](https://developer.apple.com/app-store/app-privacy-details/) and the plugin [privacy manifest instructions](https://capacitorjs.com/docs/apis/preferences).
 
 Before submission: replace development publisher/contact language, verify the signed binary's permissions and traffic, review applicable declarations and record rights/privacy sign-off in publisher.json. Do not blindly select a rating, “no data collected,” export-compliance answer or trader status from a template.
+
+- Generated Daily slot-lock icon: built-in image_gen, 30 October 2026. Unchanged transparent source and exact prompt in art-source/icons/slot-lock-v1.{png,json}; runtime transparent PNG in assets/decor/slot-lock-v1.png.
+
+- Steel Daily padlock variants: built-in image_gen, 30 October 2026. Closed/open transparent originals in art-source/icons/slot-{lock,unlock}-steel-v2.png; exact prompts in art-source/icons/steel-locks-v2.json. Runtime transparent 96px PNGs in assets/decor/.

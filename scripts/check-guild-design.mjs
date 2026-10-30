@@ -73,7 +73,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       const geometry = () => page.locator('.hero-choice, .row-active .guess-tile').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return [r.width, r.height]; }));
       measurements[`${engine}-${profile}`] = await page.evaluate(() => Object.fromEntries(['.intro-row', '.mission-card', '.picker-panel', '.row-active', '#submit-button'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return [s, { top: r.top + scrollY, bottom: r.bottom + scrollY, height: r.height, width: r.width }]; })));
       const metrics = measurements[`${engine}-${profile}`];
-      if (profile === 'phone') assert.ok(metrics['#submit-button'].bottom <= height + 96, `${engine}: larger portraits and padded ribbons keep Check within a short scroll: ${metrics['#submit-button'].bottom}`);
+      if (profile === 'phone') assert.ok(metrics['#submit-button'].bottom <= height + 160, `${engine}: portraits, ribbons and slot locks keep Check within a short scroll: ${metrics['#submit-button'].bottom}`);
       if (engine === 'chromium' && before[profile] && locale === 'en') assert.ok(metrics['.row-active'].top < before[profile]['.row-active'].top, `${profile}: padded layout remains above the original playing row`);
       if (width <= 1100) assert.ok(metrics['.picker-panel'].bottom <= metrics['.row-active'].top, 'phone/tablet selector remains above formation');
       assert.equal(await page.locator('.picker-panel').evaluate(el => getComputedStyle(el).position), 'static');

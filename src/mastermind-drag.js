@@ -8,7 +8,7 @@ export function installPortraitDrag({ board, canDrag, onDrop }) {
     const element = document.elementFromPoint(gesture.x, gesture.y);
     const target = element?.closest(".row-active .guess-tile[data-slot]");
     gesture.target?.classList.remove("drag-target");
-    gesture.target = target && board.contains(target) ? target : null;
+    gesture.target = target && board.contains(target) && target.dataset.locked !== "true" ? target : null;
     gesture.target?.classList.add("drag-target");
   }
 
@@ -73,7 +73,7 @@ export function installPortraitDrag({ board, canDrag, onDrop }) {
     suppressedClick = null;
     if (!event.isPrimary || event.button !== 0 || !canDrag()) return;
     const source = event.target.closest(".guess-tile[data-hero]");
-    if (!source || !board.contains(source)) return;
+    if (!source || !board.contains(source) || source.dataset.locked === "true") return;
     cancel();
     gesture = {
       id: event.pointerId, source, hero: source.dataset.hero,

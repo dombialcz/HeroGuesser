@@ -1,0 +1,17 @@
+{
+  "created": "2026-10-30",
+  "generator": "Built-in image_gen tool",
+  "packaging": "Transparent originals preserved. Runtime assets downscaled with sips to 96px; displayed at 20 CSS pixels.",
+  "assets": [
+    {
+      "source": "slot-lock-steel-v2.png",
+      "runtime": "../../assets/decor/slot-lock-steel-v2.png",
+      "prompt": "Use case: precise-object-edit. Edit target: attached gold padlock icon. Create its closed steel-gray variant for a small fantasy game UI toggle. Keep the same straight-on silhouette, centered keyhole, four rivets, painterly beveled metal style and transparent background. Change all brass/gold into cool neutral gray steel with bright silver edges and dark graphite contours. Simplify scratches and tiny detail so the closed shackle and keyhole read clearly at 20 pixels. Closed U-shaped shackle fully seated on both sides. Single isolated icon, square canvas, centered with small even transparent margins. No text, no background, no external shadow or glow."
+    },
+    {
+      "source": "slot-unlock-steel-v2.png",
+      "runtime": "../../assets/decor/slot-unlock-steel-v2.png",
+      "prompt": "Use case: precise-object-edit. Edit target: the attached closed steel padlock. Make the matching UNLOCKED toggle icon. Preserve the lock body exactly: same size, position, shape, four rivets, keyhole, gray steel materials, outline, light and painterly bevels. Change only the shackle: pivot the curved U-shaped shackle open from the left hinge, so the right end rises clearly above its socket with a large visible air gap, a readable open-padlock silhouette at 20px. Keep the entire icon within the same square canvas with transparent padding; body stays aligned to the closed version. Single isolated steel-gray icon on genuinely transparent background. No text, background, external shadow or glow."
+    }
+  ]
+}
