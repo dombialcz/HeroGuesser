@@ -579,7 +579,7 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
       lock.disabled = !type || isFinished(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
       const label = type ? (current.locks?.[index] ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
       lock.setAttribute('aria-label', label); lock.title = label;
-      const icon = document.createElement('img'); icon.src = current.locks?.[index] ? 'assets/decor/slot-lock-steel-v2.png' : 'assets/decor/slot-unlock-steel-v2.png'; icon.alt = ''; icon.width = 20; icon.height = 20; icon.draggable = false;
+      const icon = document.createElement('img'); icon.src = current.locks?.[index] ? 'assets/decor/slot-lock-steel-v2.png' : 'assets/decor/slot-unlock-steel-v2.png'; icon.alt = ''; icon.width = 40; icon.height = 40; icon.draggable = false;
       const fallback = document.createElement('span'); fallback.className = 'lock-fallback'; fallback.textContent = current.locks?.[index] ? '🔒' : '🔓'; fallback.setAttribute('aria-hidden', 'true');
       icon.addEventListener('error', () => { icon.hidden = true; });
       lock.append(icon, fallback); lock.addEventListener('click', () => lockSlot(index));

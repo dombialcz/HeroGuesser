@@ -12,4 +12,4 @@ The set is decorative. SVGs load through CSS backgrounds, pseudo-elements ignore
 
 - slot-lock-v1.png: generated brass padlock for Daily slot locks; transparent 96px runtime PNG displayed at 24px. Built-in image_gen original and exact prompt: ../../art-source/icons/slot-lock-v1.png and slot-lock-v1.json.
 
-- slot-lock-steel-v2.png and slot-unlock-steel-v2.png: matching generated steel closed/open padlocks, replacing the brass runtime control. Transparent 96px assets displayed at 20px over the portrait top edge, inside a 32px control. Originals and exact built-in image_gen prompts: ../../art-source/icons/steel-locks-v2.json.
+- slot-lock-steel-v2.png and slot-unlock-steel-v2.png: matching generated steel closed/open padlocks, replacing the brass runtime control. Transparent 96px assets displayed at 40px over the portrait top edge, inside a 44px control (constrained to the slot width on narrow boards). Originals and exact built-in image_gen prompts: ../../art-source/icons/steel-locks-v2.json.

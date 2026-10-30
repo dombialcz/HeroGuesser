@@ -1,7 +1,7 @@
 {
   "created": "2026-10-30",
   "generator": "Built-in image_gen tool",
-  "packaging": "Transparent originals preserved. Runtime assets downscaled with sips to 96px; displayed at 20 CSS pixels.",
+  "packaging": "Transparent originals preserved. Runtime assets downscaled with sips to 96px; displayed at 40 CSS pixels, constrained to slot width on narrow boards.",
   "assets": [
     {
       "source": "slot-lock-steel-v2.png",
