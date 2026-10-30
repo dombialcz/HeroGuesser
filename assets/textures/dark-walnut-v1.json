@@ -1,0 +1,8 @@
+{
+  "created": "2026-10-30",
+  "generator": "Built-in image_gen tool",
+  "source": "../../art-source/textures/dark-walnut-v1.png",
+  "runtime": "dark-walnut-v1.jpg",
+  "packaging": "Original unchanged. Runtime downscaled to 512px JPEG quality 78 with macOS sips; repeated at 512 CSS pixels beneath brown overlays, with luminosity blending.",
+  "prompt": "Use case: photorealistic-natural. Asset type: seamless repeating material tile for dark brown panels in a fantasy puzzle game UI. Create a single square flat orthographic scan of finely grained matte dark walnut wood, subdued warm dark chocolate brown, thin mostly horizontal gently wavering wood fibers, very low contrast, subtle natural pores. Continuous wood surface, no planks or joints. Uniform diffuse light and brightness all the way to edges. Opposite edges must match seamlessly horizontally and vertically. Quiet background under small pale text: no big knots, dramatic swirls, scratches, engraving, shapes, objects, text, vignette, shine, perspective, cast shadows, borders or watermarks. Fine believable wood grain only, opaque square."
+}

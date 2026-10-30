@@ -22,6 +22,7 @@
   --absent: #b0b3a8;
   --stone-texture: url("assets/textures/warm-stone-v1.jpg");
   --paper-texture: url("assets/textures/aged-paper-v1.jpg");
+  --wood-texture: url("assets/textures/dark-walnut-v1.jpg");
   --paper: #ead9b5;
   --paper-ink: #3f2b1c;
   --paper-muted: #70563b;
@@ -959,4 +960,25 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
   /* Six story places retain 44px touch targets inside the phone's safe gutter. */
   .story-journal { padding: 12px; border-inline: 0; background: var(--panel); }
   .story-journal .story-room { padding: 12px 0; border-inline: 0; }
+}
+
+/* Quiet walnut grain sits beneath the brown surfaces and their live content. */
+.board-panel, .home-choice-story, .story-entry, .story-tutorial, .game-dialog,
+.story-room, .story-latest, .story-attempt, .story-fact, .story-quiz, .prelude-paths > div {
+  background-image: linear-gradient(var(--wood-tint, #3a2b22c7), var(--wood-tint, #3a2b22c7)), var(--wood-texture);
+  background-size: auto, 512px 512px;
+  background-repeat: repeat;
+  background-blend-mode: normal, luminosity;
+}
+.board-panel { --wood-tint: #37281fc7; }
+.home-choice-story { --wood-tint: #3c2d24c7; }
+.story-room { --wood-tint: #2d2019c7; }
+.story-latest, .story-attempt, .story-fact, .story-quiz, .prelude-paths > div { --wood-tint: #49372bc7; }
+@media (max-width: 1100px) {
+  .picker-panel {
+    background-image: linear-gradient(#3a2b22c7, #3a2b22c7), var(--wood-texture);
+    background-size: auto, 512px 512px;
+    background-repeat: repeat;
+    background-blend-mode: normal, luminosity;
+  }
 }

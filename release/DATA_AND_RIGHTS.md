@@ -41,3 +41,5 @@ Before submission: replace development publisher/contact language, verify the si
 - Generated Daily slot-lock icon: built-in image_gen, 30 October 2026. Unchanged transparent source and exact prompt in art-source/icons/slot-lock-v1.{png,json}; runtime transparent PNG in assets/decor/slot-lock-v1.png.
 
 - Steel Daily padlock variants: built-in image_gen, 30 October 2026. Closed/open transparent originals in art-source/icons/slot-{lock,unlock}-steel-v2.png; exact prompts in art-source/icons/steel-locks-v2.json. Runtime transparent 96px PNGs in assets/decor/.
+
+- Generated walnut panel texture: built-in image_gen, 30 October 2026. Unchanged original: art-source/textures/dark-walnut-v1.png; optimized runtime and exact prompt: assets/textures/dark-walnut-v1.{jpg,json}.
