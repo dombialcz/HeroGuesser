@@ -714,8 +714,9 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
 .slot-lock-button:disabled img { opacity: .4; }
 .slot-lock-button img:not([hidden]) + .lock-fallback { display: none; }
 .guess-tile[data-locked="true"]:disabled { opacity: 1; cursor: default; }
-.guess-copy-row { grid-column: 1 / -1; min-height: 44px; max-width: 100%; width: 100%; padding: 6px 4px; border: 1px solid var(--line); border-radius: 2px; color: var(--text); background: var(--panel-raised); font: 600 .72rem/1.4 "DM Sans", sans-serif; cursor: pointer; }
-.guess-copy-row:hover:not(:disabled) { border-color: var(--accent); background: var(--surface-hover); }
+.guess-copy-row { grid-column: 1 / -1; justify-self: end; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; max-width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: 2px; color: var(--muted); background: transparent; font: 500 .7rem/1.4 "DM Sans", sans-serif; cursor: pointer; }
+.guess-copy-row svg { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; pointer-events: none; }
+.guess-copy-row:hover:not(:disabled), .guess-copy-row:focus-visible { color: var(--text); background: var(--surface-hover); }
 .guess-history .tile-position { inset: 3px auto auto 3px; min-width: 13px; min-height: 14px; padding: 1px 2px; font-size: .55rem; }
 .tile-remove { z-index: 2; top: 3px; right: 4px; font-size: .85rem; }
 .board-footer { padding-top: 18px; }
@@ -931,7 +932,7 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
   .guess-row { padding-block: 10px; }
   .row-feedback { gap: 16px; padding-top: 8px; }
   .guess-history .row-lineup { max-width: none; }
-  .guess-history .row-feedback { width: auto; gap: 16px; }
+  .guess-history .row-feedback { width: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 16px; }
   .tile-position, .story-position { inset: 3px auto auto 3px; min-width: 13px; min-height: 14px; padding: 1px 2px; font-size: .6rem; }
   .board-footer { padding-top: 12px; }
   .board-footer .submit-button { min-width: 170px; }

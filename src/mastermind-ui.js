@@ -73,8 +73,8 @@ const COPY = {
     dateLocale: "en-GB",
     unsolvedMessage: "Choose a hero to fill the highlighted row. Select a filled place to change it.",
     solvedMessage: (attempts, party) => `Solved in ${attempts} ${attempts === 1 ? "guess" : "guesses"}. The hidden party was ${party}.`,
-    dragHint: "Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy a hero, or use Copy row for the whole attempt. Padlocks keep heroes in place after checking, clearing or copying. Unlock above a slot to edit it. Unlimited guesses.",
-    copyRow: 'Copy row', copyRowLabel: n => `Copy guess ${n}; keep locked heroes`,
+    dragHint: "Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy a hero, or use Copy for the whole attempt. Padlocks keep heroes in place after checking, clearing or copying. Unlock above a slot to edit it. Unlimited guesses.",
+    copyRow: 'Copy', copyRowLabel: n => `Copy guess ${n}; keep locked heroes`,
     lockPlace: (n, hero) => `Lock ${hero} in place ${n} for later attempts`,
     unlockPlace: (n, hero) => `Unlock ${hero} in place ${n}`,
     emptyLock: n => `Place a hero in slot ${n} before locking it`,
@@ -144,8 +144,8 @@ const COPY = {
     dateLocale: "pl-PL",
     unsolvedMessage: "Wybierz klasę, aby wypełnić podświetlony wiersz. Naciśnij zajęte miejsce, aby je zmienić.",
     solvedMessage: (attempts, party) => `Rozszyfrowano w ${attempts} ${attempts === 1 ? "próbie" : "próbach"}. Ukryta drużyna: ${party}.`,
-    dragHint: "Przytrzymaj portret i przeciągnij, aby przenieść lub zamienić bohaterów. Kopiuj wiersz odtwarza całą próbę, zachowując zablokowanych bohaterów. Kłódka zachowuje bohatera po sprawdzeniu i czyszczeniu. Odblokuj miejsce, aby je zmienić. Bez limitu prób.",
-    copyRow: 'Kopiuj wiersz', copyRowLabel: n => `Skopiuj próbę ${n}; zachowaj zablokowanych bohaterów`,
+    dragHint: "Przytrzymaj portret i przeciągnij, aby przenieść lub zamienić bohaterów. Kopiuj odtwarza całą próbę, zachowując zablokowanych bohaterów. Kłódka zachowuje bohatera po sprawdzeniu i czyszczeniu. Odblokuj miejsce, aby je zmienić. Bez limitu prób.",
+    copyRow: 'Kopiuj', copyRowLabel: n => `Skopiuj próbę ${n}; zachowaj zablokowanych bohaterów`,
     lockPlace: (n, hero) => `Zablokuj: ${hero}, na miejscu ${n} w kolejnych próbach`,
     unlockPlace: (n, hero) => `Odblokuj: ${hero}, na miejscu ${n}`,
     emptyLock: n => `Umieść bohatera na miejscu ${n}, aby go zablokować`,
@@ -612,6 +612,12 @@ function renderBoard(challenge, current) {
       const feedback = renderFeedback(result);
       const clone = document.createElement('button'); clone.type = 'button'; clone.className = 'guess-copy-row'; clone.dataset.copyGuess = String(index);
       clone.textContent = copy().copyRow; clone.setAttribute('aria-label', copy().copyRowLabel(index + 1)); clone.disabled = locked;
+      clone.title = copy().copyRowLabel(index + 1);
+      const copyIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      copyIcon.setAttribute('viewBox', '0 0 20 20'); copyIcon.setAttribute('aria-hidden', 'true'); copyIcon.setAttribute('focusable', 'false');
+      const copyShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      copyShape.setAttribute('d', 'M6 6V3h11v11h-3M3 6h11v11H3Z');
+      copyIcon.append(copyShape); clone.prepend(copyIcon);
       clone.addEventListener('click', () => copyGuess(index)); feedback.append(clone);
       row.append(feedback);
     } else if (index === current.guesses.length && !locked) {
