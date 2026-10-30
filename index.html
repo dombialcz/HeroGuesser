@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Learn Guild of Wits with a guided tutorial, follow a fantasy story in four chapters, or solve four daily hero puzzles." />
-    <meta name="theme-color" content="#101a23" />
+    <meta name="theme-color" content="#291e18" />
     <title>Guild of Wits</title>
     <link rel="icon" type="image/webp" href="assets/mastermind/thief.webp" />
     <link rel="stylesheet" href="mastermind.css" />
@@ -15,7 +15,7 @@
 
     <header class="topbar">
       <a class="brand-lockup" href="./" aria-label="Guild of Wits home">
-        <span class="brand-mark" aria-hidden="true">G</span>
+        <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name"><strong>GUILD OF WITS</strong><small data-i18n="brandKicker">HERO PUZZLES</small></span>
       </a>
       <div class="topbar-actions">
@@ -38,9 +38,7 @@
 
       <section class="intro-row" hidden>
         <div>
-          <p class="eyebrow" data-i18n="gameKicker">THE DAILY HERO CODE</p>
-          <h1 id="daily-title" tabindex="-1" data-i18n="gameTitle">Guild of Wits</h1>
-          <p class="intro-copy" data-i18n="gameSubtitle">Read the party name. Rebuild the formation.</p>
+          <h1 class="guild-ribbon" id="daily-title" tabindex="-1" data-i18n="dailyBoardTitle">Quests</h1>
         </div>
       </section>
 
@@ -52,30 +50,31 @@
         </div>
         <p id="home-tutorial-note" class="home-tutorial-note" role="status" hidden></p>
         <div class="home-choices">
-          <article class="home-choice">
-            <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/knight.webp" alt=""><img class="home-companion" src="assets/mastermind/mage.webp" alt=""></div>
-            <p class="eyebrow" data-i18n="dailyKicker">A FRESH CODE EVERY DAY</p>
-            <h2 data-i18n="dailyTitle">Four hidden formations</h2>
-            <p data-i18n="dailyDescription">Decode a party name in Easy, Medium or Hard. Try Party Roll for five random slots with no count clues. Unlimited guesses.</p>
+          <article class="home-choice home-choice-daily">
             <button type="button" id="home-play-daily" class="story-button" data-i18n="playDaily">Daily Puzzles</button>
+            <div class="home-choice-art" aria-hidden="true"><img class="campaign-emblem" src="assets/campaigns/four-hidden-formations-v1.webp" width="640" height="640" alt="" decoding="async" draggable="false"></div>
+            <h2 data-i18n="dailyTitle">Four hidden formations</h2>
+            <p data-i18n="dailyDescription">Four fresh puzzles every day. Read the clues and find your party.</p>
           </article>
-          <article class="home-choice">
-            <div class="home-choice-art" aria-hidden="true"><img src="assets/mastermind/bard.webp" alt=""><img class="home-companion" src="assets/mastermind/zombie.webp" alt=""></div>
-            <p class="eyebrow" data-i18n="storiesKicker">A PRELUDE · FOUR CHAPTERS</p>
-            <h2 data-i18n="storiesTitle">The Cursed Bell</h2>
-            <p data-i18n="storiesDescription">Begin with a guided escape from the royal treasury. Follow the Thief to the tavern, gather a party and break the bell’s curse. Unlimited attempts and free hints.</p>
+          <article class="home-choice home-choice-story">
             <button type="button" id="home-play-stories" class="story-button" data-i18n="playStories">Play Story</button>
+            <div class="home-choice-heading">
+              <p class="eyebrow" data-i18n="storiesKicker">A PRELUDE · FOUR CHAPTERS</p>
+              <div class="home-choice-art" aria-hidden="true"><img class="campaign-emblem" src="assets/campaigns/cursed-bell-v1.webp" width="640" height="494" alt="" decoding="async" draggable="false"></div>
+            </div>
+            <h2 class="guild-ribbon" data-i18n="storiesTitle">The Cursed Bell</h2>
+            <p data-i18n="storiesDescription">Begin with a guided escape from the royal treasury. Follow the Thief to the tavern, gather a party and break the bell’s curse. Unlimited attempts and free hints.</p>
           </article>
         </div>
       </section>
       <section id="mastermind-stories" class="stories-menu" aria-labelledby="stories-title" hidden>
         <p class="eyebrow" data-i18n="storiesKicker">A PRELUDE · FOUR CHAPTERS</p>
-        <h1 id="stories-title" tabindex="-1" data-i18n="playStories">Play Story</h1>
+        <h1 class="guild-ribbon" id="stories-title" tabindex="-1" data-i18n="playStories">Play Story</h1>
         <section class="story-entry" id="mastermind-adventure-entry" aria-label="The Cursed Bell"></section>
       </section>
       <section id="mastermind-tutorial-entry" hidden aria-hidden="true"></section>
-      <section class="story-tutorial" id="mastermind-tutorial" aria-label="Story tutorial" hidden></section>
-      <section class="story-tutorial story-adventure" id="mastermind-adventure" aria-label="The Cursed Bell" hidden></section>
+      <section class="story-tutorial story-journal" id="mastermind-tutorial" aria-label="Story tutorial" hidden></section>
+      <section class="story-tutorial story-journal story-adventure" id="mastermind-adventure" aria-label="The Cursed Bell" hidden></section>
 
       <div id="mastermind-daily" hidden>
       <p id="daily-notice" class="save-warning" role="status" aria-live="polite"></p>
@@ -104,10 +103,11 @@
 
       <section class="mission-card" aria-labelledby="party-name">
         <div class="mission-main">
-          <div class="mission-icon" aria-hidden="true"><span>✦</span></div>
+          <div class="mission-icon" aria-hidden="true"></div>
           <div class="mission-copy">
             <p class="eyebrow" data-i18n="todaysParty">TODAY’S HIDDEN PARTY</p>
             <h2 id="party-name">Loading today’s company…</h2>
+            <p class="mission-summary" id="party-roll-note" data-i18n="partyRollSubtitle" hidden></p>
           </div>
           <div class="mission-difficulty"><span class="status-dot" aria-hidden="true"></span><span id="mission-level">Easy</span></div>
         </div>
@@ -119,7 +119,10 @@
           </div>
           <div class="clue-parts" id="clue-parts" aria-live="polite"></div>
         </div>
-        <p class="rule-note" id="rule-note">No prefix means no pair. No class appears four times; each named duplicate is exact, and every other hero is a singleton.</p>
+        <details class="formation-rules" id="formation-rules">
+          <summary data-i18n="formationRules">Formation rules</summary>
+          <p class="rule-note" id="rule-note">No prefix means no pair. No class appears four times; each named duplicate is exact, and every other hero is a singleton.</p>
+        </details>
       </section>
 
       <div class="play-layout">
@@ -127,7 +130,7 @@
           <div class="board-header">
             <div class="board-title-group">
               <div class="section-index">01</div>
-              <div><h2 id="board-heading" data-i18n="guessBoard">Guess board</h2><p id="board-subtitle" data-i18n="boardSubtitle">Build the party one row at a time.</p></div>
+              <div><h2 class="guild-ribbon" id="board-heading" data-i18n="guessBoard">Guess board</h2><p id="board-subtitle" data-i18n="boardSubtitle">Build the party one row at a time.</p></div>
             </div>
             <div class="board-actions">
               <span class="guess-counter" id="guess-counter">0 guesses</span>
@@ -145,6 +148,11 @@
               <span><i class="feedback-dot misplaced" aria-hidden="true"></i><span data-i18n="misplacedLegend">Right class, different place</span></span>
               <span><i class="feedback-dot absent" aria-hidden="true"></i><span data-i18n="absentLegend">Not included: wrong class or extra copy</span></span>
             </div>
+            <details class="controls-help" id="controls-help">
+              <summary data-i18n="controls">Controls</summary>
+              <p class="drag-hint" id="drag-hint" data-i18n="dragHint">Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy. Unlimited guesses.</p>
+              <div class="picker-footnote"><span class="keycap">1–7</span><span data-i18n="keyboardPick">quick pick</span><span class="footnote-separator">·</span><span class="keycap">↵</span><span data-i18n="keyboardSubmit">submit</span></div>
+            </details>
             <ol class="guess-board guess-history" id="guess-history" aria-label="Previous guesses, newest first" reversed></ol>
           </div>
         </section>
@@ -152,11 +160,9 @@
         <aside class="picker-panel" aria-labelledby="picker-heading">
           <div class="picker-panel-heading">
             <div class="section-index">02</div>
-            <div><h2 id="picker-heading" data-i18n="chooseHeroes">Choose heroes</h2><p data-i18n="pickerSubtitle">Select a class to fill the next open place.</p></div>
+            <div><h2 class="guild-ribbon" id="picker-heading" data-i18n="chooseHeroes">Choose heroes</h2><p data-i18n="pickerSubtitle">Select a class to fill the next open place.</p></div>
           </div>
           <div class="hero-picker" id="hero-picker" role="group" aria-label="Hero classes"></div>
-          <p class="drag-hint" id="drag-hint" data-i18n="dragHint">Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy. Unlimited guesses.</p>
-          <div class="picker-footnote"><span class="keycap">1–7</span><span data-i18n="keyboardPick">quick pick</span><span class="footnote-separator">·</span><span class="keycap">↵</span><span data-i18n="keyboardSubmit">submit</span></div>
           <button id="share-result" class="story-button" type="button" hidden>Share result</button>
           <p class="game-message" id="game-message" role="status" aria-live="polite"></p>
           <div class="daily-note"><span class="daily-note-icon" aria-hidden="true">◷</span><span data-i18n="dailyNote">Four new formations arrive each day.</span></div>

@@ -177,9 +177,9 @@ try {
     await page.locator("#tutorial-next").click(); await page.locator("#tutorial-next").click();
     await page.locator("#tutorial-answer-elsewhere").click(); await page.locator("#tutorial-next").click(); await page.locator("#tutorial-next").click();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${locale}/${width}: enlarged board has no overflow`);
-    const clipped = await page.locator(".story-picker button, .story-window-description, .story-scores > span, .story-topline > *").evaluateAll(elements => elements.filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent));
+    const clipped = await page.locator(".story-picker button, .story-window-description, .story-scores > span, .story-journal-header > *").evaluateAll(elements => elements.filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent));
     assert.deepEqual(clipped, [], `${locale}/${width}: essential labels do not clip`);
-    const brokenWords = await page.locator(".story-picker button > span").evaluateAll(labels => labels.filter(label => { const range = document.createRange(); range.selectNodeContents(label); return range.getClientRects().length > 1; }).map(label => label.textContent));
+    const brokenWords = await page.locator(".story-picker button > span:not(.portrait-frame)").evaluateAll(labels => labels.filter(label => { const range = document.createRange(); range.selectNodeContents(label); return range.getClientRects().length > 1; }).map(label => label.textContent));
     assert.deepEqual(brokenWords, [], `${locale}/${width}: enlarged piece names remain whole words`);
     await page.screenshot({ path: `${output}/${locale}-${width}-large-text.png`, fullPage: true });
     await page.close(); console.log(`${locale}/${width}: 200% text reflows without clipping`);

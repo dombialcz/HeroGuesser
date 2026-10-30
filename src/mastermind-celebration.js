@@ -2,7 +2,7 @@ const COPY = {
   en: { daily: "Party discovered!", scene: "Scene solved!", dailyNote: "A perfect formation.", sceneNote: "The story unfolds." },
   pl: { daily: "Układ odkryty!", scene: "Scena odkryta!", dailyNote: "Drużyna w komplecie.", sceneNote: "Historia toczy się dalej." },
 };
-const COLORS = ["#f3d58a", "#e7ac55", "#8bcf9d", "#82b8ed", "#b99ae8", "#ed96bb"];
+const COLORS = ["#d3ae66", "#ead9b5", "#8bcf9d", "#82b8ed", "#b99ae8", "#ed96bb"];
 const DURATION = 3200;
 
 // Decorative only: existing result regions announce the win and keep keyboard focus.

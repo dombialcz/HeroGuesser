@@ -1,3 +1,4 @@
+import { createPortrait, animatePlacement, animateResultStamp } from "./portraits.js";
 import { storage, shareText } from "./platform.js";
 import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
 import { showShareText } from "./dialog.js";
@@ -19,10 +20,11 @@ const COPY = {
   en: {
     home: "Home", homeKicker: "THE PARTY IS A PUZZLE", homeSubtitle: "Read the clues. Find your party.",
     playStories: "Play Story", playDaily: "Daily Puzzles", tutorialReminder: "The tutorial is always in Stories → Prelude.",
-    storiesKicker: "A PRELUDE · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "Begin with a guided escape from the royal treasury. Follow the Thief to the tavern, gather a party and break the bell’s curse. Unlimited attempts and free hints.",
-    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Decode a party name in Easy, Medium or Hard. Try Party Roll for five random slots with no count clues. Unlimited guesses.",
+    storiesKicker: "A PRELUDE · FOUR CHAPTERS", storiesTitle: "The Cursed Bell", storiesDescription: "A thief, a tavern, a bell that should never ring. Follow the clues through a prelude and four chapters.",
+    dailyKicker: "A FRESH CODE EVERY DAY", dailyTitle: "Four hidden formations", dailyDescription: "Four fresh puzzles every day. Read the clues and find your party.",
     brandKicker: "DAILY CHALLENGE",
     gameKicker: "THE DAILY HERO CODE",
+    dailyBoardTitle: "Quests",
     gameTitle: "Guild of Wits",
     gameSubtitle: "Read the party name. Rebuild the formation.",
     languageLabel: "Language",
@@ -39,7 +41,7 @@ const COPY = {
     partyRollSubtitle: "Five random slots. Any hero, any number of times.",
     partyRollRule: "Each of the five slots can hold any of the seven heroes. Repeats are unrestricted—even five of the same hero. Use the feedback to find the order. Everyone gets the same Party Roll puzzle for today’s date.",
     heroes: "heroes",
-    todaysParty: "TODAY’S HIDDEN PARTY",
+    todaysParty: "GUILD COMMISSION · DAILY",
     nameClues: "Name clues",
     nameCluesHint: "Each word reveals an exact class count.",
     guessBoard: "Guess board",
@@ -58,6 +60,7 @@ const COPY = {
     keyboardSubmit: "submit",
     dailyNote: "Four new formations arrive each day.",
     dailyFooter: "A new code every day · Four challenges",
+    formationRules: "Formation rules", controls: "Controls",
     ruleNote: "No prefix means no pair. No class appears four times; each named duplicate is exact, and every other hero is a singleton.",
     exactCount: (count) => `Exactly ${count}`,
     rowLabel: (number) => `Guess ${number}`,
@@ -83,10 +86,11 @@ const COPY = {
   pl: {
     home: "Ekran główny", homeKicker: "DRUŻYNA PEŁNA ZAGADEK", homeSubtitle: "Odczytaj wskazówki. Odtwórz drużynę.",
     playStories: "Opowieść", playDaily: "Codzienne zagadki", tutorialReminder: "Samouczek znajdziesz w Opowieści → Prolog.",
-    storiesKicker: "PROLOG · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Ucieknij z królewskiego skarbca, poznając zasady krok po kroku. Rusz za Złodziejem do karczmy, zbierz drużynę i złam klątwę dzwonu. Bez limitu prób, z darmowymi podpowiedziami.",
-    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Odczytaj nazwę drużyny na poziomie Łatwym, Średnim lub Trudnym. Wybierz „Drużynę z przypadku”, aby odgadnąć pięć losowych miejsc bez wskazówek o liczbie bohaterów. Bez limitu prób.",
+    storiesKicker: "PROLOG · CZTERY ROZDZIAŁY", storiesTitle: "Przeklęty dzwon", storiesDescription: "Złodziej, karczma i dzwon, który nie powinien zabrzmieć. Podążaj za wskazówkami przez prolog i cztery rozdziały.",
+    dailyKicker: "NOWY KOD KAŻDEGO DNIA", dailyTitle: "Cztery ukryte drużyny", dailyDescription: "Cztery nowe zagadki każdego dnia. Odczytaj wskazówki i odtwórz drużynę.",
     brandKicker: "CODZIENNE WYZWANIE",
     gameKicker: "CODZIENNY KOD BOHATERÓW",
+    dailyBoardTitle: "Zadania",
     gameTitle: "Guild of Wits",
     gameSubtitle: "Odczytaj nazwę drużyny. Odtwórz jej skład.",
     languageLabel: "Język",
@@ -103,7 +107,7 @@ const COPY = {
     partyRollSubtitle: "Pięć losowych miejsc. Każdy bohater może się powtarzać.",
     partyRollRule: "Na każdym z pięciu miejsc może stanąć dowolny z siedmiu bohaterów. Powtórzenia są dowolne — nawet pięć razy ten sam bohater. Odkryj kolejność dzięki wynikom prób. Dzisiejsza „Drużyna z przypadku” jest taka sama dla wszystkich.",
     heroes: "bohaterów",
-    todaysParty: "TAJEMNICZA DRUŻYNA DNIA",
+    todaysParty: "ZLECENIE GILDII · NA DZIŚ",
     nameClues: "Wskazówki w nazwie",
     nameCluesHint: "Każde słowo wskazuje dokładną liczbę klas.",
     guessBoard: "Twoje próby",
@@ -122,6 +126,7 @@ const COPY = {
     keyboardSubmit: "zatwierdź",
     dailyNote: "Każdego dnia czekają cztery nowe składy.",
     dailyFooter: "Nowy kod każdego dnia · Cztery wyzwania",
+    formationRules: "Zasady składu", controls: "Sterowanie",
     ruleNote: "Brak przedrostka oznacza brak pary. Żadna klasa nie występuje cztery razy; wskazane duplikaty są dokładne, a pozostałe klasy pojawiają się pojedynczo.",
     exactCount: (count) => `Dokładnie ${count}×`,
     rowLabel: (number) => `Próba ${number}`,
@@ -344,6 +349,7 @@ function placeHero(type) {
   if (state.selectedSlot < 0) state.selectedSlot = slot;
   saveProgress();
   render();
+  animatePlacement(currentGuess.querySelector(`[data-slot="${slot}"] .portrait-frame`));
 }
 
 function selectSlot(index) {
@@ -366,6 +372,7 @@ function submitGuess() {
   state.selectedSlot = 0;
   saveProgress();
   render();
+  animateResultStamp(guessHistory.firstElementChild?.querySelector(".row-feedback"));
   if (isFinished()) { celebration.play({ kind: "daily" }); playCompletionSound(); }
 }
 
@@ -403,7 +410,7 @@ function applyCopy() {
   heroPicker.setAttribute("aria-label", strings.heroClassesLabel);
   document.querySelector(".board-legend").setAttribute("aria-label", strings.feedbackLegendLabel);
   const isPartyRoll = currentChallenge().id === "chaos";
-  document.querySelector('[data-i18n="gameSubtitle"]').textContent = isPartyRoll ? strings.partyRollSubtitle : strings.gameSubtitle;
+  document.querySelector("#party-roll-note").hidden = !isPartyRoll;
   document.querySelector("#rule-note").textContent = isPartyRoll ? strings.partyRollRule : strings.ruleNote;
   languageButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.locale === state.locale)));
   todayDate.dateTime = dateKey;
@@ -425,9 +432,7 @@ function makeCluePart(clue) {
   const chip = document.createElement("article");
   chip.className = `clue-card clue-${clue.kind}`;
   applyHeroAppearance(chip, hero);
-  const image = document.createElement("img");
-  image.src = hero.image;
-  image.alt = "";
+  const image = createPortrait(hero.image, localizedHero(hero.id));
   const text = document.createElement("span");
   text.className = "clue-text";
   const kind = document.createElement("span");
@@ -477,6 +482,14 @@ function renderFeedback(result) {
   return feedback;
 }
 
+function makePlaceTab(index) {
+  const tab = document.createElement("span");
+  tab.className = "tile-position";
+  tab.setAttribute("aria-hidden", "true");
+  tab.textContent = String(index + 1);
+  return tab;
+}
+
 function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current = currentProgress()) {
   const lineup = document.createElement("span");
   lineup.className = "row-lineup";
@@ -492,11 +505,8 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
       tile.addEventListener("click", () => placeHero(type));
       tile.className = "guess-tile";
       applyHeroAppearance(tile, HERO_BY_ID[type]);
-      const image = document.createElement("img");
-      image.src = HERO_BY_ID[type].image;
-      image.draggable = false;
-      image.alt = "";
-      tile.append(image);
+      const image = createPortrait(HERO_BY_ID[type].image, localizedHero(type));
+      tile.append(image, makePlaceTab(index));
       lineup.append(tile);
     }
     return lineup;
@@ -519,10 +529,7 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
     }
     if (type) {
       applyHeroAppearance(tile, HERO_BY_ID[type]);
-      const image = document.createElement("img");
-      image.src = HERO_BY_ID[type].image;
-      image.draggable = false;
-      image.alt = "";
+      const image = createPortrait(HERO_BY_ID[type].image, localizedHero(type));
       tile.append(image);
       if (currentRow) {
         const remove = document.createElement("span");
@@ -530,12 +537,8 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
         remove.textContent = "×";
         tile.append(remove);
       }
-    } else if (currentRow) {
-      const number = document.createElement("span");
-      number.className = "tile-position";
-      number.textContent = String(index + 1);
-      tile.append(number);
     }
+    tile.append(makePlaceTab(index));
     lineup.append(tile);
   }
   return lineup;
@@ -587,9 +590,7 @@ function renderPicker() {
     applyHeroAppearance(button, hero);
     button.disabled = locked;
     button.setAttribute("aria-label", copy().heroChoice(localizedHero(hero.id), index + 1));
-    const image = document.createElement("img");
-    image.src = hero.image;
-    image.alt = "";
+    const image = createPortrait(hero.image, localizedHero(hero.id));
     const name = document.createElement("span");
     name.textContent = localizedHero(hero.id);
     const key = document.createElement("kbd");
@@ -676,7 +677,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") { portraitDrag.cancel(); return; }
   if (event.altKey || event.ctrlKey || event.metaKey) return;
   if (event.target instanceof HTMLElement && (
-    ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(event.target.tagName)
+    ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A", "SUMMARY"].includes(event.target.tagName)
     || event.target.isContentEditable
   )) return;
   if (/^[1-7]$/.test(event.key)) {
@@ -733,6 +734,7 @@ portraitDrag = installPortraitDrag({
     if (state.selectedSlot < 0) state.selectedSlot = targetSlot;
     saveProgress();
     render();
+    if (changed) animatePlacement(currentGuess.querySelector(`[data-slot="${targetSlot}"] .portrait-frame`));
   },
 });
 pruneDaily(storage, dateKey);

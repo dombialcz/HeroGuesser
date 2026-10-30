@@ -1,3 +1,4 @@
+import { portraitMarkup, animatePlacement, animateResultStamp } from "./portraits.js";
 import { storage } from "./platform.js";
 import { restoreStory, serializeStory, storyKey } from "./story-progress.js";
 import { loadCampaign, resumeChapter, needsPrelude } from "./story-campaign.js";
@@ -56,7 +57,11 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     if (["pick", "slot", "move", "clear"].includes(action.type) && changed) undo = { draft: before.draft, selected: before.selected };
     if ((action.type === "check" && !state.notice) || action.type === "next") undo = null;
     persist(); render();
-    if (state.guesses.length > before.guesses.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) root.querySelector(".story-latest")?.animate([{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 180, easing: "ease-out" });
+    if (changed && ["pick", "move"].includes(action.type)) {
+      const slot = action.type === "move" ? action.to : state.draft.findIndex((piece, index) => piece !== before.draft[index]);
+      animatePlacement(root.querySelector(`[data-slot="${slot}"] .portrait-frame`));
+    }
+    if (state.guesses.length > before.guesses.length) animateResultStamp(root.querySelector(".story-latest .story-scores"));
     let message = state.notice ? c[state.notice === "incomplete" ? "incompleteNotice" : state.notice] : "";
     if (!message && action.type === "check") message = state.phase === "solved" ? c.solved : c.result(state.guesses.at(-1));
     if (!message && action.type === "pick" && changed) {
@@ -77,7 +82,7 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     else if (action.type === "check" && state.guesses.length > before.guesses.length) focus("#adventure-result-heading");
     else if (action.type === "clear") focus("#adventure-slot-0");
   }
-  const image = piece => `<img src="${IMAGE[piece]}" alt="" draggable="false">`;
+  const image = piece => portraitMarkup(IMAGE[piece], t()[piece]);
   function lineup(pieces, sceneIndex, editable = false) {
     const c = t(), text = c.scenes[sceneCopyIndex(state, sceneIndex)];
     const scene = ADVENTURES[state.adventure].scenes[sceneIndex];
@@ -86,8 +91,8 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     const label = pieces.map((p, i) => `${c.position} ${i + 1}: ${p ? c[p] : c.empty}`).join("; ");
     return `<div class="adventure-landmarks" aria-label="${text.landmarks.join(" → ")}"><span>${landmarkIcon("left")}${text.landmarks[0]} →</span><span>← ${landmarkIcon("right")}${text.landmarks[1]}</span></div><div class="story-formation no-window"><div class="story-slots${editable ? " row-active" : ""}" style="--story-size:${pieces.length}" role="${editable ? "group" : "img"}" aria-label="${editable ? c.current : label}">${pieces.map((p, i) => {
       const style = p ? `style="--hero-color:${COLOR[p]}"` : "";
-      if (!editable) return `<span class="story-piece" ${style}>${p ? image(p) : i + 1}</span>`;
-      return `<button type="button" id="adventure-slot-${i}" class="guess-tile story-tile ${p || "empty"}" data-slot="${i}" ${p ? `data-hero="${p}"` : ""} ${style} aria-label="${c.position} ${i + 1}: ${p ? `${c[p]}. ${c.tapClear}` : c.empty}" aria-current="${state.selected === i}" aria-describedby="adventure-clues">${p ? image(p) : i + 1}<span class="story-position" aria-hidden="true">${i + 1}</span></button>`;
+      if (!editable) return `<span class="story-piece" ${style}>${p ? image(p) : ""}<span class="story-position" aria-hidden="true">${i + 1}</span></span>`;
+      return `<button type="button" id="adventure-slot-${i}" class="guess-tile story-tile ${p || "empty"}" data-slot="${i}" ${p ? `data-hero="${p}"` : ""} ${style} aria-label="${c.position} ${i + 1}: ${p ? `${c[p]}. ${c.tapClear}` : c.empty}" aria-current="${state.selected === i}" aria-describedby="adventure-clues">${p ? image(p) : ""}<span class="story-position" aria-hidden="true">${i + 1}</span></button>`;
     }).join("")}</div></div>`;
   }
   function scores(result) {
@@ -122,7 +127,7 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     ADVENTURES.forEach((_, index) => entry.querySelector(`#start-adventure-${index}`).addEventListener("click", () => start(index)));
     if (!active) { content.replaceChildren(); announce(""); return; }
     if (recovery) {
-      content.innerHTML = `<h2 id="adventure-guide-title" tabindex="-1">${c.adventures[state.adventure].title}</h2><p role="alert">${c.recovery}</p><button id="adventure-recovery" class="story-primary" type="button">${c.restart}</button><button id="adventure-exit" type="button">${c.back}</button>`;
+      content.innerHTML = `<h1 id="adventure-guide-title" tabindex="-1">${c.adventures[state.adventure].title}</h1><p role="alert">${c.recovery}</p><button id="adventure-recovery" class="story-primary" type="button">${c.restart}</button><button id="adventure-exit" type="button">${c.back}</button>`;
       root.querySelector('#adventure-exit').onclick = leave;
       root.querySelector('#adventure-recovery').onclick = restart;
       return;
@@ -136,21 +141,20 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
     root.dataset.phase = state.phase;
     const counts = adventureCounts(state);
     content.innerHTML = `
-      <div class="story-topline"><p class="eyebrow">${c.chapter} ${state.adventure + 1} · ${c.scene} ${state.scene + 1} ${c.of} ${ADVENTURES[state.adventure].scenes.length}</p><button id="adventure-exit" class="story-text-button" type="button">${c.back}</button></div>
-      <h1 class="story-title">${story.title}</h1>
-      <section class="story-instruction"><h2 id="adventure-guide-title" tabindex="-1">${heading}</h2>${isIntro && state.scene === 0 ? `<p class="adventure-premise">${story.intro}</p>` : ""}<p>${complete ? story.ending : solved ? text.fact : text.story}</p></section>
+      <header class="story-journal-header"><button id="adventure-exit" class="story-text-button" type="button"><span aria-hidden="true">← </span>${c.chapters}</button><p class="story-chapter">${c.chapter} ${state.adventure + 1} · ${story.title} · ${c.scene} ${state.scene + 1} ${c.of} ${ADVENTURES[state.adventure].scenes.length}</p></header>
+      <section class="story-instruction" aria-labelledby="adventure-guide-title"><h1 id="adventure-guide-title" tabindex="-1" class="guild-ribbon">${heading}</h1>${isIntro && state.scene === 0 ? `<p class="adventure-premise">${story.intro}</p>` : ""}<p>${complete ? story.ending : solved ? text.fact : text.story}</p></section>
       ${isIntro && state.scene === 0 ? `<p class="story-evidence">${c.rules}</p>` : ""}
-      ${isIntro || playing ? `<aside class="story-name-clue" id="adventure-clues"><h3>${c.clues}</h3><p class="story-lesson">${text.lesson}</p><ul>${text.clues.map(clue => `<li>${clue}</li>`).join("")}</ul><p>${c.adjacency}</p></aside>` : ""}
+      ${isIntro || playing ? `<aside class="story-name-clue" id="adventure-clues" aria-labelledby="adventure-clues-heading"><h2 id="adventure-clues-heading">${c.clues}</h2><p class="story-lesson">${text.lesson}</p><ul>${text.clues.map(clue => `<li>${clue}</li>`).join("")}</ul><p>${c.adjacency}</p></aside>` : ""}
       ${solved ? `<details class="adventure-feedback-help story-reasoning"><summary>${c.reasoning}</summary><p>${text.reasoning}</p></details>` : ""}
-      ${latest ? `<section class="story-latest"><h3 id="adventure-result-heading" tabindex="-1">${c.latest} · ${state.guesses.length}</h3>${lineup(latest.pieces, state.scene)}${scores(latest)}<p>${c.fresh}</p></section>` : ""}
-      ${playing ? `<section class="story-room" aria-labelledby="adventure-current-heading"><h3 id="adventure-current-heading">${c.current}</h3><p class="story-current-hint">${c.currentHint}</p>${lineup(state.draft, state.scene, true)}<p class="story-counts">${c.pieces}: ${scene.pieces.map(p => `${c[p]} × ${counts[p]}`).join(" · ")}</p><div class="story-picker" role="group" aria-label="${c.choose}">${scene.pieces.map((p, i) => `<button type="button" id="adventure-pick-${p}" data-piece="${p}" aria-label="${c.add} ${c[p]}, ${c.shortcut} ${i + 1}" aria-keyshortcuts="${i + 1}">${image(p)}<span>${c[p]}</span><kbd aria-hidden="true">${i + 1}</kbd></button>`).join("")}</div><p class="story-ready" id="adventure-ready">${state.draft.every(Boolean) ? c.ready : c.incomplete}</p></section>` : ""}
+      ${latest ? `<section class="story-latest"><h2 id="adventure-result-heading" tabindex="-1">${c.latest} · ${state.guesses.length}</h2>${lineup(latest.pieces, state.scene)}${scores(latest)}<p>${c.fresh}</p></section>` : ""}
+      ${playing ? `<section class="story-room" aria-labelledby="adventure-current-heading"><h2 id="adventure-current-heading">${c.current}</h2><p class="story-current-hint">${c.currentHint}</p>${lineup(state.draft, state.scene, true)}<p class="story-counts">${c.pieces}: ${scene.pieces.map(p => `${c[p]} × ${counts[p]}`).join(" · ")}</p><div class="story-picker" role="group" aria-label="${c.choose}">${scene.pieces.map((p, i) => `<button type="button" id="adventure-pick-${p}" data-piece="${p}" aria-label="${c.add} ${c[p]}, ${c.shortcut} ${i + 1}" aria-keyshortcuts="${i + 1}">${image(p)}<span>${c[p]}</span><kbd aria-hidden="true">${i + 1}</kbd></button>`).join("")}</div><p class="story-ready" id="adventure-ready">${state.draft.every(Boolean) ? c.ready : c.incomplete}</p></section>` : ""}
       <p class="story-notice${state.notice ? " has-notice" : ""}">${state.notice ? c[state.notice === "incomplete" ? "incompleteNotice" : state.notice] : ""}</p>
       <div class="story-primary-actions">${playing ? `<button id="adventure-check" class="story-primary" type="button" aria-describedby="adventure-ready" ${state.draft.every(Boolean) ? "" : "disabled"}>${c.check} →</button>` : isIntro || solved ? `<button id="adventure-next" class="story-primary" type="button">${isIntro ? c.begin : c.next} →</button>` : complete ? `<button id="adventure-finish" class="story-primary" type="button">${state.adventure + 1 < ADVENTURES.length ? `${c.continue}: ${c.adventures[state.adventure + 1].title}` : c.finish} →</button>` : ""}</div>
       <div class="story-edit-actions">${playing ? `<button id="adventure-clear" class="story-text-button" type="button" ${state.draft.some(Boolean) ? "" : "disabled"}>${c.clear}</button><button id="adventure-hint" class="story-text-button" type="button" ${state.hint >= 2 ? "disabled" : ""}>${state.hint === 0 ? c.hint : state.hint === 1 ? c.moreHint : c.hintsShown}</button>` : ""}${undo ? `<button id="adventure-undo" class="story-text-button" type="button">${c.undo}</button>` : ""}</div>
-      ${playing && state.hint ? `<aside class="story-hint"><h3>${c.hintHeading}</h3>${text.hints.slice(0, state.hint).map(h => `<p>${h}</p>`).join("")}</aside>` : ""}
+      ${playing && state.hint ? `<aside class="story-hint"><h2>${c.hintHeading}</h2>${text.hints.slice(0, state.hint).map(h => `<p>${h}</p>`).join("")}</aside>` : ""}
       ${playing ? `<p class="story-drag-hint">${c.dragHint}</p><details class="adventure-feedback-help"><summary>${c.exact} / ${c.misplaced} / ${c.absent}</summary><p>${c.feedbackHelp}</p></details>` : ""}
-      ${state.guesses.length > 1 ? `<section class="story-history"><h3>${c.earlier}</h3><ol class="story-attempts" reversed start="${state.guesses.length - 1}">${state.guesses.slice(0, -1).map((g, i) => `<li class="story-attempt"><span class="attempt-number">${i + 1}</span><div>${lineup(g.pieces, state.scene)}${scores(g)}<p>${c.hypotheses}</p></div></li>`).reverse().join("")}</ol></section>` : ""}
-      ${state.facts.length ? `<section class="story-facts"><h3>${c.facts}</h3>${state.facts.map(f => `<article class="story-fact"><h4>${c.verified} ${f.scene + 1} · ${c.scenes[sceneCopyIndex(state, f.scene)].title}</h4><p>${c.scenes[sceneCopyIndex(state, f.scene)].fact}</p>${lineup(f.pieces, f.scene)}</article>`).join("")}</section>` : ""}
+      ${state.guesses.length > 1 ? `<section class="story-history"><h2>${c.earlier}</h2><ol class="story-attempts" reversed start="${state.guesses.length - 1}">${state.guesses.slice(0, -1).map((g, i) => `<li class="story-attempt"><span class="attempt-number">${i + 1}</span><div>${lineup(g.pieces, state.scene)}${scores(g)}<p>${c.hypotheses}</p></div></li>`).reverse().join("")}</ol></section>` : ""}
+      ${state.facts.length ? `<section class="story-facts"><h2>${c.facts}</h2>${state.facts.map(f => `<article class="story-fact"><h3>${c.verified} ${f.scene + 1} · ${c.scenes[sceneCopyIndex(state, f.scene)].title}</h3><p>${c.scenes[sceneCopyIndex(state, f.scene)].fact}</p>${lineup(f.pieces, f.scene)}</article>`).join("")}</section>` : ""}
       <div class="story-bottom"><p>${c.noSave}</p><button id="adventure-restart" class="story-text-button" type="button">${complete ? c.replay : c.restart}</button></div>`;
     const bind = (id, cb) => root.querySelector(`#${id}`)?.addEventListener("click", cb);
     bind("adventure-exit", leave);

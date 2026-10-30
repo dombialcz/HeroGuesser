@@ -84,7 +84,9 @@ try {
     assert.equal((await draft())[0], "knight");
     assert.equal((await draft())[2], "bard", "History portraits also support keyboard copying");
     await page.locator('[data-locale="pl"]').click();
+    await page.locator("#controls-help summary").click();
     assert.match(await page.locator("#drag-hint").innerText(), /Przytrzymaj/);
+    await page.locator("#controls-help summary").click();
 
     // Old ten-attempt saves must reopen, and history beyond ten must survive.
     await page.evaluate(() => {

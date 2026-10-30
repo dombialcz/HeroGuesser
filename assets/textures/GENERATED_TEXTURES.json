@@ -1,0 +1,22 @@
+{
+  "created": "2026-10-29",
+  "generator": "Built-in image_gen tool",
+  "assets": [
+    {
+      "file": "charcoal-cloth-v1.jpg",
+      "source": "../../art-source/textures/charcoal-cloth-v1.png",
+      "prompt": "Use case: photorealistic-natural.\nAsset type: seamless repeating background texture for a restrained fantasy tabletop deduction game UI.\nPrimary request: create a single square, perfectly tileable swatch of fine charcoal linen cloth. Flat orthographic macro material scan filling every pixel, with a tight subtly irregular natural woven fibre structure.\nColour palette: warm charcoal with a very slight olive undertone, predominantly #35372f through #43453a. Low local contrast, matte, quiet, tactile and refined; this will sit beneath interface text after a dark CSS overlay.\nComposition and lighting: uniform neutral diffuse lighting throughout; absolutely no perspective, depth-of-field, vignette, bright centre, gradients or directional highlights. Fine-scale weave, not large hessian or burlap.\nConstraints: opposing edges must join continuously when repeated horizontally and vertically. No obvious repetition landmarks, no seams, folds, fraying, knots, scratches, motifs, objects, lettering, logos, borders or watermarks. Texture only. Square 1024 by 1024 pixels. Opaque background."
+    },
+    {
+      "file": "aged-paper-v1.jpg",
+      "source": "../../art-source/textures/aged-paper-v1.png",
+      "prompt": "Use case: photorealistic-natural.\nAsset type: seamless repeating paper texture for the commission slips of a restrained fantasy tabletop deduction game UI.\nPrimary request: create a single square, perfectly tileable swatch of warm aged cotton-rag paper. Flat orthographic close-up material scan filling every pixel. Fine softly interwoven paper fibres, delicate fine grain, minimal natural small-scale variation.\nColour palette: warm muted ivory and oatmeal, centred on #d6c9a8. Very low contrast so small dark UI text stays easy to read; understated and believable.\nComposition and lighting: even neutral diffuse lighting, perfectly flat material with no perspective, vignette, centre glow, directional shadows or broad colour patches.\nConstraints: opposing edges must join continuously in both axes. No visible page edges, borders, creases, tears, burns, foxing spots, large stains, maps, drawings, calligraphy, objects, printed marks, letters, logos or watermarks. No manufactured repeating decorative pattern. Texture only. Square 1024 by 1024 pixels. Opaque background."
+    },
+    {
+      "file": "warm-stone-v1.jpg",
+      "source": "../../art-source/textures/warm-stone-v1.png",
+      "prompt": "Use case: stylized-concept\nAsset type: seamless repeating square stone material tile for the full-page background of a fantasy puzzle game.\nPrimary request: extremely subtle fine-grained aged stone, warm charcoal grey with a quiet taupe undertone, a continuous matte honed limestone/slate surface, delicate mineral grain, tiny shallow pores and faint irregular mineral flecks. Read as real stone rather than fabric or paper.\nComposition: orthographic flat material scan, texture fills every pixel. Seamlessly tileable in both axes: left and right edges match, top and bottom edges match. Uniform detail and brightness all the way to each edge.\nLighting: flat diffuse ambient lighting, subdued low contrast. Background must stay quiet under parchment cards and gold lettering.\nColor palette: dark warm grey stone, restrained neutral taupe, no colorful flecks.\nConstraints: no masonry grid, bricks, cobbles, mortar, large cracks, prominent veins, borders, isolated objects, symbols, text, watermarks, perspective, cast shadows, vignette, center glow, broad light/dark patches or decorative motifs. Fine-scale texture only. Opaque square image, 1024 by 1024 pixels."
+    }
+  ],
+  "packaging": "Original 1254×1254 PNGs preserved. Runtime copies downscaled to 512×512 JPEG quality 78 with macOS sips. Stone repeats at 512 CSS pixels behind a dark warm-grey overlay; paper repeats at 384px. CSS luminosity blending keeps both in the guild palette; plain colours remain the fallback. Cloth is retained as an unused earlier material."
+}

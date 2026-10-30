@@ -45,6 +45,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal(await page.locator('.clue-divider').isVisible(), false);
       assert.equal(await page.locator('.hero-choice').count(), 7);
       assert.equal(await page.locator('#current-guess .guess-tile').count(), 5);
+      if (!await page.locator('#formation-rules').evaluate(el => el.open)) await page.locator('#formation-rules summary').click();
       assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /pięć razy/ : /five of the same/);
       await click('.hero-choice[data-hero="mage"]');
       await click('#mastermind-home-button'); await click('#home-play-daily');
@@ -71,6 +72,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal(await page.locator('.clue-area').isVisible(), true);
       await partyRoll();
       await click(`[data-locale="${locale === 'pl' ? 'en' : 'pl'}"]`);
+      if (!await page.locator('#formation-rules').evaluate(el => el.open)) await page.locator('#formation-rules summary').click();
       assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /seven heroes/ : /siedmiu bohaterów/);
       await click(`[data-locale="${locale}"]`);
       await fill(puzzle.code); await click('#submit-button');

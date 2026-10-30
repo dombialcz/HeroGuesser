@@ -1,3 +1,4 @@
+import { portraitMarkup, animatePlacement, animateResultStamp } from "./portraits.js";
 import { actTutorial, canEditTutorial, createTutorial, guardSlot, tutorialScene, tutorialPieces, tutorialLimits } from "./mastermind-tutorial-core.js";
 import { TUTORIAL_COPY } from "./mastermind-tutorial-copy.js";
 import { installPortraitDrag } from "./mastermind-drag.js";
@@ -60,6 +61,10 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     }
     if (["check", "next", "answer"].includes(action.type) && !state.notice) undoState = null;
     render({ animate: state.guesses.length > before.guesses.length });
+    if (changed && ["pick", "move"].includes(action.type)) {
+      const slot = action.type === "move" ? action.to : state.draft.findIndex((piece, index) => piece !== before.draft[index]);
+      animatePlacement(root.querySelector(`[data-slot="${slot}"] .portrait-frame`));
+    }
     let message = state.notice ? c[state.notice] : "";
     if (!message && action.type === "pick" && changed) {
       const slot = state.draft.findIndex((piece, index) => piece !== before.draft[index]);
@@ -87,7 +92,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
   function hints() {
     return state.phase === "guard" ? t().guardHints : state.phase === "practice" ? t().practiceHints : t().treasuryHints;
   }
-  const image = piece => `<img src="${IMAGE[piece]}" alt="" draggable="false">`;
+  const image = piece => portraitMarkup(IMAGE[piece], t()[piece]);
   function lineup(pieces, windowSide, editable = false) {
     const c = t();
     const tiles = pieces.map((piece, index) => {
@@ -95,9 +100,9 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
       const fixed = editable && index === guardSlot(state);
       const label = `${c.position} ${index + 1}: ${piece ? c[piece] : c.empty}${near ? `, ${c.nearWindow}` : ""}${fixed ? `, ${c.fixed}` : editable && piece ? `. ${c.tapClear}` : ""}`;
       const appearance = piece ? `style="--hero-color:${COLOR[piece]};--hero-tint:${COLOR[piece]}24"` : "";
-      if (!editable) return `<span class="story-piece ${piece || "empty"}" ${appearance}>${piece ? image(piece) : index + 1}</span>`;
+      if (!editable) return `<span class="story-piece ${piece || "empty"}" ${appearance}>${piece ? image(piece) : ""}<span class="story-position" aria-hidden="true">${index + 1}</span></span>`;
       if (fixed) return `<span id="tutorial-slot-${index}" class="story-tile ${piece}" ${appearance} role="img" aria-label="${label}">${image(piece)}<span class="story-position" aria-hidden="true">${index + 1} ◆</span></span>`;
-      return `<button type="button" id="tutorial-slot-${index}" class="guess-tile story-tile ${piece || "empty"}" data-slot="${index}" ${piece && !fixed ? `data-hero="${piece}"` : ""} ${appearance} aria-label="${label}" aria-current="${state.selected === index}" ${fixed ? 'aria-disabled="true"' : ""} aria-describedby="tutorial-step-copy${windowSide !== null ? " tutorial-window-desc" : ""}">${piece ? image(piece) : `<span>${index + 1}</span>`}<span class="story-position" aria-hidden="true">${index + 1}${fixed ? " ◆" : ""}</span></button>`;
+      return `<button type="button" id="tutorial-slot-${index}" class="guess-tile story-tile ${piece || "empty"}" data-slot="${index}" ${piece && !fixed ? `data-hero="${piece}"` : ""} ${appearance} aria-label="${label}" aria-current="${state.selected === index}" ${fixed ? 'aria-disabled="true"' : ""} aria-describedby="tutorial-step-copy${windowSide !== null ? " tutorial-window-desc" : ""}">${piece ? image(piece) : ""}<span class="story-position" aria-hidden="true">${index + 1}${fixed ? " ◆" : ""}</span></button>`;
     }).join("");
     const label = pieces.map((piece, index) => `${c.position} ${index + 1}: ${piece ? c[piece] : c.empty}`).join("; ");
     return `<div class="story-formation ${windowSide === null ? "no-window" : windowSide === 0 ? "window-left" : "window-right"}">${windowSide === null ? "" : `<span class="story-window" role="img" aria-label="${c.byWindow(windowSide + 1)}"><img src="assets/mastermind/window.svg" alt="" draggable="false"></span>`}<div class="story-slots${editable ? " row-active" : ""}" style="--story-size:${pieces.length}" role="${editable ? "group" : "img"}" aria-label="${editable ? `${c.position} 1–${pieces.length}` : label}">${tiles}</div></div>`;
@@ -126,22 +131,21 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     const inPractice = state.phase === "practice" || state.phase === "practice-intro";
     const next = NEXT_PHASES.includes(state.phase);
     content.innerHTML = `
-      <div class="story-topline"><p class="eyebrow">${c.prelude} · ${c.scene} ${tutorialScene(state)} ${c.stage}</p><button type="button" id="tutorial-exit" class="story-text-button">${c.back}</button></div>
-      <h1 class="story-title">${c.titles[tutorialScene(state)]}</h1>
-      <section class="story-instruction" aria-labelledby="tutorial-guide-title"><h2 id="tutorial-guide-title" tabindex="-1">${title}</h2><p id="tutorial-step-copy">${instruction}</p></section>
+      <header class="story-journal-header"><button type="button" id="tutorial-exit" class="story-text-button"><span aria-hidden="true">← </span>${c.back}</button><p class="story-chapter">${c.prelude} · ${c.titles[tutorialScene(state)]} · ${c.scene} ${tutorialScene(state)} ${c.stage}</p></header>
+      <section class="story-instruction" aria-labelledby="tutorial-guide-title"><h1 id="tutorial-guide-title" tabindex="-1" class="guild-ribbon">${title}</h1><p id="tutorial-step-copy">${instruction}</p></section>
       ${state.windowSide !== null && !editable && state.phase === "window" ? `<p class="story-evidence">${c.byWindow(state.windowSide + 1)}</p>` : ""}
-      ${latest ? `<section class="story-latest" aria-labelledby="tutorial-result-heading"><h3 id="tutorial-result-heading" tabindex="-1">${c.latest} · ${latest === state.guesses[0] ? "1" : state.guesses.length}</h3>${lineup(latest.pieces, state.windowSide)}${scores(latest, FEEDBACK_PHASES.includes(state.phase))}<p>${FEEDBACK_PHASES.includes(state.phase) ? c.totals : c.fresh}</p></section>` : ""}
+      ${latest ? `<section class="story-latest" aria-labelledby="tutorial-result-heading"><h2 id="tutorial-result-heading" tabindex="-1">${c.latest} · ${latest === state.guesses[0] ? "1" : state.guesses.length}</h2>${lineup(latest.pieces, state.windowSide)}${scores(latest, FEEDBACK_PHASES.includes(state.phase))}<p>${FEEDBACK_PHASES.includes(state.phase) ? c.totals : c.fresh}</p></section>` : ""}
       ${state.phase === "quiz" ? `<fieldset class="story-quiz"><legend>${c.question}</legend><button id="tutorial-answer-elsewhere" type="button" ${state.quizPassed ? "disabled" : ""}>${c.elsewhereAnswer}</button><button id="tutorial-answer-absent" type="button" ${state.quizPassed ? "disabled" : ""}>${c.absentAnswer}</button></fieldset>` : ""}
-      ${inPractice ? `<aside class="story-name-clue"><h3>${c.practiceName}</h3><p>${c.practiceClues}</p></aside>` : ""}
-      ${editable ? `<section class="story-room" aria-labelledby="story-current-heading"><h3 id="story-current-heading">${c.current}</h3><p class="story-current-hint">${c.currentHint}</p>${state.windowSide === null ? "" : `<p id="tutorial-window-desc" class="story-window-description">${c.byWindow(state.windowSide + 1)}</p>`}${lineup(state.draft, state.windowSide, true)}${tutorialLimits(state) ? `<p class="story-counts">${c.count(state.draft.filter(p => p === "thief").length, state.draft.filter(p => p === "coin").length, tutorialLimits(state).coin)}</p>` : ""}<div class="story-picker" role="group" aria-label="${c.choose}">${tutorialPieces(state).map((piece, index) => `<button type="button" id="tutorial-pick-${piece}" data-tutorial-piece="${piece}" aria-label="${c.add} ${c[piece]}, ${c.shortcut} ${index + 1}" aria-keyshortcuts="${index + 1}">${image(piece)}<span>${c[piece]}</span><kbd aria-hidden="true">${index + 1}</kbd></button>`).join("")}</div><p class="story-ready" id="tutorial-ready">${complete ? c.ready : c.incomplete}</p></section>` : ""}
+      ${inPractice ? `<aside class="story-name-clue"><h2>${c.practiceName}</h2><p>${c.practiceClues}</p></aside>` : ""}
+      ${editable ? `<section class="story-room" aria-labelledby="story-current-heading"><h2 id="story-current-heading">${c.current}</h2><p class="story-current-hint">${c.currentHint}</p>${state.windowSide === null ? "" : `<p id="tutorial-window-desc" class="story-window-description">${c.byWindow(state.windowSide + 1)}</p>`}${lineup(state.draft, state.windowSide, true)}${tutorialLimits(state) ? `<p class="story-counts">${c.count(state.draft.filter(p => p === "thief").length, state.draft.filter(p => p === "coin").length, tutorialLimits(state).coin)}</p>` : ""}<div class="story-picker" role="group" aria-label="${c.choose}">${tutorialPieces(state).map((piece, index) => `<button type="button" id="tutorial-pick-${piece}" data-tutorial-piece="${piece}" aria-label="${c.add} ${c[piece]}, ${c.shortcut} ${index + 1}" aria-keyshortcuts="${index + 1}">${image(piece)}<span>${c[piece]}</span><kbd aria-hidden="true">${index + 1}</kbd></button>`).join("")}</div><p class="story-ready" id="tutorial-ready">${complete ? c.ready : c.incomplete}</p></section>` : ""}
       <p class="story-notice${state.notice ? " has-notice" : ""}">${state.notice ? c[state.notice] : ""}</p>
       <div class="story-primary-actions">${editable ? `<button type="button" id="tutorial-check" class="story-primary" aria-describedby="tutorial-ready" ${complete ? "" : "disabled"}>${c.check} <span aria-hidden="true">→</span></button>` : next ? `<button type="button" id="tutorial-next" class="story-primary" ${state.phase === "quiz" && !state.quizPassed ? "disabled" : ""}>${c.next} <span aria-hidden="true">→</span></button>` : ""}</div>
       ${state.phase === "complete" ? `<section class="prelude-paths" aria-label="${c.choosePath}"><div><button type="button" id="tutorial-finish" class="story-primary" aria-describedby="prelude-daily-path">${c.daily} →</button><p id="prelude-daily-path">${c.dailyPath}</p></div><div><button type="button" id="tutorial-adventure" class="story-primary" aria-describedby="prelude-story-path">${c.venture} →</button><p id="prelude-story-path">${c.storyPath}</p></div></section>` : ""}
       <div class="story-edit-actions">${editable ? `<button type="button" id="tutorial-clear" class="story-text-button" ${state.draft.some((p, index) => p && index !== guardSlot(state)) ? "" : "disabled"}>${c.clear}</button>` : ""}${undoState ? `<button type="button" id="tutorial-undo" class="story-text-button">${c[undoKind]}</button>` : ""}${["deduce", "guard", "practice"].includes(state.phase) ? `<button type="button" id="tutorial-hint" class="story-text-button" ${state.hint === 2 ? "disabled" : ""}>${state.hint === 0 ? c.hint : state.hint === 1 ? c.moreHint : c.hintsShown}</button>` : ""}</div>
-      ${state.hint ? `<aside class="story-hint"><h3>${c.hintHeading}</h3>${hints().slice(0, state.hint).map(hint => `<p>${hint}</p>`).join("")}</aside>` : ""}
+      ${state.hint ? `<aside class="story-hint"><h2>${c.hintHeading}</h2>${hints().slice(0, state.hint).map(hint => `<p>${hint}</p>`).join("")}</aside>` : ""}
       ${editable ? `<p class="story-drag-hint">${c.dragHint}</p>` : ""}
-      ${state.guesses.length > 1 ? `<section class="story-history" aria-labelledby="story-history-heading"><h3 id="story-history-heading">${c.earlier}</h3><ol class="story-attempts" reversed start="${state.guesses.length - 1}">${state.guesses.slice(0, -1).map((guess, index) => `<li class="story-attempt" value="${index + 1}" aria-label="${c.attempt} ${index + 1}"><span class="attempt-number">${String(index + 1).padStart(2, "0")}</span><div>${lineup(guess.pieces, state.windowSide)}${scores(guess)}<p>${c.hypotheses}</p></div></li>`).reverse().join("")}</ol></section>` : ""}
-      ${state.facts.length ? `<section class="story-facts" aria-labelledby="story-facts-heading"><h3 id="story-facts-heading">${c.facts}</h3>${state.facts.map(fact => `<article class="story-fact"><h4>${c.verified} ${fact.scene} · ${c.titles[fact.scene]}</h4><p>${c.factText[fact.scene]}</p>${lineup(fact.pieces, fact.windowSide)}</article>`).join("")}</section>` : ""}
+      ${state.guesses.length > 1 ? `<section class="story-history" aria-labelledby="story-history-heading"><h2 id="story-history-heading">${c.earlier}</h2><ol class="story-attempts" reversed start="${state.guesses.length - 1}">${state.guesses.slice(0, -1).map((guess, index) => `<li class="story-attempt" value="${index + 1}" aria-label="${c.attempt} ${index + 1}"><span class="attempt-number">${String(index + 1).padStart(2, "0")}</span><div>${lineup(guess.pieces, state.windowSide)}${scores(guess)}<p>${c.hypotheses}</p></div></li>`).reverse().join("")}</ol></section>` : ""}
+      ${state.facts.length ? `<section class="story-facts" aria-labelledby="story-facts-heading"><h2 id="story-facts-heading">${c.facts}</h2>${state.facts.map(fact => `<article class="story-fact"><h3>${c.verified} ${fact.scene} · ${c.titles[fact.scene]}</h3><p>${c.factText[fact.scene]}</p>${lineup(fact.pieces, fact.windowSide)}</article>`).join("")}</section>` : ""}
       <div class="story-bottom"><p>${state.phase === "complete" ? c.completionSave : c.noSave}</p><button type="button" id="tutorial-restart" class="story-text-button">${state.phase === "complete" ? c.replay : c.restart}</button></div>`;
     const bind = (id, callback) => root.querySelector(`#${id}`)?.addEventListener("click", callback);
     bind("tutorial-exit", leave); bind("tutorial-restart", restart); bind("tutorial-undo", undo);
@@ -151,7 +155,7 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
     for (const answer of ["elsewhere", "absent"]) bind(`tutorial-answer-${answer}`, () => dispatch({ type: "answer", answer }));
     root.querySelectorAll("[data-slot]").forEach(button => button.addEventListener("click", () => dispatch({ type: "slot", slot: Number(button.dataset.slot) })));
     root.querySelectorAll("[data-tutorial-piece]").forEach(button => button.addEventListener("click", () => dispatch({ type: "pick", piece: button.dataset.tutorialPiece })));
-    if (animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) root.querySelector(".story-latest")?.animate([{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 180, easing: "ease-out" });
+    if (animate) animateResultStamp(root.querySelector(".story-latest .story-scores"));
     if (focused && !root.querySelector(`#${focused}`)?.disabled) focus(`#${focused}`, true);
   }
   drag = installPortraitDrag({ board: root, canDrag: () => active && canEditTutorial(state), onDrop: ({ sourceSlot, targetSlot }) => dispatch({ type: "move", from: sourceSlot, to: targetSlot }) });
