@@ -51,7 +51,7 @@ try {
       assert.ok(order.slice(1).every(active => !active));
       assert.equal(await page.locator(".hero-choice").count(), 7);
     }
-    await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+    await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
     await page.screenshot({ path: `output/mastermind-flow/${name}.png` });
     // The selector stays in the normal flow at the top and after resize.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));

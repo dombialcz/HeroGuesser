@@ -64,7 +64,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     }, 'keyboard placement');
     // Actual pointer hold/drop: one effect on commit, none on same-place drop.
     const drag = async (from, to) => {
-      await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+      await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
       const source = page.locator(`.row-active [data-slot="${from}"]`);
       await source.scrollIntoViewIfNeeded();
       const a = await source.boundingBox(), b = await page.locator(`.row-active [data-slot="${to}"]`).boundingBox();

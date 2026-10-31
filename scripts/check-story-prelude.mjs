@@ -27,7 +27,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       const dailySaves = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => key.startsWith('heroguesser:v1:'))));
       const menu = async () => { await click('#mastermind-home-button'); await click('#home-play-stories'); };
       const capture = async suffix => {
-        await page.evaluate(async () => { await document.fonts.ready; document.getAnimations().forEach(a => a.finish()); });
+        await page.evaluate(async () => { await document.fonts.ready; document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()); });
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${engine}/${name}/${suffix}: no overflow`);
         assert.deepEqual(await page.locator('.prelude-paths button:visible').evaluateAll(buttons => buttons.filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent)), []);
         await page.screenshot({ path: `${output}/${engine}-${name}-${suffix}.png`, fullPage: true });

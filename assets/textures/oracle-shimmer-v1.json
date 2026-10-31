@@ -1,0 +1,8 @@
+{
+  "created": "2026-10-31",
+  "generator": "Built-in image_gen tool",
+  "source": "../../art-source/textures/oracle-shimmer-v1.png",
+  "runtime": "oracle-shimmer-v1.jpg",
+  "packaging": "Original unchanged. Runtime downscaled to 512px JPEG quality 83 with macOS sips. Shared beneath the hint eye and protected revealed portraits; CSS animates the material and a gentle glint, disabled for reduced motion.",
+  "prompt": "Use case: stylized-concept\nAsset type: seamless square game UI material texture, used beneath a small line-art eye icon and beneath hero portraits in a fantasy deduction game.\nPrimary request: a rich shimmering magical field of teal, magenta, purple and violet, luminous pearlescent fine mineral dust and flowing iridescent silk-like wisps, small scattered glints, smoothly blended colorful depths. Evenly detailed across the entire square, readable at 64 pixels, refined enchanted material rather than a busy scene. Soft luminous teal and magenta currents in violet, no dominant central flare, no large white patches.\nComposition: flat edge-to-edge seamless repeating texture, no perspective, no border, no objects, no eye, no symbols, no characters, no letters, no text, no watermark. Opaque square material with deep colored rather than black shadows."
+}

@@ -11,6 +11,7 @@ export function copyPastRow(progress, index) {
 
 export function toggleLock(progress, slot) {
   if (!Number.isInteger(slot) || slot < 0 || slot >= progress.draft.length) return false;
+  if (progress.hints?.[slot]) return false;
   const locks = progress.locks ?? Array(progress.draft.length).fill(null);
   if (!locks[slot] && !progress.draft[slot]) return false;
   progress.locks = [...locks];

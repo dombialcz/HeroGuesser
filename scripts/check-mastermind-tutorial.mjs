@@ -39,7 +39,7 @@ try {
     const check = () => click("#tutorial-check");
     const screenshot = async phase => {
       await page.waitForFunction(() => [...document.querySelectorAll("#mastermind-tutorial img")].every(img => img.complete && img.naturalWidth > 0));
-      await page.evaluate(() => document.getAnimations().forEach(a => a.finish()));
+      await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}/${phase}: no horizontal overflow`);
       await page.screenshot({ path: `${output}/${name}-${phase}.png`, fullPage: true });
     };

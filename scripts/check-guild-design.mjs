@@ -34,7 +34,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       }, locale);
       const largeText = async () => { if (large) await page.addStyleTag({ content: 'html { font-size: 200%; }' }); };
       const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
-      const settle = () => page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); document.getAnimations().forEach(a => a.finish()); });
+      const settle = () => page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()); });
       const fits = async () => {
         await page.evaluate(() => document.fonts.ready);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${engine}/${profile}: page fits`);

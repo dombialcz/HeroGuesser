@@ -1,4 +1,5 @@
 import { normalizeLocks, applyLocks } from './daily-row-tools.js';
+import { normalizeHints, restoreHintLocks, HINT_COOLDOWN_MS } from './daily-hints.js';
 import { HERO_CLASSES, evaluateGuess } from './mastermind-core.js';
 const valid = new Set(HERO_CLASSES.map(hero => hero.id));
 export const DAILY_SCHEMA = 2;
@@ -21,8 +22,15 @@ export function restoreDaily(raw, challenge) {
     const solved = guesses.some(guess => evaluateGuess(challenge.code, guess).exact === challenge.size);
     const draft = Array.isArray(saved.draft) && saved.draft.length === challenge.size
       ? saved.draft.map(type => type === null || valid.has(type) ? type : null) : fallback.draft;
-    const locks = normalizeLocks(saved.locks, challenge.size, valid);
-    return { progress: { guesses, draft: solved ? fallback.draft : applyLocks(draft, locks), ...(saved.locks === undefined ? {} : { locks }) }, invalid: false };
+    const hints = normalizeHints(saved.hints, challenge.size);
+    const locks = restoreHintLocks(normalizeLocks(saved.locks, challenge.size, valid), hints, challenge);
+    const hintReadyAt = hints.some(Boolean) && Number.isFinite(saved.hintReadyAt)
+      ? Math.max(0, Math.min(saved.hintReadyAt, Date.now() + HINT_COOLDOWN_MS)) : 0;
+    return { progress: {
+      guesses, draft: solved ? fallback.draft : applyLocks(draft, locks),
+      ...(saved.locks === undefined && saved.hints === undefined ? {} : { locks }),
+      ...(saved.hints === undefined ? {} : { hints, hintReadyAt }),
+    }, invalid: false };
   } catch { return { progress: fallback, invalid: true }; }
 }
 export const serializeDaily = progress => JSON.stringify({ schema: DAILY_SCHEMA, generator: GENERATOR_VERSION, ...progress });

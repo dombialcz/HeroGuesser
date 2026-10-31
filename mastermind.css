@@ -772,6 +772,43 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
 .guess-tile[data-locked="true"] .portrait-fallback { color: #eef1f3; }
 .guess-tile[data-locked="true"] .tile-position { color: #eef1f3; border-color: #a6b0b8; background: #30383f; }
 .guess-tile[data-locked="true"] .tile-remove { display: none; }
+
+/* Revealed places share one enchanted material with the eye in the hero picker. */
+.hint-aperture, .guess-tile[data-revealed="open"] > .portrait-frame {
+  background-color: #31204f;
+  background-image: linear-gradient(#1b103424, #15112b44), url("assets/textures/oracle-shimmer-v1.jpg");
+  background-size: cover, 180% 180%;
+  background-position: center, 15% 35%;
+  border-color: #be9bdd;
+  animation: oracle-shimmer 9s ease-in-out infinite alternate;
+}
+.hint-choice .hint-field { display: grid; place-items: center; border-color: #78634c; background-color: #3d2c22; background-image: linear-gradient(#3d2c22c9, #2d211bdb), url("assets/textures/warm-stone-v1.jpg"); background-size: auto, 192px 192px; background-blend-mode: normal, luminosity; box-shadow: inset 1px 1px #ac8c5d33, inset -1px -3px #1e150e; }
+.hint-field svg, .slot-eye-button svg { width: 76%; height: 76%; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.hint-field svg { position: absolute; inset: 12%; stroke: #170e0a; stroke-width: 4.5; filter: drop-shadow(0 1px 0 #bd986b70); }
+.hint-aperture { position: absolute; inset: 12%; overflow: hidden; mask: url("assets/decor/eye-cutout.svg") center / contain no-repeat; -webkit-mask: url("assets/decor/eye-cutout.svg") center / contain no-repeat; pointer-events: none; }
+.hint-aperture::after { content: ""; position: absolute; z-index: 2; inset: 0; background: white; opacity: .3; pointer-events: none; }
+.hint-cooldown { position: absolute; z-index: 2; right: 5px; bottom: 5px; min-width: 25px; padding: 2px 4px; border: 1px solid #a58c5b66; border-radius: 2px; color: #f1e3c9; background: #21170ee8; font: 600 .64rem/1.2 "DM Sans", sans-serif; font-variant-numeric: tabular-nums; pointer-events: none; }
+.hint-aperture::before, .guess-tile[data-revealed="open"] > .portrait-frame::before { content: ""; position: absolute; z-index: 1; inset: -80%; background: linear-gradient(110deg, transparent 40%, #c4fcff33 48%, #f3baff66 50%, transparent 58%); animation: oracle-glint 6s ease-in-out infinite; pointer-events: none; }
+.hint-choice:disabled { opacity: 1; cursor: default; }
+.hint-choice:disabled .hint-aperture { animation: none; filter: saturate(.4) brightness(.65); }
+.hint-choice:disabled .hint-aperture::before { animation: none; opacity: 0; }
+.hint-choice .hint-label { font-variant-numeric: tabular-nums; }
+.hint-help { margin: 10px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+.slot-eye-button { position: absolute; z-index: 3; top: -36px; left: 50%; transform: translateX(-50%); display: grid; place-items: center; width: 44px; max-width: 100%; height: 44px; padding: 0; border: 0; border-radius: 3px; background: transparent; cursor: pointer; }
+.slot-eye-button svg { width: 40px; max-width: 100%; height: 40px; stroke: #dcfaff; filter: drop-shadow(0 0 4px #64e6e8) drop-shadow(0 0 6px #cd6aff); }
+.slot-eye-button[data-open="false"] svg { stroke: #c4aacd; filter: drop-shadow(0 0 2px #aa7bc8); }
+.slot-eye-button:hover svg { stroke: white; }
+.slot-eye-button:focus-visible { outline: 2px solid #bceff3; outline-offset: 1px; }
+.guess-tile[data-revealed="open"] { --frame-edge: #a6f0e2; box-shadow: 0 3px 0 #291837, 0 0 10px #a278d840; }
+.guess-tile[data-revealed="open"] > .portrait-frame img { background: transparent; }
+.guess-tile[data-revealed="open"] > .portrait-frame::after { border-color: #d4a5ff99; border-bottom-color: #9df4e4; }
+.guess-tile[data-revealed="open"] .tile-position { color: #effffc; border-color: #a4d9d3; background: #29203fe8; }
+@keyframes oracle-shimmer { to { background-position: center, 85% 65%; } }
+@keyframes oracle-glint { 0%, 30% { transform: translateX(-45%); opacity: 0; } 45%, 55% { opacity: .7; } 75%, 100% { transform: translateX(45%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hint-aperture, .hint-aperture::before, .guess-tile[data-revealed="open"] > .portrait-frame, .guess-tile[data-revealed="open"] > .portrait-frame::before { animation: none; }
+  .hint-aperture::before, .guess-tile[data-revealed="open"] > .portrait-frame::before { opacity: .2; }
+}
 .clue-card > .portrait-frame { --bevel: 3px; width: 44px; height: 44px; border: 1px solid var(--frame-edge); background: #80684d; }
 .clue-card .portrait-fallback { color: #f5e7c9; }
 .story-picker .portrait-frame { flex: none; width: 64px; height: 64px; }
@@ -882,7 +919,7 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
 @media (max-width: 1100px) {
   .play-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .picker-panel { order: -1; padding: 14px; border: 1px solid var(--line); background: var(--panel); }
-  .hero-picker { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .hero-picker { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .hero-choice .portrait-frame { max-width: 100px; align-self: center; }
   .mission-card { grid-template-columns: minmax(0, 1fr); }
   .clue-area { padding: 12px 0 0; margin-top: 12px; border: 0; border-top: 1px solid var(--paper-rule); }

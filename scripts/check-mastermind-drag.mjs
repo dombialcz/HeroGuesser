@@ -30,7 +30,7 @@ try {
       ? cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] })
       : page.mouse.up();
     async function drag(source, target, options = {}) {
-      await page.evaluate(() => document.getAnimations().forEach(a => a.finish()));
+      await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()));
       await source.scrollIntoViewIfNeeded();
       const a = await source.boundingBox();
       await start(a.x + a.width / 2, a.y + a.height / 2);
@@ -135,6 +135,10 @@ try {
     const scrollBefore = await page.evaluate(() => scrollY);
     await page.waitForTimeout(400);
     assert.ok(await page.evaluate(() => scrollY) < scrollBefore, "Held portraits autoscroll at the viewport edge");
+    // Leave the edge before positioning the viewport; otherwise the next scroll
+    // frame can move the destination under its overlapping padlock mid-drop.
+    await move(150, 300);
+    await page.waitForTimeout(50);
     const element = await active(2).elementHandle();
     await element.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
     const destination = await active(2).boundingBox();
@@ -153,7 +157,7 @@ try {
     assert.equal((await state()).result, "solved");
     assert.equal((await state()).guesses.length, 14);
     assert.equal(await page.locator(".row-active").count(), 0);
-    assert.equal(await page.locator(".hero-choice:disabled").count(), 7);
+    assert.equal(await page.locator(".hero-choice[data-hero]:disabled").count(), 7);
     assert.deepEqual(errors, []);
     console.log(`${name}: hold, move, swap, history clone, cancellation, taps, autoscroll, saves, unlimited guesses and solving pass`);
     await context.close();

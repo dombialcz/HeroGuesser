@@ -1,4 +1,5 @@
 import { applyLocks, copyPastRow, toggleLock } from './daily-row-tools.js';
+import { revealHint, toggleHint, hintCooldownRemaining } from './daily-hints.js';
 import { createPortrait, animatePlacement, animateResultStamp } from "./portraits.js";
 import { storage, shareText } from "./platform.js";
 import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
@@ -46,7 +47,7 @@ const COPY = {
     nameClues: "Name clues",
     nameCluesHint: "Each word reveals an exact class count.",
     guessBoard: "Guess board",
-    boardSubtitle: "Lock a hero to keep it in later attempts.",
+    boardSubtitle: "Keep your choices with locks. Reveal a hero with the eye.",
     formation: "FORMATION",
     feedback: "FEEDBACK",
     submitGuess: "Check guess",
@@ -78,6 +79,15 @@ const COPY = {
     lockPlace: (n, hero) => `Lock ${hero} in place ${n} for later attempts`,
     unlockPlace: (n, hero) => `Unlock ${hero} in place ${n}`,
     emptyLock: n => `Place a hero in slot ${n} before locking it`,
+    hint: 'Hint', hintReady: 'Reveal one correct hero. Available every 30 seconds.',
+    hintWaiting: n => `Next reveal in ${n} seconds`, hintComplete: 'All places revealed',
+    hintHelp: 'The eye reveals one correct hero every 30 seconds. Close a revealed eye to experiment; reopen it to restore and protect the correct hero.',
+    closeEye: (n, hero) => `Close the eye at place ${n}, ${hero}, to allow changes`,
+    openEye: n => `Open the eye at place ${n} to restore and protect the correct hero`,
+    revealedPlace: (n, hero) => `Place ${n}: ${hero}, revealed and protected. Close the eye above to allow changes.`,
+    hintRevealed: (n, hero) => `Place ${n} revealed: ${hero}. The open eye protects this hero.`,
+    eyeClosed: n => `Eye closed at place ${n}. You can change this hero.`,
+    eyeOpened: (n, hero) => `Eye open at place ${n}. ${hero} restored and protected.`,
     lockedPlace: (n, hero) => `Place ${n}: ${hero}, locked. Unlock using the padlock above.`,
     copyHero: (hero) => `Copy ${hero} to the next open place, or hold and drag to a place.`,
     heroNames: {
@@ -117,7 +127,7 @@ const COPY = {
     nameClues: "Wskazówki w nazwie",
     nameCluesHint: "Każde słowo wskazuje dokładną liczbę klas.",
     guessBoard: "Twoje próby",
-    boardSubtitle: "Zablokuj bohatera, aby zachować go w kolejnych próbach.",
+    boardSubtitle: "Kłódka zachowuje wybór. Oko odkrywa właściwego bohatera.",
     formation: "SKŁAD",
     feedback: "WYNIK",
     submitGuess: "Sprawdź skład",
@@ -149,6 +159,15 @@ const COPY = {
     lockPlace: (n, hero) => `Zablokuj: ${hero}, na miejscu ${n} w kolejnych próbach`,
     unlockPlace: (n, hero) => `Odblokuj: ${hero}, na miejscu ${n}`,
     emptyLock: n => `Umieść bohatera na miejscu ${n}, aby go zablokować`,
+    hint: 'Wskazówka', hintReady: 'Odkryj jednego właściwego bohatera. Dostępne co 30 sekund.',
+    hintWaiting: n => `Następna wskazówka za ${n} s`, hintComplete: 'Wszystkie miejsca odkryte',
+    hintHelp: 'Oko co 30 sekund odkrywa jednego właściwego bohatera. Zamknij oko nad odkrytym miejscem, by wypróbować inny układ. Otwórz je ponownie, by przywrócić i zablokować właściwego bohatera.',
+    closeEye: (n, hero) => `Zamknij oko nad miejscem ${n} (${hero}), aby umożliwić zmiany`,
+    openEye: n => `Otwórz oko nad miejscem ${n}, aby przywrócić i zablokować właściwego bohatera`,
+    revealedPlace: (n, hero) => `Miejsce ${n}: ${hero}, odkryte i zablokowane. Zamknij oko powyżej, aby umożliwić zmiany.`,
+    hintRevealed: (n, hero) => `Odkryto miejsce ${n}: ${hero}. Otwarte oko chroni tego bohatera.`,
+    eyeClosed: n => `Oko nad miejscem ${n} zamknięte. Możesz zmienić bohatera.`,
+    eyeOpened: (n, hero) => `Oko nad miejscem ${n} otwarte. Przywrócono i zablokowano: ${hero}.`,
     lockedPlace: (n, hero) => `Miejsce ${n}: ${hero}, zablokowane. Odblokuj kłódką powyżej.`,
     copyHero: (hero) => `Skopiuj: ${hero}, na kolejne wolne miejsce lub przytrzymaj i przeciągnij.`,
     heroNames: {
@@ -408,6 +427,30 @@ function lockSlot(slot) {
   currentGuess.querySelector(`[data-lock-slot="${slot}"]`)?.focus({ preventScroll: true });
 }
 
+function announceHint(message) {
+  document.querySelector('#daily-guess-tools-status').textContent = message;
+}
+
+function revealDailyHint() {
+  if (dateGuard() || isFinished()) return;
+  const slot = revealHint(currentProgress(), currentChallenge());
+  if (slot === null) return;
+  state.selectedSlot = currentProgress().draft.findIndex(type => type === null);
+  saveProgress(); render();
+  currentGuess.querySelector(`[data-eye-slot="${slot}"]`)?.focus({ preventScroll: true });
+  announceHint(copy().hintRevealed(slot + 1, localizedHero(currentChallenge().code[slot])));
+  animatePlacement(currentGuess.querySelector(`[data-slot="${slot}"] .portrait-frame`));
+}
+
+function toggleDailyEye(slot) {
+  if (dateGuard() || isFinished() || !toggleHint(currentProgress(), currentChallenge(), slot)) return;
+  const opened = currentProgress().hints[slot] === 'open';
+  state.selectedSlot = opened ? currentProgress().draft.findIndex(type => type === null) : slot;
+  saveProgress(); render();
+  currentGuess.querySelector(`[data-eye-slot="${slot}"]`)?.focus({ preventScroll: true });
+  announceHint(opened ? copy().eyeOpened(slot + 1, localizedHero(currentChallenge().code[slot])) : copy().eyeClosed(slot + 1));
+}
+
 function clearDraft() {
   if (dateGuard()) return;
   if (isFinished()) return;
@@ -523,6 +566,17 @@ function makePlaceTab(index) {
   return tab;
 }
 
+function makeEyeIcon(closed = false) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', closed
+    ? 'M6 21Q24 39 42 21M10 25l-3 5m11-1-1 6m13-6 1 6m8-10 3 5'
+    : 'M4 24Q24 4 44 24Q24 44 4 24ZM31 24a7 7 0 1 1-14 0a7 7 0 1 1 14 0M24 21v6');
+  svg.append(path);
+  return svg;
+}
+
 function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current = currentProgress()) {
   const lineup = document.createElement("span");
   lineup.className = "row-lineup";
@@ -557,6 +611,10 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
         : copy().emptyPlace(index + 1));
       tile.disabled = isFinished() || !!current.locks?.[index];
       if (current.locks?.[index]) { tile.dataset.locked = 'true'; tile.setAttribute('aria-label', copy().lockedPlace(index + 1, localizedHero(type))); }
+      if (current.hints?.[index]) {
+        tile.dataset.revealed = current.hints[index];
+        if (current.hints[index] === 'open') tile.setAttribute('aria-label', copy().revealedPlace(index + 1, localizedHero(type)));
+      }
       tile.addEventListener("click", () => selectSlot(index));
     } else {
       tile.setAttribute("aria-hidden", "true");
@@ -575,6 +633,16 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
     tile.append(makePlaceTab(index));
     if (currentRow) {
       const cell = document.createElement('span'); cell.className = 'guess-slot';
+      if (current.hints?.[index]) {
+        const open = current.hints[index] === 'open';
+        const eye = document.createElement('button'); eye.type = 'button'; eye.className = 'slot-eye-button'; eye.dataset.eyeSlot = String(index);
+        eye.dataset.open = String(open); eye.disabled = isFinished(); eye.setAttribute('aria-pressed', String(open));
+        const label = open ? copy().closeEye(index + 1, localizedHero(challenge.code[index])) : copy().openEye(index + 1);
+        eye.setAttribute('aria-label', label); eye.title = label;
+        eye.append(makeEyeIcon(!open)); eye.addEventListener('click', () => toggleDailyEye(index));
+        cell.append(eye, tile); lineup.append(cell);
+        continue;
+      }
       const lock = document.createElement('button'); lock.type = 'button'; lock.className = 'slot-lock-button'; lock.dataset.lockSlot = String(index);
       lock.disabled = !type || isFinished(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
       const label = type ? (current.locks?.[index] ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
@@ -655,8 +723,36 @@ function renderPicker() {
     button.addEventListener("click", () => placeHero(hero.id));
     return button;
   });
-  heroPicker.replaceChildren(...choices);
+  const hint = document.createElement('button'); hint.type = 'button'; hint.id = 'daily-hint-button'; hint.className = 'hero-choice hint-choice';
+  hint.setAttribute('aria-describedby', 'daily-hint-help');
+  const field = document.createElement('span'); field.className = 'portrait-frame hint-field'; field.append(makeEyeIcon());
+  const aperture = document.createElement('span'); aperture.className = 'hint-aperture'; aperture.setAttribute('aria-hidden', 'true'); field.append(aperture);
+  const countdown = document.createElement('span'); countdown.className = 'hint-cooldown'; countdown.setAttribute('aria-hidden', 'true'); field.append(countdown);
+  const label = document.createElement('span'); label.className = 'hint-label';
+  hint.append(field, label); hint.addEventListener('click', revealDailyHint);
+  heroPicker.replaceChildren(...choices, hint);
+  let help = document.querySelector('#daily-hint-help');
+  if (!help) { help = document.createElement('p'); help.id = 'daily-hint-help'; help.className = 'hint-help'; document.querySelector('#controls-help').append(help); }
+  help.textContent = copy().hintHelp;
+  updateHintButton();
 }
+
+// Only update the countdown: do not rebuild focused controls or cancel a drag each second.
+function updateHintButton() {
+  const button = document.querySelector('#daily-hint-button');
+  if (!button) return;
+  const remaining = Math.ceil(hintCooldownRemaining(currentProgress()) / 1000);
+  const complete = (currentProgress().hints ?? []).filter(Boolean).length === currentChallenge().size;
+  button.disabled = isFinished() || complete || remaining > 0;
+  button.dataset.ready = String(!button.disabled);
+  const label = isFinished() ? copy().challengeComplete : complete ? copy().hintComplete : remaining > 0 ? copy().hintWaiting(remaining) : copy().hintReady;
+  button.setAttribute('aria-label', label); button.title = label;
+  button.querySelector('.hint-label').textContent = copy().hint;
+  const countdown = button.querySelector('.hint-cooldown');
+  countdown.hidden = complete || isFinished() || remaining === 0;
+  countdown.textContent = countdown.hidden ? '' : `${remaining}s`;
+}
+setInterval(() => { if (state.screen === 'daily' && !document.hidden) updateHintButton(); }, 250);
 
 function renderMessage(challenge, current) {
   gameMessage.className = "game-message";
@@ -767,6 +863,9 @@ window.render_game_to_text = () => {
     clues: challenge.clues.map((clue) => ({ kind: clue.kind, hero: localizedHero(clue.type) })),
     draft: current.draft,
     locks: current.locks ?? Array(challenge.size).fill(null),
+    hints: current.hints ?? Array(challenge.size).fill(null),
+    hintCooldownSeconds: Math.ceil(hintCooldownRemaining(current) / 1000),
+    hintAvailable: !isFinished() && hintCooldownRemaining(current) === 0 && (current.hints ?? []).filter(Boolean).length < challenge.size,
     guesses: current.guesses.map((guess) => ({ heroes: guess, ...currentResult(guess, challenge) })),
     guessLimit: null,
     guessesRemaining: null,

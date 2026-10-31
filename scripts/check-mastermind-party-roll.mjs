@@ -83,7 +83,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await click('#share-result');
       assert.ok((await page.evaluate(() => window.sharedResult)).includes(`2026-10-26 · ${localizedName}\n`));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-      await page.evaluate(async () => { await document.fonts.ready; document.getAnimations().forEach(a => a.finish()); window.scrollTo(0, 0); });
+      await page.evaluate(async () => { await document.fonts.ready; document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()); window.scrollTo(0, 0); });
       await page.screenshot({ path: `output/mastermind-party-roll/${engine}-${name}.png`, fullPage: true });
       await page.reload(); await page.waitForFunction(() => window.render_game_to_text);
       await click('#home-play-daily'); await partyRoll();

@@ -23,24 +23,24 @@ try {
       await page.locator(`[data-challenge="${difficulty}"]`).click();
       const size = (await state()).partySize;
       assert.equal(await page.locator(".guess-row").count(), 1);
-      for (let i = 0; i < size; i++) await page.locator(".hero-choice").nth(i).click();
+      for (let i = 0; i < size; i++) await page.locator(".hero-choice[data-hero]").nth(i).click();
       assert.equal(await page.locator(".row-active .guess-tile[data-hero]").count(), size);
       await page.locator(".row-active .guess-tile").first().click();
       assert.equal(await page.locator(".row-active .tile-empty").count(), 1);
-      await page.locator(".hero-choice").first().click();
+      await page.locator(".hero-choice[data-hero]").first().click();
       await page.locator("#submit-button").click();
       assert.equal((await state()).guesses.length, 1);
       assert.equal(await page.locator(".guess-row").count(), 2);
       assert.equal(await page.locator(".row-submitted .guess-tile[data-hero]").count(), size);
-      for (let i = 0; i < size; i++) await page.locator(".hero-choice").nth(i).click();
+      for (let i = 0; i < size; i++) await page.locator(".hero-choice[data-hero]").nth(i).click();
       await page.evaluate(async () => { await Promise.all([...document.images].map(image => image.decode())); });
       const appearance = await page.evaluate(() => {
-        const choices = [...document.querySelectorAll(".hero-choice")];
+        const choices = [...document.querySelectorAll(".hero-choice[data-hero]")];
         const colors = new Map(choices.map(el => [el.dataset.hero, el.style.getPropertyValue("--hero-color")]));
         return {
           uniqueColors: new Set(colors.values()).size,
           consistent: [...document.querySelectorAll("[data-hero]")].every(el => el.style.getPropertyValue("--hero-color") === colors.get(el.dataset.hero)),
-          isolated: [...document.images].every(image => image.getAttribute("src").startsWith("assets/mastermind/")),
+          isolated: [...document.querySelectorAll('.portrait-frame img')].every(image => image.getAttribute("src").startsWith("assets/mastermind/")),
           overflow: document.documentElement.scrollWidth > innerWidth,
           contained: [...document.querySelectorAll(".guess-tile")].every(el => {
             const tile = el.getBoundingClientRect(), row = el.closest(".guess-row").getBoundingClientRect();
@@ -54,7 +54,7 @@ try {
       assert.equal(appearance.overflow, false);
       assert.ok(appearance.contained);
       assert.ok(appearance.portraitWidth >= (width > 1100 ? 80 : 30));
-      await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+      await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
       await page.screenshot({ path: `${output}/${name}-${difficulty}.png`, fullPage: true });
       await page.locator("#clear-button").click();
       assert.ok((await state()).draft.every(hero => hero === null));
@@ -74,8 +74,8 @@ try {
     await page.locator("#submit-button").click();
     assert.equal((await state()).result, "solved");
     assert.equal(await page.locator(".guess-row").count(), 2);
-    assert.equal(await page.locator(".hero-choice:disabled").count(), 7);
-    await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+    assert.equal(await page.locator(".hero-choice[data-hero]:disabled").count(), 7);
+    await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
     await page.screenshot({ path: `${output}/${name}-solved.png`, fullPage: true });
     if (["desktop", "small-phone"].includes(name)) {
       await page.locator('[data-challenge="medium"]').click();
@@ -90,8 +90,8 @@ try {
       await page.reload();
       await page.locator('[data-challenge="medium"]').click();
       assert.equal((await state()).guesses.length, 12);
-      assert.equal(await page.locator(".hero-choice:disabled").count(), 0);
-      await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+      assert.equal(await page.locator(".hero-choice[data-hero]:disabled").count(), 0);
+      await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
       await page.screenshot({ path: `${output}/${name}-unlimited.png`, fullPage: true });
     }
     assert.deepEqual(errors, []);

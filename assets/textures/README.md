@@ -6,6 +6,7 @@ The exact final prompts and source paths are in GENERATED_TEXTURES.json.
 - warm-stone-v1.jpg: fine warm-grey stone, repeated across the entire game background.
 - charcoal-cloth-v1.jpg: earlier warm-charcoal linen, retained as an unused source material.
 - aged-paper-v1.jpg: warm cotton-rag paper, used on the daily commission and Home's Daily invitation.
+- oracle-shimmer-v1.jpg: teal, magenta, purple and violet enchanted material beneath the Daily hint eye and eye-protected portraits. Generated on 31 October 2026; exact prompt and provenance in oracle-shimmer-v1.json. Original in ../../art-source/textures/oracle-shimmer-v1.png; runtime is 512px JPEG quality 83. Material drift and a gentle glint stop with reduced motion.
 
 Original 1254×1254 PNGs are preserved in ../../art-source/textures/.
 The shipped assets are 512×512 JPEGs at quality 78.
