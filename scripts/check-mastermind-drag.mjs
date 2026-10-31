@@ -36,8 +36,10 @@ try {
       await start(a.x + a.width / 2, a.y + a.height / 2);
       await page.waitForTimeout(320);
       assert.ok((await state()).drag, "Holding starts a drag");
+      assert.equal(await page.evaluate(() => getSelection().toString()), "", "Holding never selects portrait labels");
       const b = target ? await target.boundingBox() : { x: 2, y: 2, width: 0, height: 0 };
       await move(b.x + b.width / 2, b.y + b.height / 2);
+      assert.equal(await page.evaluate(() => getSelection().toString()), "", "Dragging never selects the surrounding interface");
       if (options.screenshot) await page.screenshot({ path: `${output}/${name}-${options.screenshot}.png` });
       if (options.cancel) {
         if (touch) await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });

@@ -40,6 +40,8 @@ New daily puzzles follow the device's calendar date, including resume/date chang
 
 Tap to place/clear, hold-drag to move/swap, copy earlier daily portraits and use keyboard shortcuts. EN/PL, enlarged text, descriptive feedback, focus announcements and reduced-motion celebration are supported. Home removes direct-mode query parameters. Existing `?tutorial=1`, `?adventure=1` through `4`, and `?daily=1` links continue to work; adventure links resume their chapter.
 
+Game controls suppress text selection and iOS long-press callouts from the start of a press. Double-tap zoom is disabled across the game with `touch-action: manipulation`; scrolling and pinch zoom remain available outside draggable portraits, which retain custom hold/drag/swipe handling. Story text and clues can still be selected when no drag is active. Run `node scripts/check-browser-gestures.mjs` for Chromium/WebKit gesture checks.
+
 Settings includes About, privacy, support and separate story/daily/all-data resets. Public development pages are privacy.html and support.html; final publisher contact remains a store-release gate.
 
 Character placement and drag moves play one of seven thuds extracted from the supplied recording, avoiding consecutive repeats. Daily puzzles, tutorial and story mode share the effects. Toggle sound effects in Settings; the preference is saved on the device. The standalone WAVs are in `assets/audio/`; regenerate them with `python3 scripts/split-placement-thuds.py '/path/to/Single Thud.wav'`.
