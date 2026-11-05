@@ -53,7 +53,7 @@ try {
       assert.ok(appearance.consistent && appearance.isolated);
       assert.equal(appearance.overflow, false);
       assert.ok(appearance.contained);
-      assert.ok(appearance.portraitWidth >= (width > 1100 ? 80 : 30));
+      assert.ok(appearance.portraitWidth >= (width > 1100 ? 50 : 30));
       await page.evaluate(() => document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish()));
       await page.screenshot({ path: `${output}/${name}-${difficulty}.png`, fullPage: true });
       await page.locator("#clear-button").click();

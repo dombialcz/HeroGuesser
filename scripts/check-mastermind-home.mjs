@@ -34,7 +34,7 @@ try {
       assert.ok(await page.locator("button:visible").evaluateAll(els => els.every(el => el.getBoundingClientRect().right <= innerWidth + 1)), `${name}: controls fit viewport`);
       await page.screenshot({ path: `${output}/${name}-${suffix}.png`, fullPage: true });
     };
-    assert.equal((await state()).mode, "home");
+    assert.equal((await state()).mode, "daily"); await home();
     assert.equal(await page.locator(".home-choices button:visible").count(), 2);
     assert.equal(await page.locator(".home-choices button").first().getAttribute("id"), "home-play-daily");
     assert.equal(await page.locator("#mastermind-daily").isVisible(), false);
@@ -61,21 +61,21 @@ try {
     await home(); await click("#home-play-stories"); await click("#home-play-tutorial"); assert.equal((await state()).phase, "setup");
     await click("#tutorial-pick-thief"); await click("#tutorial-exit"); assert.equal((await state()).mode, "home");
     await click("#home-play-stories"); await click("#home-play-tutorial"); assert.ok((await state()).draft.every(p => p === null));
-    await home(); await page.reload(); assert.equal((await state()).mode, "home");
+    await home(); await page.reload(); assert.equal((await state()).mode, "daily"); await home();
     assert.equal(await stored(), saved);
     await page.locator(`[data-locale="${locale === "en" ? "pl" : "en"}"]`).click();
     assert.equal((await state()).locale, locale === "en" ? "pl" : "en"); await shot("locale-switch");
     assert.deepEqual(errors, []); await context.close(); console.log(`${name}: home, daily resume, stories/tutorial cleanup, focus, keyboard isolation, language/reflow passed`);
   }
-  const page = await browser.newPage();
-  for (const [param, mode] of [["daily=1", undefined], ["tutorial=1", "story-tutorial"], ["adventure=2", "stories"]]) {
+  const page = await browser.newPage(); await seedFirstRunHandled(page);
+  for (const [param, mode] of [["daily=1", "daily"], ["tutorial=1", "story-tutorial"], ["adventure=2", "stories"]]) {
     await page.goto(`${BASE_URL}/index.html?${param}`); await page.waitForFunction(() => window.render_game_to_text);
     assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), mode);
     await page.locator("#mastermind-home-button").click(); assert.equal(new URL(page.url()).search, "");
-    await page.reload(); assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), "home");
+    await page.reload(); assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), "daily");
   }
   await page.goto(`${BASE_URL}/index.html?tutorial=1`);
   await page.locator("#tutorial-exit").click(); assert.equal(new URL(page.url()).search, "");
-  await page.reload(); assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), "home");
+  await page.reload(); assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).mode), "daily");
   await page.close(); console.log("Direct mode links and both Home controls clear mode queries");
 } finally { await browser.close(); }

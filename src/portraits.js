@@ -22,9 +22,9 @@ export function animatePlacement(element) {
     { duration: 170, easing: 'ease-out' },
   );
 }
-export function animateResultStamp(element) {
+export function animateResultStamp(element, { inset = false } = {}) {
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) element?.animate(
-    [{ opacity: 0, transform: 'translateY(-3px) scale(1.08) rotate(-2deg)' }, { opacity: 1, transform: 'none' }],
+    [{ opacity: 0, transform: inset ? 'translateY(-3px) scale(.96)' : 'translateY(-3px) scale(1.08) rotate(-2deg)' }, { opacity: 1, transform: 'none' }],
     { duration: 160, easing: 'cubic-bezier(.2,.8,.3,1)' },
   );
 }

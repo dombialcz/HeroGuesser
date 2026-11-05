@@ -29,6 +29,7 @@ try {
     await page.evaluate(() => document.fonts.ready);
     const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
     const click = async selector => {
+      if (['#home-play-stories', '#home-play-daily'].includes(selector) && !await page.locator(selector).isVisible()) await page.locator('#mastermind-home-button').click();
       if (selector.startsWith("#start-adventure") && !await page.locator(selector).isVisible()) {
         if (await page.locator("#mastermind-home-button").isVisible()) await page.locator("#mastermind-home-button").click();
         await page.locator("#home-play-stories").click();
@@ -145,7 +146,7 @@ try {
     await click("#adventure-restart"); await click("#confirm-accept"); assert.equal((await state()).phase, "intro");
     await next(); await pick("ale");
     await page.reload(); await page.waitForFunction(() => window.render_game_to_text);
-    assert.equal((await state()).mode, "home");
+    assert.equal((await state()).mode, "daily");
     await click("#start-adventure-0"); assert.equal((await state()).draft[0], "ale");
     await click("#adventure-exit"); await click("#start-adventure-1");
     await click("#adventure-restart"); await click("#confirm-accept"); await next(); await pick("mage");
@@ -221,7 +222,7 @@ try {
   assert.equal(await handoff.locator("#mastermind-tutorial-entry").isVisible(), false);
   await click("adventure-next"); await click("adventure-pick-thief");
   await handoff.locator('[data-locale="pl"]').click(); assert.equal((await state()).locale, "pl"); assert.equal((await state()).draft[0], "thief");
-  await handoff.reload(); assert.equal((await state()).mode, "home");
+  await handoff.reload(); assert.equal((await state()).mode, "daily"); await click("mastermind-home-button");
   await click("home-play-stories"); await click("campaign-continue");
   assert.equal((await state()).adventure, "last-round"); assert.equal((await state()).draft[0], "thief");
   await handoff.close(); console.log("Prelude-to-chapter handoff, locale switch and saved chapter continuation after reload passed");

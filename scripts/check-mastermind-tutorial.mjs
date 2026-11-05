@@ -27,9 +27,9 @@ try {
     const dailyStorage = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => key.startsWith("heroguesser:v1:"))));
     const dailyBefore = await dailyStorage();
     const click = async selector => {
-      if (selector === "#home-play-tutorial" && !await page.locator(selector).isVisible()) {
-        if (await page.locator("#mastermind-home-button").isVisible()) await page.locator("#mastermind-home-button").click();
-        await page.locator("#home-play-stories").click();
+      if (selector === '#home-play-tutorial' && (await state()).mode !== 'stories') {
+        if ((await state()).mode !== 'home') await page.locator('#mastermind-home-button').click();
+        await page.locator('#home-play-stories').click();
       }
       return width < 500 ? page.locator(selector).tap() : page.locator(selector).click();
     };
@@ -154,7 +154,7 @@ try {
     await pick("thief"); const beforeRestart = (await state()).draft;
     await click("#tutorial-restart"); assert.deepEqual((await state()).draft, [null, null, null]);
     await click("#tutorial-undo"); assert.deepEqual((await state()).draft, beforeRestart);
-    await page.reload(); assert.equal((await state()).mode, "home", "ordinary URL returns home after reload");
+    await page.reload(); assert.equal((await state()).mode, "daily", "ordinary URL returns to Daily after reload");
     await click("#home-play-tutorial"); assert.deepEqual((await state()).draft, [null, null, null]);
     await pick("thief"); await click("#tutorial-exit"); await click("#home-play-tutorial");
     assert.deepEqual((await state()).draft, [null, null, null], "leaving drops the current run");

@@ -17,6 +17,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       page.on('pageerror', e => errors.push(e.message));
       const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
       const click = async selector => {
+      if (['#home-play-stories', '#home-play-daily'].includes(selector) && !await page.locator(selector).isVisible()) await page.locator('#mastermind-home-button').click();
         await page.locator(selector).tap();
         if (selector.startsWith('#confirm-')) await page.waitForFunction(() => !document.querySelector('dialog[aria-labelledby="confirm-heading"]'));
       };

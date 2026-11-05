@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createAdventure, actAdventure, adventureScene } from '../src/mastermind-adventure-core.js';
 import { restoreStory, serializeStory } from '../src/story-progress.js';
 import { generateChallenge } from '../src/mastermind-core.js';
-import { restoreDaily, serializeDaily, dailyShareText, pruneDaily, dailyKey } from '../src/daily-progress.js';
+import { restoreDaily, serializeDaily, dailyShareText, pruneDaily, dailyKey, dailyMedal } from '../src/daily-progress.js';
 import { installNativePlatform, storage } from '../src/platform.js';
 import { readFileSync } from 'node:fs';
 
@@ -80,8 +80,20 @@ test('daily sharing contains aggregate counts only, in both locales, and require
     const text = dailyShareText(c, [wrong, c.code], locale);
     assert.match(text, /2026-10-25/); assert.match(text, /5 🟩 · 0 🟨 · 0 ⬜/);
     assert.ok(text.includes(locale === 'pl' ? 'Próby: 2' : 'Guesses: 2'));
+    assert.ok(text.split('\n').includes(locale === 'pl' ? 'Wskazówki: 0' : 'Hints: 0'));
     for (const piece of ['knight', 'thief', 'bard', 'cleric', 'barbarian', 'ranger', 'mage']) assert.ok(!text.includes(piece));
   }
+});
+test('Daily medal thresholds include the last guess of each tier', () => {
+  for (const [id, gold, silver] of [['easy', 5, 8], ['medium', 6, 10], ['hard', 8, 11], ['chaos', 10, 14]]) {
+    assert.equal(dailyMedal(id, 0), null);
+    assert.equal(dailyMedal(id, 1), 'gold');
+    assert.equal(dailyMedal(id, gold), 'gold');
+    assert.equal(dailyMedal(id, gold + 1), 'silver');
+    assert.equal(dailyMedal(id, silver), 'silver');
+    assert.equal(dailyMedal(id, silver + 1), 'bronze');
+  }
+  assert.equal(dailyMedal('warmup', 1), null);
 });
 test('90-day pruning leaves story/language, future dates and unrelated keys intact', () => {
   const keys = new Set([dailyKey('2026-07-27', 'easy'), dailyKey('2026-07-28', 'easy'), dailyKey('2027-01-01', 'hard'), 'heroguesser:story:v1:last-round', 'heroguesser:language', 'other']);
@@ -106,7 +118,7 @@ test('Party Roll saves, sharing and retention are independent of the original da
   const complete = restoreDaily(serializeDaily({ guesses: [c.code], draft }), c);
   assert.equal(complete.invalid, false);
   assert.deepEqual(complete.progress.draft, Array(5).fill(null));
-  for (const locale of ['en', 'pl']) assert.ok(dailyShareText(c, [c.code], locale).includes(`${locale === 'pl' ? 'Drużyna z przypadku' : 'Party Roll'}\n`));
+  for (const locale of ['en', 'pl']) assert.ok(dailyShareText(c, [c.code], locale).includes(`${locale === 'pl' ? 'Ekspert' : 'Expert'}\n`));
   assert.notEqual(dailyKey(c.dateKey, 'chaos'), dailyKey(c.dateKey, 'easy'));
   const keys = new Set([dailyKey('2026-07-27', 'chaos'), dailyKey('2026-10-25', 'chaos'), dailyKey('2026-10-25', 'easy')]);
   pruneDaily({ keys: () => [...keys], removeItem: key => keys.delete(key) }, '2026-10-25');

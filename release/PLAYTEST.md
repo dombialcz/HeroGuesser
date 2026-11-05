@@ -4,9 +4,11 @@ Engineering checks are automated; participant/device results below must be obser
 
 ## Five unfamiliar players
 
-Recruit five people unfamiliar with the controls, including Polish and English readers. Give them the app without coaching. Ask them to find and finish the tutorial, start a story, leave/continue it, and solve one daily with hints available. Then ask them to share a solved result without spoilers.
+Recruit five people unfamiliar with the controls, including Polish and English readers. Give them a fresh profile with the new warm-up and say nothing for the first 90 seconds. Observe taps without visible changes, time to first Check and time to solve. The targets are an unaided warm-up solve within 90 seconds, an explanation that feedback counts describe the whole row, and an unaided first Daily guess. These are playtest targets, not guarantees or automated evidence.
 
-Record anonymous participant IDs, language, device/build, completion, where they hesitated, accidental taps, hint use, misunderstood feedback and whether they could continue unaided. Collect no unnecessary personal information. Review narrative clues, the deliberate tutorial failure, row-total feedback and the meaning of grey. Fix wrong-scoring, lost-save, navigation and core accessibility blockers before beta sign-off.
+After the warm-up, ask them to solve Easy with existing renewable hints available, explain what a lock versus a revealed eye means, find Help, share a result without spoilers, and find Story as an optional extra. Include absent heroes and excess copies, a return visit, and a player who skips the warm-up. Check whether a single daily solve feels like a satisfying stopping point and whether optional next difficulties are understood.
+
+Record anonymous participant IDs, language, device/build, completion, hesitation, accidental taps, hints and misunderstood feedback. Ask each participant to explain a deduction before coaching. Keep the existing hint budget/cooldown unchanged during this pass. Defer streaks, timing, deduction helpers and monetization until observed results justify another experiment. Collect no unnecessary personal information. Fix wrong-scoring, lost-save, navigation and accessibility blockers before beta sign-off.
 
 | Participant | Locale/device/build | Tutorial/daily completed unaided | Confusion/accidental actions/hints | Issue/fix/retest |
 | --- | --- | --- | --- | --- |
@@ -24,7 +26,7 @@ For the content-edition-2 pass, ask at least two participants to continue throug
 
 Use the publisher's real iPhone, a lower/older supported device or OS where available, and simulators for missing sizes. Test the exact Release build, EN/PL, portrait/landscape, large text and reduced motion.
 
-- Fresh install and **first launch in airplane mode**: Home, all three tutorial scenes, all eleven story scenes, three daily difficulties, icons/fonts and celebration. Verify the date labels and no core network dependency.
+- Fresh install and **first launch in airplane mode**: Daily, the worked-example warm-up, all three optional tutorial scenes, all eleven story scenes, four daily difficulties, icons/fonts and celebration. Verify the date labels and no core network dependency.
 - Wrong/incomplete/duplicate rows, unlimited attempts beyond five, hints, edit Undo, drag/swap/copy, quick swipes and long histories.
 - Each chapter: Home/Back, background/call/notification/lock, force-close/relaunch, then Continue. Check draft, hints, guesses and verified facts. Restart/reset cancellation must keep data; confirmed operations affect only their labelled scope.
 - Native daily shares: inspect aggregate payload, cancel sheet, share through a chosen app, return safely. Test without network; no answer pieces/order may appear.

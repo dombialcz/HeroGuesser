@@ -199,7 +199,9 @@ export function installMastermindAdventures({ root, entry, getLocale, onModeChan
           if (tile && !state.draft[Number(tile.dataset.slot)]) state.selected = Number(tile.dataset.slot);
           dispatch({ type: "pick", piece });
         }
-      } else if (event.key === "Enter" && !event.target.closest("button, a, summary")) {
+      } else if (event.key === "Backspace" && state.phase === "play") {
+        event.preventDefault(); const slot = event.target.closest("[data-slot]")?.dataset.slot; if (slot !== undefined || state.selected !== null) dispatch({ type: "slot", slot: slot !== undefined ? Number(slot) : state.selected });
+      } else if (event.key === "Enter" && (!event.target.closest("button, a, summary") || event.target.closest("[data-slot]"))) {
         event.preventDefault(); if (state.phase === "play") dispatch({ type: "check" }); else if (["intro", "solved"].includes(state.phase)) dispatch({ type: "next" });
       }
     },

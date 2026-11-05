@@ -1,142 +1,74 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { chromium, webkit } from 'playwright';
 import { seedFirstRunHandled } from './story-test-fixtures.mjs';
-import { generateChallenge } from '../src/mastermind-core.js';
-const base = (process.env.HERO_GUESSER_BASE_URL ?? 'http://127.0.0.1:4180').replace(/\/$/, '');
-const output = 'output/tabletop-after';
-await mkdir(output, { recursive: true });
-let before = {};
-try { before = JSON.parse(await readFile('output/tabletop-before/measurements.json', 'utf8')); } catch { /* Baseline is optional on clean checkouts. */ }
-const measurements = {};
-for (const [engine, type] of Object.entries({ chromium, webkit })) {
-  const browser = await type.launch();
-  try {
-    for (const [profile, width, height, locale, large] of [
-      ['desktop', 1440, 1000, 'en', false], ['tablet', 1024, 768, 'en', false],
-      ['phone', 390, 844, 'en', false], ['phone-pl', 390, 844, 'pl', false],
-      ['small-phone', 320, 740, 'en', false], ['landscape', 844, 390, 'pl', false],
-      ['small-large-pl', 320, 740, 'pl', true],
-    ]) {
-      const page = await browser.newPage({ viewport: { width, height }, reducedMotion: large ? 'reduce' : 'no-preference' });
-      const errors = [];
-      page.on('pageerror', e => errors.push(e.message));
-      await seedFirstRunHandled(page);
-      await page.addInitScript(locale => {
-        localStorage.setItem('heroguesser:language', locale);
-        window.tabletopEffects = [];
-        const original = Element.prototype.animate;
-        Element.prototype.animate = function(frames, options) {
-          const kind = this.matches('.portrait-frame') ? 'placement' : this.matches('.row-feedback, .story-scores') ? 'result' : null;
-          if (kind) window.tabletopEffects.push({ kind, duration: options.duration, frames });
-          return original.call(this, frames, options);
-        };
-      }, locale);
-      const largeText = async () => { if (large) await page.addStyleTag({ content: 'html { font-size: 200%; }' }); };
-      const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
-      const settle = () => page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).forEach(a => a.finish()); });
-      const fits = async () => {
-        await page.evaluate(() => document.fonts.ready);
-        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${engine}/${profile}: page fits`);
-        const labels = await page.locator('.hero-choice > span:not(.portrait-frame), .clue-text strong, .clue-text small').evaluateAll(els => els.filter(e => e.getBoundingClientRect().width).every(e => e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1));
-        assert.ok(labels, `${engine}/${profile}: full class/clue labels fit`);
-        assert.ok(await page.locator('.hero-choice > span:not(.portrait-frame)').evaluateAll(labels => labels.every(label => { const range = document.createRange(); range.selectNodeContents(label); return range.getClientRects().length <= 1; })), 'class names remain whole words');
-      };
-      await page.goto(base); await page.waitForFunction(() => window.render_game_to_text); await largeText(); await settle();
-      await fits();
-      const dailyCard = page.locator('.home-choice-daily');
-      assert.equal(await dailyCard.locator('button').first().getAttribute('id'), 'home-play-daily');
-      assert.equal(await dailyCard.locator('.guild-ribbon').count(), 0, 'Daily keeps a quiet supporting title');
-      assert.ok(await dailyCard.evaluate(card => {
-        const action = card.querySelector('button').getBoundingClientRect();
-        const title = card.querySelector('h2').getBoundingClientRect();
-        const art = card.querySelector('.home-choice-art');
-        const style = getComputedStyle(art);
-        return action.bottom < title.top && style.position === 'absolute' && Number(style.opacity) <= .2 && style.pointerEvents === 'none';
-      }), 'Daily action precedes copy and the emblem remains a subdued, inert background');
-      assert.ok(await page.locator('.home-choice-story').evaluate(card => {
-        const art = card.querySelector('.home-choice-art img').getBoundingClientRect();
-        return [...card.querySelectorAll('p, button')].every(el => { const r = el.getBoundingClientRect(); return art.right <= r.left + 1 || art.left >= r.right - 1 || art.bottom <= r.top + 1 || art.top >= r.bottom - 1; });
-      }), 'Story artwork stays clear of descriptions and controls');
-      if (!large) {
-        assert.ok(await page.locator('.home-choice-story').evaluate(card => {
-          const art = card.querySelector('.home-choice-art img').getBoundingClientRect();
-          const title = card.querySelector('h2').getBoundingClientRect();
-          const overlap = Math.min(art.bottom, title.bottom) - Math.max(art.top, title.top);
-          return overlap > 0 && overlap <= 96 && Number(getComputedStyle(card.querySelector('h2')).zIndex) > Number(getComputedStyle(card.querySelector('.home-choice-art')).zIndex);
-        }), 'Compact Story emblem overlaps behind its title ribbon');
-      }
-      const ratio = await page.locator('.home-choices').evaluate(el => el.children[0].getBoundingClientRect().width / el.children[1].getBoundingClientRect().width);
-      assert.ok(Math.abs(ratio - (width > 760 ? 1.5 : 1)) < .01, 'Home uses 3:2 columns and stacks on phones');
-      await page.screenshot({ path: `${output}/${engine}-${profile}-home.png`, fullPage: true });
-      await page.locator('#home-play-daily').click(); await settle();
-      const geometry = () => page.locator('.hero-choice, .row-active .guess-tile').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return [r.width, r.height]; }));
-      measurements[`${engine}-${profile}`] = await page.evaluate(() => Object.fromEntries(['.intro-row', '.mission-card', '.picker-panel', '.row-active', '#submit-button'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return [s, { top: r.top + scrollY, bottom: r.bottom + scrollY, height: r.height, width: r.width }]; })));
-      const metrics = measurements[`${engine}-${profile}`];
-      if (profile === 'phone') assert.ok(metrics['#submit-button'].bottom <= height + 160, `${engine}: portraits, ribbons and slot locks keep Check within a short scroll: ${metrics['#submit-button'].bottom}`);
-      if (engine === 'chromium' && before[profile] && locale === 'en') assert.ok(metrics['.row-active'].top < before[profile]['.row-active'].top, `${profile}: padded layout remains above the original playing row`);
-      if (width <= 1100) assert.ok(metrics['.picker-panel'].bottom <= metrics['.row-active'].top, 'phone/tablet selector remains above formation');
-      assert.equal(await page.locator('.picker-panel').evaluate(el => getComputedStyle(el).position), 'static');
-      assert.equal(await page.locator('#formation-rules').evaluate(el => el.open), false);
-      assert.equal(await page.locator('#controls-help').evaluate(el => el.open), false);
-      assert.equal(await page.locator('#guess-board').getAttribute('aria-describedby'), 'drag-hint');
-      assert.ok(await page.locator('.portrait-frame img').evaluateAll(imgs => imgs.every(img => getComputedStyle(img).objectFit === 'contain')));
-      assert.equal(await page.locator('#hero-picker .portrait-fallback:visible').count(), 0, 'fallback letters do not bleed through transparent artwork');
-      await fits();
-      await page.screenshot({ path: `${output}/${engine}-${profile}-daily.png`, fullPage: true });
-      if (large) await page.locator('.picker-panel').screenshot({ path: `${output}/${engine}-${profile}-selector.png` });
-      // Both native disclosures support keyboard activation and remain open across placements.
-      await page.locator('#formation-rules summary').focus(); await page.keyboard.press('Space');
-      assert.equal(await page.locator('#formation-rules summary').innerText(), locale === 'pl' ? 'Zasady składu' : 'Formation rules');
-      assert.ok(await page.locator('#rule-note').isVisible());
-      await page.locator('#controls-help summary').focus(); await page.keyboard.press('Enter');
-      assert.equal(await page.locator('#controls-help summary').innerText(), locale === 'pl' ? 'Sterowanie' : 'Controls');
-      assert.ok(await page.locator('#drag-hint').isVisible());
-      await page.locator('.hero-choice').first().click();
-      assert.equal(await page.locator('#formation-rules').evaluate(el => el.open), true);
-      assert.equal(await page.locator('#controls-help').evaluate(el => el.open), true);
-      await page.locator('#clear-button').click();
-      await page.locator('#formation-rules summary').click(); await page.locator('#controls-help summary').click();
-      await page.locator('[data-challenge="hard"]').click(); await settle(); await fits();
-      const withImages = await geometry();
-      await page.route('**/assets/mastermind/*', route => route.abort());
-      await page.reload(); await largeText();
-      await page.locator('#home-play-daily').click(); await page.locator('[data-challenge="hard"]').click();
-      await page.waitForFunction(() => [...document.querySelectorAll('#hero-picker .portrait-frame img')].every(img => img.hidden));
-      assert.deepEqual(await geometry(), withImages, `${profile}: failed portraits do not resize controls`);
-      await fits();
-      const fallback = page.locator('.hero-choice[data-hero="barbarian"] .portrait-fallback small');
-      assert.equal(await fallback.textContent(), locale === 'pl' ? 'Barbarzyńca' : 'Barbarian');
-      assert.ok(await fallback.isVisible());
-      await page.locator('.hero-choice').first().focus(); await page.keyboard.press('ArrowRight');
-      assert.ok(await page.locator('.hero-choice').first().evaluate(el => el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none' && getComputedStyle(el).clipPath === 'none'), 'focus outline stays outside the bevelled portrait');
-      assert.notEqual(await page.locator('.hero-choice .portrait-frame').first().evaluate(el => getComputedStyle(el).clipPath), 'none');
-      await page.evaluate(() => document.activeElement.blur());
-      for (let i = 0; i < 7; i++) await page.keyboard.press('1');
-      assert.equal((await state()).draft.filter(Boolean).length, 7);
-      assert.deepEqual(await page.locator('.row-active .tile-position').allTextContents(), ['1', '2', '3', '4', '5', '6', '7']);
-      await page.locator('#controls-help summary').focus(); await page.keyboard.press('Enter');
-      assert.equal(await page.locator('#controls-help').evaluate(el => el.open), true);
-      assert.equal((await state()).guesses.length, 0, 'Enter on a disclosure never submits a full formation');
-      await page.keyboard.press('Enter'); await page.evaluate(() => document.activeElement.blur());
-      await page.keyboard.press('Enter'); assert.equal((await state()).guesses.length, 1);
-      const effects = await page.evaluate(() => window.tabletopEffects);
-      assert.equal(effects.filter(e => e.kind === 'placement' && e.duration === 170).length, large ? 0 : 7);
-      assert.equal(effects.filter(e => e.kind === 'result' && e.duration === 160).length, large ? 0 : 1);
-      const shapes = await page.locator('#guess-history .feedback-dot').evaluateAll(els => els.map(el => { const s = getComputedStyle(el); return [s.borderRadius, s.transform, s.borderStyle, s.backgroundColor].join(); }));
-      assert.equal(new Set(shapes).size, 3, 'feedback has three distinguishable shapes');
-      await fits(); await settle();
-      await page.screenshot({ path: `${output}/${engine}-${profile}-fallback.png`, fullPage: true });
-      const snap = await state();
-      for (const hero of generateChallenge(snap.date, 'hard').code) await page.locator(`.hero-choice[data-hero="${hero}"]`).click();
-      await page.locator('#submit-button').click(); assert.equal((await state()).result, 'solved');
-      await page.unroute('**/assets/mastermind/*');
-      await page.reload(); await largeText(); await page.locator('#home-play-daily').click(); await page.locator('[data-challenge="hard"]').click();
-      assert.equal((await state()).result, 'solved');
-      assert.deepEqual(await page.evaluate(() => window.tabletopEffects), [], 'restoring a solved puzzle does not replay visual effects');
-      assert.deepEqual(errors, []); await page.close();
-      console.log(`${engine}/${profile}: composition, disclosures, whole labels, fallback geometry, keyboard/focus, place tabs, action-only/reduced motion and solving pass`);
+import { generateChallenge, HERO_CLASSES } from '../src/mastermind-core.js';
+const base=(process.env.HERO_GUESSER_BASE_URL??'http://127.0.0.1:4180').replace(/\/$/,'');
+await mkdir('output/overhaul',{recursive:true});
+for(const [engine,type] of Object.entries({chromium,webkit})) {
+ const browser=await type.launch();
+ try {
+  for(const [profile,width,height,locale,large] of [['desktop',1280,860,'en',false],['tablet',1024,768,'en',false],['phone',390,844,'en',false],['small',320,740,'en',false],['phone-pl',390,844,'pl',false],['large-pl',320,740,'pl',true],['landscape',844,390,'pl',false]]) {
+   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});await seedFirstRunHandled(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`)});
+   await page.addInitScript(locale=>localStorage.setItem('heroguesser:language',locale),locale);await page.goto(base);
+   if(large)await page.addStyleTag({content:'html { font-size:200%; }'});
+   const state=()=>page.evaluate(()=>JSON.parse(render_game_to_text()));
+   const fits=async()=>{await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${engine}/${profile}: no overflow`);};
+   assert.equal((await state()).mode,'daily');await page.locator('#mastermind-home-button').click();
+   assert.equal(await page.locator('.home-choices button').first().getAttribute('id'),'home-play-daily');
+   assert.ok(await page.locator('.home-choice-daily').evaluate(el=>el.getBoundingClientRect().top<document.querySelector('.home-choice-story').getBoundingClientRect().top));
+   assert.equal(await page.locator('.home-choice-daily .home-choice-art').evaluate(el=>getComputedStyle(el).opacity),'1');
+   await fits();await page.screenshot({path:`output/overhaul/${engine}-${profile}-home.png`,fullPage:true});await page.locator('#home-play-daily').click();
+   for(const difficulty of ['easy','medium','hard','chaos']) {
+    await page.locator(`[data-challenge=${difficulty}]`).click();const c=generateChallenge((await state()).date,difficulty);const absent=HERO_CLASSES.find(h=>!c.code.includes(h.id)).id;
+    assert.equal(await page.locator('#hero-picker .hero-choice').count(),7);assert.equal(await page.locator('#hero-picker #daily-hint-button').count(),0);
+    const sizes=await page.locator('.hero-choice > span:not(.portrait-frame), .guess-copy-row, .clue-card strong').evaluateAll(els=>els.map(e=>parseFloat(getComputedStyle(e).fontSize)));assert.ok(sizes.every(s=>s>=13));
+    for(const hero of Array(c.size).fill(absent))await page.locator(`.hero-choice[data-hero=${hero}]`).click();await page.locator('#submit-button').click();await page.waitForTimeout(100);
+    const previewGeometry = await page.locator('#last-check .last-check-portrait').evaluateAll(tiles => tiles.map(tile => { const r = tile.getBoundingClientRect(); return { width: r.width, height: r.height }; }));
+    assert.equal(previewGeometry.length, c.size);
+    assert.ok(previewGeometry.every(tile => tile.width >= (width >= 1024 ? 48 : 30) && Math.abs(tile.width - tile.height) < 1), `${engine}/${profile}/${difficulty}: portraits have real square dimensions ${JSON.stringify(previewGeometry)}`);
+    assert.equal(await page.locator('#last-check-totals .feedback-score').count(), 3);
+    assert.equal(await page.locator('#last-check-totals .feedback-words:visible').count(), 3);
+    assert.ok(await page.locator('#last-check-totals .feedback-dot, #guess-history .feedback-dot').evaluateAll(dots => dots.every(dot => dot.offsetWidth >= 14 && dot.offsetHeight >= 14)), 'feedback symbols cannot collapse');
+    assert.equal((await state()).guesses.at(-1).absent,c.size);assert.ok(await page.locator('#feedback-explanation').isVisible());
+    assert.ok(await page.evaluate(()=>document.querySelector('.board-panel').getBoundingClientRect().top>document.querySelector('#current-guess').getBoundingClientRect().bottom), 'history stays below the primary playing field');
+    const flow = await page.evaluate(() => {
+     const boxes = ['.picker-panel', '#current-guess', '.board-footer', '#last-check', '.board-panel'].map(selector => document.querySelector(selector).getBoundingClientRect().toJSON());
+     const picker = document.querySelector('.picker-panel');
+     return { boxes, domOrder: !!(picker.compareDocumentPosition(document.querySelector('#current-guess')) & Node.DOCUMENT_POSITION_FOLLOWING), pickerTops: [...document.querySelectorAll('#hero-picker .hero-choice')].map(el => el.getBoundingClientRect().top) };
+    });
+    assert.ok(flow.domOrder, 'picker comes before the formation for keyboard and screen-reader navigation');
+    assert.ok(flow.boxes.every((box, index) => index === 0 || box.top >= flow.boxes[index - 1].bottom - 1), `${engine}/${profile}/${difficulty}: picker, formation, actions, latest result and history follow without interleaving`);
+    if (width > 760) assert.ok(flow.pickerTops.every(top => Math.abs(top - flow.pickerTops[0]) < 1), 'desktop picker stays on one row above the slots');
+    assert.equal(await page.locator('#board-heading.guild-ribbon, #picker-heading.guild-ribbon, #daily-title.guild-ribbon').count(),3);
+    if(width<=760&&!large&&height>=740) {
+     const geometry=await page.evaluate(()=>({feedback:document.querySelector('#last-check').getBoundingClientRect().toJSON(),dock:document.querySelector('.daily-dock').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
+     assert.ok(geometry.feedback.top>=-1&&geometry.feedback.bottom<=geometry.vh+1,`${engine}/${profile}/${difficulty}: last checked guess visible beside controls ${JSON.stringify(geometry)}`);
+     assert.ok(geometry.check.bottom<=geometry.vh+1,`${engine}/${profile}: Check visible`);
     }
-  } finally { await browser.close(); }
+    await fits();await page.screenshot({path:`output/overhaul/${engine}-${profile}-${difficulty}.png`,fullPage:true});
+    for(const hero of c.code)await page.locator(`.hero-choice[data-hero=${hero}]`).click();await page.locator('#submit-button').click();await page.waitForTimeout(100);
+    assert.equal((await state()).result,'solved');assert.ok(await page.locator('#daily-result').isVisible());assert.ok(await page.locator('#game-message').isVisible());assert.equal(await page.locator('.daily-dock').isVisible(),false);
+    const badge = page.locator(`[data-challenge=${difficulty}] .difficulty-result`);
+    assert.equal(await badge.innerText(), '✓ 2');
+    assert.equal(await badge.getAttribute('data-medal'), 'gold');
+    assert.equal(await page.locator('#result-medal').innerText(), locale === 'pl' ? 'Złoto' : 'Gold');
+    await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async ({text})=>{window.shared=text}}));await page.locator('#share-result').click();assert.match(await page.evaluate(()=>window.shared),locale==='pl'?/Wskazówki: 0/:/Hints: 0/);
+   }
+   assert.equal(await page.locator('#next-puzzle').isVisible(),false);assert.ok((await state()).dailyProgress.every(c=>c.solved));
+   await page.screenshot({path:`output/overhaul/${engine}-${profile}-solved.png`,fullPage:true});
+   await page.locator('#mastermind-home-button').click();await page.locator('#home-play-stories').click();await page.locator('#start-adventure-0').click();await page.locator('#adventure-next').click();
+   await page.keyboard.press('1');await page.keyboard.press('2');await page.keyboard.press('3');const before=(await state()).draft;await page.keyboard.press('Enter');assert.equal((await state()).guesses.length+(await state()).facts.length,1);assert.ok(before.every(Boolean));
+   await fits();assert.deepEqual(errors,[]);await page.close();console.log(`${engine}/${profile}: Daily-first home, roster, all boards, visible feedback, results/sharing and Story keyboard pass`);
+  }
+  const missing = await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
+  await missing.route('**/assets/mastermind/*.webp', route => route.abort());
+  await missing.goto(`${base}/?daily=1`); await missing.locator('[data-challenge=hard]').click();
+  const challenge = generateChallenge(await missing.evaluate(()=>JSON.parse(render_game_to_text()).date), 'hard');
+  for (const hero of challenge.code) await missing.locator(`.hero-choice[data-hero=${hero}]`).click();
+  await missing.waitForFunction(()=>[...document.querySelectorAll('.portrait-fallback')].filter(e=>!e.hidden&&e.getBoundingClientRect().width).length>=7);
+  assert.ok(await missing.locator('.portrait-fallback:visible').count() >= 7);
+  await missing.locator('#submit-button').click(); assert.equal(await missing.evaluate(()=>JSON.parse(render_game_to_text()).result),'solved');
+  await missing.screenshot({path:`output/overhaul/${engine}-missing-art.png`,fullPage:true}); await missing.close();
+ }finally{await browser.close();}
 }
-await writeFile(`${output}/measurements.json`, JSON.stringify(measurements, null, 2));

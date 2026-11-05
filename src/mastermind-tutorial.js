@@ -177,7 +177,8 @@ export function installMastermindTutorial({ root, entry, getLocale, onModeChange
         }
         return;
       }
-      if (event.target.closest("button, a")) return;
+      if (event.key === 'Backspace' && canEditTutorial(state)) { event.preventDefault(); const slot = event.target.closest('[data-slot]')?.dataset.slot; if (slot !== undefined || state.selected !== null) dispatch({ type: 'slot', slot: slot !== undefined ? Number(slot) : state.selected }); return; }
+      if (event.target.closest("button, a") && !event.target.closest('[data-slot]')) return;
       if (event.key === "Enter") { event.preventDefault(); if (canEditTutorial(state)) dispatch({ type: "check" }); else if (NEXT_PHASES.includes(state.phase)) dispatch({ type: "next" }); }
     },
     snapshot() {

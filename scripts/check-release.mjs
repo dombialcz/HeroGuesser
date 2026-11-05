@@ -27,6 +27,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await page.waitForFunction(() => window.render_game_to_text);
       if (large) await page.addStyleTag({ content: 'html { font-size: 200%; }' });
       const click = async selector => {
+      if (['#home-play-stories', '#home-play-daily'].includes(selector) && !await page.locator(selector).isVisible()) await page.locator('#mastermind-home-button').click();
         await page.locator(selector).click();
         if (selector.startsWith('#confirm-')) await page.waitForFunction(() => !document.querySelector('dialog[aria-labelledby="confirm-heading"]'));
       };

@@ -10,10 +10,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     await context.addInitScript(() => {
       window.audioStarts = [];
+      const bufferIds = new WeakMap(); let nextBufferId = 0;
       const start = AudioBufferSourceNode.prototype.start;
       AudioBufferSourceNode.prototype.start = function (...args) {
         const samples = this.buffer.getChannelData(0);
-        const entry = { duration: this.buffer.duration, rate: this.playbackRate.value, signature: Array.from(samples.slice(2400, 2410)), state: this.context.state, signal: 0 };
+        if (!bufferIds.has(this.buffer)) bufferIds.set(this.buffer, nextBufferId++);
+        const entry = { bufferId: bufferIds.get(this.buffer), duration: this.buffer.duration, rate: this.playbackRate.value, signature: Array.from(samples.slice(2400, 2410)), state: this.context.state, signal: 0 };
         window.audioStarts.push(entry);
         // Measure the rendered signal, in addition to checking that start() was called.
         const analyser = this.context.createAnalyser();
@@ -84,8 +86,8 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     }
     await expectSilence(() => click('#clear-button'), 'clear is silent');
     const starts = await page.evaluate(() => audioStarts.filter(sound => sound.rate === 1));
-    for (let i = 1; i < starts.length; i++) assert.notDeepEqual(starts[i].signature, starts[i - 1].signature, 'no consecutive variant repeats');
-    assert.equal(new Set(starts.map(sound => JSON.stringify(sound.signature))).size, 7, 'all seven real variants used');
+    for (let i = 1; i < starts.length; i++) assert.notEqual(starts[i].bufferId, starts[i - 1].bufferId, 'no consecutive variant repeats');
+    assert.equal(new Set(starts.map(sound => sound.bufferId)).size, 7, 'all seven real variants used');
     await click('#settings-open'); await page.locator('#settings-sound').uncheck(); await click('#settings-close');
     await expectSilence(() => click('.hero-choice[data-hero="knight"]'), 'muted placement');
     await expectSilence(() => click('.row-active [data-slot="0"]'), 'muted removal');

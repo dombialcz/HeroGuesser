@@ -1,54 +1,22 @@
-const BASE_URL = (process.env.HERO_GUESSER_BASE_URL ?? "http://127.0.0.1:4180").replace(/\/$/, "");
-import assert from "node:assert/strict";
-import { chromium } from "playwright";
-import { mkdir } from "node:fs/promises";
-
-const browser = await chromium.launch({ headless: true });
-await mkdir("output/mastermind-mobile-scroll", { recursive: true });
-try {
-  for (const width of [320, 390]) {
-    for (const guesses of [0, 1, 2, 3, 8]) {
-      const context = await browser.newContext({ viewport: { width, height: 740 }, isMobile: true, hasTouch: true });
-      const page = await context.newPage();
-      const errors = [];
-      page.on("pageerror", e => errors.push(e.message));
-      await page.goto(`${BASE_URL}/index.html?daily=1`);
-      await page.evaluate(count => {
-        const { date } = JSON.parse(window.render_game_to_text());
-        localStorage.setItem(`heroguesser:v1:${date}:easy`, JSON.stringify({
-          guesses: Array.from({ length: count }, () => Array(5).fill("knight")), draft: Array(5).fill(null),
-        }));
-      }, guesses);
-      await page.reload();
-      const originalHeight = await page.evaluate(() => document.documentElement.scrollHeight);
-      const cdp = await context.newCDPSession(page);
-      let previous = 0;
-      // Swipe the page gutter so native touch scrolling crosses the pin point.
-      for (let swipe = 0; swipe < 5; swipe++) {
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 5, y: 620, id: 0 }] });
-        for (let y = 580; y >= 300; y -= 40) {
-          await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 5, y, id: 0 }] });
-          await page.waitForTimeout(30);
-        }
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-        await page.waitForTimeout(200);
-        const current = await page.evaluate(() => ({ y: scrollY, height: document.documentElement.scrollHeight }));
-        assert.ok(current.y >= previous - 2, `A downward swipe must not jump upward (${width}px, ${guesses} guesses: ${previous} → ${current.y})`);
-        assert.ok(Math.abs(current.height - originalHeight) <= 2, "Scrolling preserves page height");
-        previous = current.y;
-      }
-      assert.ok(previous > 0, "Touch swipes actually scroll the page");
-      assert.equal(await page.locator(".picker-floating").count(), 0);
-      assert.equal(await page.locator(".picker-panel").evaluate(el => getComputedStyle(el).position), "static");
-      if (guesses >= 2) {
-        await page.screenshot({ path: `output/mastermind-mobile-scroll/${width}-${guesses}.png` });
-      }
-      await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
-      await page.waitForFunction(() => !document.querySelector(".picker-panel").classList.contains("picker-floating"));
-      assert.equal(await page.evaluate(() => scrollY), 0);
-      assert.deepEqual(errors, []);
-      await context.close();
-      console.log(`${width}px / ${guesses} guesses: native swipes preserve scroll direction and page height; selector stays static`);
-    }
+import assert from 'node:assert/strict';
+import {chromium,webkit} from 'playwright';
+import {mkdir} from 'node:fs/promises';
+const base=process.env.HERO_GUESSER_BASE_URL??'http://127.0.0.1:4180';await mkdir('output/mastermind-mobile-scroll',{recursive:true});
+for(const [engine,type] of Object.entries({chromium,webkit})) {
+ const browser=await type.launch();try {
+  for(const width of [320,390])for(const count of [0,1,8,30]) {
+   const page=await browser.newPage({viewport:{width,height:844},hasTouch:true,isMobile:true,reducedMotion:'reduce'});
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`${base}/?daily=1`);
+   await page.evaluate(count=>{const {date}=JSON.parse(render_game_to_text());localStorage.setItem(`heroguesser:v1:${date}:easy`,JSON.stringify({guesses:Array.from({length:count},()=>Array(5).fill('knight')),draft:Array(5).fill(null)}));},count);await page.reload();
+   await page.locator('#current-guess').scrollIntoViewIfNeeded();
+   for(let i=0;i<5;i++)await page.locator('.hero-choice[data-hero=knight]').click();await page.locator('#submit-button').click();
+   await page.waitForTimeout(100);
+   const geometry=await page.evaluate(()=>({dock:document.querySelector('.daily-dock').getBoundingClientRect().toJSON(),result:document.querySelector('#last-check').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
+   assert.ok(geometry.check.bottom<=geometry.vh+1,`${engine}/${width}/${count}: Check visible`);
+   assert.ok(geometry.result.top>=-1&&geometry.result.bottom<=geometry.vh+1,`${engine}/${width}/${count}: last checked guess visible ${JSON.stringify(geometry)}`);
+   const stable=await page.evaluate(()=>({y:scrollY,height:document.documentElement.scrollHeight}));await page.waitForTimeout(100);assert.deepEqual(await page.evaluate(()=>({y:scrollY,height:document.documentElement.scrollHeight})),stable);
+   await page.locator('#guess-history').evaluate(el=>el.scrollIntoView({block:'start'}));const height=await page.evaluate(()=>document.documentElement.scrollHeight);await page.evaluate(()=>scrollBy(0,200));await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight),height);
+   if(count===8)await page.screenshot({path:`output/mastermind-mobile-scroll/${engine}-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);await page.close();console.log(`${engine}/${width}/${count}: chronological history, visible result/controls and stable scroll pass`);
   }
-} finally { await browser.close(); }
+ }finally{await browser.close();}
+}

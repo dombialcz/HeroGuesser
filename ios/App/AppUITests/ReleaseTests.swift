@@ -14,17 +14,19 @@ final class ReleaseTests: XCTestCase {
             for _ in 0..<5 where !element.isHittable { app.swipeUp() }
             element.tap()
         }
-        if button("Skip for now").waitForExistence(timeout: 2) { tap("Skip for now") }
+        if button("Skip to today").waitForExistence(timeout: 2) { tap("Skip to today") }
         tap("Settings"); tap("Reset all local data"); app.buttons["Confirm"].tap()
         XCTAssertTrue(app.staticTexts["Settings & About"].waitForNonExistence(timeout: 10))
         app.terminate(); app.launch()
-        tap("Skip for now")
-        XCTAssertTrue(app.staticTexts["The tutorial is always in Stories → Prelude."].waitForExistence(timeout: 10))
-        tap("Play Story")
+        tap("Check")
+        XCTAssertTrue(button("Use guess 1").waitForExistence(timeout: 10), "The worked example offers a real editable guess")
+        app.terminate(); app.launch()
+        XCTAssertTrue(button("Use guess 1").waitForExistence(timeout: 10), "Warm-up survives relaunch")
+        tap("Skip to today"); tap("Home"); tap("Play Story")
         XCTAssertFalse(button("Chapter 2").isEnabled, "The next chapter starts locked")
         tap("Prelude · A thief in the treasury")
-        XCTAssertTrue(app.staticTexts["The royal treasury"].waitForExistence(timeout: 10), "The skipped tutorial stays available from Stories")
-        tap("Back to home"); tap("Play Story"); tap("Begin story")
+        XCTAssertTrue(button("Add Thief").waitForExistence(timeout: 10), "The skipped tutorial stays available from Stories")
+        tap("Back to home"); tap("Play Story"); tap("Chapter 1")
         tap("Arrange this scene"); tap("Add Thief")
         let placed = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Place 1: Thief")).firstMatch
         XCTAssertTrue(placed.waitForExistence(timeout: 10))
@@ -32,7 +34,7 @@ final class ReleaseTests: XCTestCase {
         app.activate()
         XCTAssertTrue(placed.waitForExistence(timeout: 10))
         app.terminate(); app.launch()
-        tap("Play Story"); tap("Continue story")
+        tap("Home"); tap("Play Story"); tap("Continue story")
         XCTAssertTrue(placed.waitForExistence(timeout: 10), "Preferences should restore the draft after termination")
         tap("Add Ale"); tap("Add Knight"); tap("Check arrangement")
         XCTAssertTrue(app.staticTexts["Scene solved"].waitForExistence(timeout: 10))

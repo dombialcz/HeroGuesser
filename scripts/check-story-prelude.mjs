@@ -22,7 +22,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       page.on('pageerror', e => errors.push(e.message));
       page.on('response', r => { if (r.url().startsWith(base) && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
       const state = () => page.evaluate(() => JSON.parse(render_game_to_text()));
-      const click = selector => page.locator(selector).click();
+      const click = async selector => { if (selector === '#home-play-stories' && !await page.locator(selector).isVisible()) await page.locator('#mastermind-home-button').click(); await page.locator(selector).click(); };
       const saved = key => page.evaluate(key => localStorage.getItem(key), key);
       const dailySaves = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => key.startsWith('heroguesser:v1:'))));
       const menu = async () => { await click('#mastermind-home-button'); await click('#home-play-stories'); };
@@ -36,7 +36,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       if (large) await page.addStyleTag({ content: 'html { font-size: 200%; }' });
       assert.equal(await page.locator('.home-choices button').count(), 2);
       const dailies = await dailySaves();
-      await click('#first-run-tutorial');
+      await click('#help-open'); await click('#help-prelude');
       await page.waitForFunction(() => JSON.parse(render_game_to_text()).mode === 'story-tutorial');
       assert.equal((await state()).mode, 'story-tutorial');
       await click('#tutorial-exit');

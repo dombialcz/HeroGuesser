@@ -7,10 +7,10 @@ function loadSettings() {
   try {
     const saved = JSON.parse(storage.getItem(KEY));
     return {
-      enabled: typeof saved?.enabled === 'boolean' ? saved.enabled : true,
+      enabled: typeof saved?.enabled === 'boolean' ? saved.enabled : false,
       volume: typeof saved?.volume === 'number' && Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : 0.5,
     };
-  } catch { return { enabled: true, volume: 0.5 }; }
+  } catch { return { enabled: false, volume: 0.5 }; }
 }
 let settings = loadSettings(), audio, gain, mediaSource, interacted = false, backgrounded = false;
 let order = [], current = -1;

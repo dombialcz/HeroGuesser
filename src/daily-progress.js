@@ -4,6 +4,18 @@ import { HERO_CLASSES, evaluateGuess } from './mastermind-core.js';
 const valid = new Set(HERO_CLASSES.map(hero => hero.id));
 export const DAILY_SCHEMA = 2;
 export const GENERATOR_VERSION = 1;
+export const DAILY_MEDAL_LIMITS = {
+  easy: { gold: 5, silver: 8 },
+  medium: { gold: 6, silver: 10 },
+  hard: { gold: 8, silver: 11 },
+  chaos: { gold: 10, silver: 14 },
+};
+export function dailyMedal(difficulty, guesses) {
+  const limits = DAILY_MEDAL_LIMITS[difficulty];
+  if (!limits || guesses < 1) return null;
+  if (guesses <= limits.gold) return 'gold';
+  return guesses <= limits.silver ? 'silver' : 'bronze';
+}
 export const dailyKey = (date, difficulty) => `heroguesser:v1:${date}:${difficulty}`;
 export const blankDaily = challenge => ({ guesses: [], draft: Array(challenge.size).fill(null) });
 export function restoreDaily(raw, challenge) {
@@ -41,13 +53,19 @@ export function pruneDaily(storage, date) {
     if (match && today - Date.parse(`${match[1]}T00:00:00Z`) >= 90 * 86400000) storage.removeItem(key);
   }
 }
-export function dailyShareText(challenge, guesses, locale = 'en', name = 'Guild of Wits') {
-  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny', chaos: 'Drużyna z przypadku' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard', chaos: 'Party Roll' };
+export function dailyShareText(challenge, guesses, locale = 'en', name = 'Guild of Wits', hintsUsed = 0) {
+  const labels = locale === 'pl' ? { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny', chaos: 'Ekspert' } : { easy: 'Easy', medium: 'Medium', hard: 'Hard', chaos: 'Expert' };
   const solvedAt = guesses.findIndex(guess => evaluateGuess(challenge.code, guess)?.exact === challenge.size);
   if (solvedAt < 0) return null;
   const rows = guesses.slice(0, solvedAt + 1).map(guess => {
     const { exact, misplaced } = evaluateGuess(challenge.code, guess);
     return `${exact} 🟩 · ${misplaced} 🟨 · ${challenge.size - exact - misplaced} ⬜`;
   });
-  return [`${name} · ${challenge.dateKey} · ${labels[challenge.id]}`, `${locale === 'pl' ? 'Próby' : 'Guesses'}: ${solvedAt + 1}`, ...rows, 'https://dombialcz.github.io/HeroGuesser/'].join('\n');
+  return [
+    `${name} · ${challenge.dateKey} · ${labels[challenge.id]}`,
+    `${locale === 'pl' ? 'Próby' : 'Guesses'}: ${solvedAt + 1}`,
+    `${locale === 'pl' ? 'Wskazówki' : 'Hints'}: ${hintsUsed}`,
+    ...rows,
+    'https://dombialcz.github.io/HeroGuesser/',
+  ].join('\n');
 }

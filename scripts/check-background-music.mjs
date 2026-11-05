@@ -54,7 +54,8 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await page.waitForFunction(() => window.render_game_to_text);
     assert.equal(await status(), null, 'no playback or track download before interaction');
     assert.ok(!requests.some(url => url.endsWith('.mp3')));
-    await click('#home-play-daily'); await playing();
+    await click('#help-open'); await click('#help-close'); assert.equal(await status(), null, 'music stays off after interaction');
+    await click('#settings-open'); assert.equal(await page.locator('#settings-music').isChecked(), false); await page.locator('#settings-music').check(); await click('#settings-close'); await playing();
     assert.equal((await status()).gain, 0.5, 'default music gain is 50%');
     await page.waitForFunction(() => {
       const data = new Float32Array(musicProbe.analyser.fftSize);
@@ -117,7 +118,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await click('#settings-open'); assert.equal(await page.locator('#settings-music-volume').inputValue(), '73');
     await click('#reset-all'); await click('#confirm-accept'); await page.waitForFunction(() => !document.querySelector('#settings-dialog'));
     await click('#settings-open'); assert.equal(await page.locator('#settings-music-volume').inputValue(), '50');
-    assert.equal(await page.locator('#settings-music').isChecked(), true);
+    assert.equal(await page.locator('#settings-music').isChecked(), false);
     assert.deepEqual(errors, []);
     await context.close();
     // Malformed saved settings recover to the requested defaults.
@@ -126,7 +127,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const recovery = await invalid.newPage(); await seedFirstRunHandled(recovery); await recovery.goto(`${base}/index.html`);
     await recovery.locator('#settings-open').click();
     assert.equal(await recovery.locator('#settings-music-volume').inputValue(), '50');
-    assert.equal(await recovery.locator('#settings-music').isChecked(), true);
+    assert.equal(await recovery.locator('#settings-music').isChecked(), false);
     await invalid.close();
     console.log(`${name}: actual music signal, six-track shuffle, 50% default, live volume/mute, persistence, independent effects, lifecycle, modes, resets and EN/PL large-text controls pass`);
   } finally { await browser.close(); }

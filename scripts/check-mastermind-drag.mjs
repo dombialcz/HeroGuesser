@@ -37,6 +37,15 @@ try {
       await page.waitForTimeout(320);
       assert.ok((await state()).drag, "Holding starts a drag");
       assert.equal(await page.evaluate(() => getSelection().toString()), "", "Holding never selects portrait labels");
+      if (target) {
+        const bounds = await target.boundingBox();
+        if (bounds.y < 0 || bounds.y + bounds.height > (touch ? 844 : 1000)) {
+          // The ledger now sits below the playing field. Bring an offscreen
+          // destination into view while holding, as in the edge-scroll case below.
+          await move(150, 300);
+          await target.evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        }
+      }
       const b = target ? await target.boundingBox() : { x: 2, y: 2, width: 0, height: 0 };
       await move(b.x + b.width / 2, b.y + b.height / 2);
       assert.equal(await page.evaluate(() => getSelection().toString()), "", "Dragging never selects the surrounding interface");
@@ -115,9 +124,9 @@ try {
     assert.equal((await state()).result, "playing");
 
     if (touch) {
-      const newest = page.locator('[data-history-row="12"][data-slot="0"]');
-      await newest.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
-      const point = await newest.boundingBox();
+      const swipeSource = page.locator('[data-history-row="0"][data-slot="0"]');
+      await swipeSource.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
+      const point = await swipeSource.boundingBox();
       const scroll = await page.evaluate(() => scrollY);
       await start(point.x + point.width / 2, point.y + point.height / 2);
       await move(point.x + point.width / 2, point.y + point.height / 2 - 70);

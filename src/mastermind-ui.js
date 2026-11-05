@@ -2,7 +2,7 @@ import { applyLocks, copyPastRow, toggleLock } from './daily-row-tools.js';
 import { revealHint, toggleHint, hintCooldownRemaining } from './daily-hints.js';
 import { createPortrait, animatePlacement, animateResultStamp } from "./portraits.js";
 import { storage, shareText } from "./platform.js";
-import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText } from "./daily-progress.js";
+import { dailyKey, restoreDaily, serializeDaily, pruneDaily, dailyShareText, DAILY_MEDAL_LIMITS, dailyMedal } from "./daily-progress.js";
 import { showShareText } from "./dialog.js";
 import { installSettings } from "./settings.js";
 import { playPlacementSound, playRemovalSound, playCompletionSound } from "./game-audio.js";
@@ -14,7 +14,8 @@ import { installMastermindTutorial } from "./mastermind-tutorial.js";
 import { installMastermindAdventures } from "./mastermind-adventure.js";
 import { ADVENTURES } from "./mastermind-adventure-core.js";
 import { completePrelude } from "./story-campaign.js";
-import { installFirstRun } from "./first-run.js";
+import { WARMUP, WARMUP_HEROES, newWarmup, loadWarmup, saveWarmup, needsWarmup, difficultyKey, readDifficulty, completionSummary, publicRoster, nextPuzzleIn } from './warmup.js';
+import { showHelp } from './how-to-play.js';
 import { PARTY_NAMES } from "./mastermind-names.js";
 
 const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]));
@@ -181,6 +182,46 @@ const COPY = {
   },
 };
 
+Object.assign(COPY.en, {
+  currentFormation: 'Your formation', dailyBoardTitle: 'Daily', dailyTitle: "Today's puzzles", dailyDescription: 'A fresh party for every difficulty. Solve one today, or try all four.',
+  historyLabel: 'Previous guesses, oldest first', chaos: 'Expert', heroes: 'places',
+  partyRollSubtitle: 'No clues · repeats allowed', partyRollRule: 'Any hero can appear in any place, any number of times. Use the whole-guess feedback to discover the party.',
+  todaysParty: "TODAY’S PARTY", guessBoard: 'Your guesses', boardSubtitle: 'Locks keep your choices; revealed eyes confirm a hero.',
+  submitGuess: 'Check', exactLegend: 'Right hero, right place', misplacedLegend: 'Right hero, wrong place', absentLegend: 'Not in the party, or one copy too many',
+  chooseHeroes: 'Pick a hero', formationRules: 'How the name works', nameClues: 'Known heroes', nameCluesHint: '',
+  copyRow: 'Use this guess', copyRowLabel: n => `Use guess ${n}; keep locked heroes`,
+  feedbackCount: (a,b,c) => `${a} right place · ${b} wrong place · ${c} absent or extra`,
+  help: 'Help', warmup: 'Warm-up', skip: "Skip to today’s puzzle", example: 'A practice guess, ready to Check. The roster tells you which heroes belong.',
+  practice: 'Use the example guess below, then change it. The result describes the whole guess, not individual places.',
+  totals: 'Totals describe the whole guess, not individual places.', extra: 'A grey ring can mean an absent hero or one copy too many.',
+  other: n => `${n} other ${n === 1 ? 'hero' : 'heroes'}, each used once`,
+  fill: n => `Fill all ${n} places`, found: 'Party found!', firstDaily: "Play today’s Easy", allDone: 'All four puzzles solved today. Come back tomorrow!',
+  solvedToday: n => `${n} of 4 solved`, revealsUsed: n => `${n} ${n === 1 ? 'place revealed' : 'places revealed'}`,
+  medalTargets: 'Medals by guesses', medals: { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' },
+  next: name => `Next: ${name} →`, newIn: time => `New puzzles in ${time}`, clear: 'Clear',
+});
+Object.assign(COPY.pl, {
+  currentFormation: 'Twój układ', dailyBoardTitle: 'Codzienne', dailyTitle: 'Dzisiejsze zagadki', dailyDescription: 'Nowa drużyna na każdym poziomie. Rozwiąż jedną zagadkę lub spróbuj wszystkich czterech.',
+  historyLabel: 'Wcześniejsze próby, od najstarszej', chaos: 'Ekspert', heroes: 'miejsc',
+  partyRollSubtitle: 'Bez wskazówek · dowolne powtórzenia', partyRollRule: 'Na każdym miejscu może stanąć dowolny bohater, dowolną liczbę razy. Odkryj drużynę dzięki wynikom całych prób.',
+  todaysParty: 'DZISIEJSZA DRUŻYNA', guessBoard: 'Twoje próby', boardSubtitle: 'Kłódka zachowuje twój wybór. Otwarte oko potwierdza bohatera.',
+  submitGuess: 'Sprawdź', exactLegend: 'Dobry bohater, dobre miejsce', misplacedLegend: 'Dobry bohater, złe miejsce', absentLegend: 'Poza drużyną lub o jednego za dużo',
+  chooseHeroes: 'Wybierz bohatera', formationRules: 'Jak czytać nazwę', nameClues: 'Znani bohaterowie', nameCluesHint: '',
+  copyRow: 'Użyj tej próby', copyRowLabel: n => `Użyj próby ${n}; zachowaj zablokowanych bohaterów`,
+  feedbackCount: (a,b,c) => `${a} na dobrym miejscu · ${b} na złym miejscu · ${c} poza drużyną lub za dużo`,
+  help: 'Jak grać', warmup: 'Rozgrzewka', skip: 'Pomiń — dzisiejsza zagadka', example: 'Przykładowa próba jest gotowa. Naciśnij Sprawdź. Wskazówki podają skład drużyny.',
+  practice: 'Użyj przykładowej próby i zmień układ. Wynik dotyczy całej próby, nie poszczególnych miejsc.',
+  totals: 'Wynik dotyczy całej próby, nie poszczególnych miejsc.', extra: 'Szare kółko oznacza bohatera spoza drużyny lub nadmiarową kopię.',
+  other: n => `${n} ${n === 1 ? 'inny bohater' : 'innych bohaterów'}, każdy tylko raz`,
+  fill: n => `Zapełnij wszystkie ${n} ${n === 3 ? "miejsca" : "miejsc"}`, found: 'Drużyna odnaleziona!', firstDaily: 'Zagraj w dzisiejszą łatwą zagadkę', allDone: 'Wszystkie cztery zagadki rozwiązane. Wróć jutro!',
+  solvedToday: n => `Rozwiązane: ${n} z 4`, revealsUsed: n => `Odkryte miejsca: ${n}`,
+  medalTargets: 'Medale za liczbę prób', medals: { gold: 'Złoto', silver: 'Srebro', bronze: 'Brąz' },
+  next: name => `Dalej: ${name} →`, newIn: time => `Nowe zagadki za ${time.replace('h', ' godz.').replace('m', ' min')}`, clear: 'Wyczyść',
+});
+let warmup = loadWarmup(storage);
+const firstVisit = needsWarmup(storage);
+const isWarmup = () => state.screen === 'warmup';
+const isExample = () => isWarmup() && warmup.progress.guesses.length === 0;
 let dateKey = localDateKey();
 let invalidDaily = false;
 let dailyNotice = null;
@@ -188,7 +229,7 @@ let levels = Object.fromEntries(
   CHALLENGES.map((challenge) => [challenge.id, generateChallenge(dateKey, challenge.id)]),
 );
 let progress = Object.fromEntries(CHALLENGES.map((challenge) => [challenge.id, restoreProgress(challenge)]));
-const state = { screen: "home", difficulty: "easy", locale: readLocale(), selectedSlot: 0 };
+const state = { screen: firstVisit ? "warmup" : "daily", difficulty: readDifficulty(storage), locale: readLocale(), selectedSlot: 0 };
 
 const todayDate = document.querySelector("#today-date");
 const languageButtons = [...document.querySelectorAll("[data-locale]")];
@@ -204,8 +245,7 @@ const heroPicker = document.querySelector("#hero-picker");
 const clearButton = document.querySelector("#clear-button");
 const submitButton = document.querySelector("#submit-button");
 const gameMessage = document.querySelector("#game-message");
-let portraitDrag, firstRun;
-let tutorialReminder = false;
+let portraitDrag;
 const celebration = createMastermindCelebration({ getLocale: () => state.locale });
 const tutorial = installMastermindTutorial({
   root: document.querySelector("#mastermind-tutorial"),
@@ -216,7 +256,6 @@ const tutorial = installMastermindTutorial({
   onAdventureStart: () => adventures.continueStory(),
   onDailyStart: () => { showScreen("daily"); chooseChallenge("easy"); },
   onModeChange: active => {
-    if (active) firstRun?.recordTutorial();
     portraitDrag?.cancel();
     celebration.clear();
     state.screen = active ? "tutorial" : "home";
@@ -244,7 +283,7 @@ const adventures = installMastermindAdventures({
 });
 
 function focusScreen() {
-  const target = { home: "mastermind-home-title", stories: "stories-title", daily: "daily-title" }[state.screen];
+  const target = { home: "mastermind-home-title", stories: "stories-title", daily: "daily-title", warmup: "daily-title" }[state.screen];
   if (target) document.getElementById(target).focus();
 }
 function clearModeParams() {
@@ -259,7 +298,6 @@ function showScreen(screen) {
   if (adventures.active) adventures.leave();
   portraitDrag?.cancel();
   state.screen = screen;
-  tutorialReminder = false;
   if (screen === "daily") checkDate(false);
   if (screen === "home") clearModeParams();
   render(); focusScreen();
@@ -293,11 +331,8 @@ function localizedHero(type) {
   return copy().heroNames[type] ?? HERO_BY_ID[type].label;
 }
 
-function localizedPlural(type) {
-  return copy().heroPlural[type] ?? copy().heroNames[type];
-}
-
 function localizedPartyName(challenge) {
+  if (challenge.id === "warmup") return copy().warmup;
   if (challenge.id === "chaos") return copy().chaos;
   if (state.locale === "en") return challenge.title;
   const names = PARTY_NAMES[state.locale];
@@ -317,10 +352,11 @@ function restoreProgress(challenge) {
   return restored.progress;
 }
 function saveProgress() {
+  if (isWarmup()) { if (isFinished()) warmup.status = "completed"; saveWarmup(storage, warmup); return; }
   storage.setItem(dailyKey(dateKey, state.difficulty), serializeDaily(currentProgress()));
 }
 function checkDate(redraw = true) {
-  if (state.screen === 'adventure' || state.screen === 'tutorial') return false;
+  if (state.screen === 'adventure' || state.screen === 'tutorial' || isWarmup()) return false;
   const nextDate = localDateKey();
   if (nextDate === dateKey) return false;
   saveProgress(); portraitDrag?.cancel(); celebration.clear();
@@ -337,11 +373,11 @@ function checkDate(redraw = true) {
 function dateGuard() { return checkDate(); }
 
 function currentChallenge() {
-  return levels[state.difficulty];
+  return isWarmup() ? WARMUP : levels[state.difficulty];
 }
 
 function currentProgress() {
-  return progress[state.difficulty];
+  return isWarmup() ? warmup.progress : progress[state.difficulty];
 }
 
 function currentResult(guess, challenge = currentChallenge()) {
@@ -349,9 +385,9 @@ function currentResult(guess, challenge = currentChallenge()) {
   return result ? { ...result, absent: challenge.size - result.exact - result.misplaced } : null;
 }
 
-function isFinished(id = state.difficulty, guesses = progress[id].guesses) {
-  const challenge = levels[id];
-  return guesses.some((guess) => evaluateGuess(challenge.code, guess)?.exact === challenge.size);
+function isFinished(id, guesses) {
+  const challenge = id ? levels[id] : currentChallenge();
+  return (guesses ?? (id ? progress[id] : currentProgress()).guesses).some(guess => evaluateGuess(challenge.code, guess)?.exact === challenge.size);
 }
 
 function chooseChallenge(id) {
@@ -359,6 +395,7 @@ function chooseChallenge(id) {
   celebration.clear();
   if (!levels[id]) return;
   state.difficulty = id;
+  storage.setItem(difficultyKey, id);
   const draft = currentProgress().draft;
   const emptyIndex = draft.findIndex((type, index) => type === null && !currentProgress().locks?.[index]);
   state.selectedSlot = emptyIndex >= 0 ? emptyIndex : Math.max(0, draft.length - 1);
@@ -366,6 +403,7 @@ function chooseChallenge(id) {
 }
 
 function placeHero(type) {
+  if (isExample()) return;
   if (dateGuard()) return;
   if (isFinished()) return;
   const draft = currentProgress().draft;
@@ -380,9 +418,11 @@ function placeHero(type) {
   saveProgress();
   render();
   animatePlacement(currentGuess.querySelector(`[data-slot="${slot}"] .portrait-frame`));
+  currentGuess.scrollIntoView({ block: 'nearest', behavior: 'instant' });
 }
 
 function selectSlot(index) {
+  if (isExample()) return;
   if (dateGuard()) return;
   if (isFinished() || !Number.isInteger(index) || index < 0 || index >= currentChallenge().size || currentProgress().locks?.[index]) return;
   const draft = currentProgress().draft;
@@ -396,13 +436,20 @@ function submitGuess() {
   if (dateGuard()) return;
   const challenge = currentChallenge();
   const current = currentProgress();
-  if (isFinished() || current.draft.some((type) => type === null)) return;
+  if (isFinished()) return;
+  if (current.draft.some(type => type === null)) { announceHint(copy().fill(challenge.size)); return; }
   current.guesses.push([...current.draft]);
   current.draft = applyLocks(Array(challenge.size).fill(null), current.locks);
   state.selectedSlot = current.draft.findIndex(type => type === null);
   saveProgress();
   render();
-  animateResultStamp(guessHistory.firstElementChild?.querySelector(".row-feedback"));
+  const latest = guessHistory.lastElementChild;
+  animateResultStamp(latest?.querySelector('.row-feedback'), { inset: true });
+  latest?.classList.add('just-checked');
+  requestAnimationFrame(() => {
+    const result = document.querySelector(isFinished() ? '#daily-result' : '#last-check');
+    result?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  });
   if (isFinished()) { celebration.play({ kind: "daily" }); playCompletionSound(); }
 }
 
@@ -421,6 +468,7 @@ function copyGuess(index) {
 }
 
 function lockSlot(slot) {
+  if (isExample()) return;
   if (dateGuard() || isFinished() || !toggleLock(currentProgress(), slot)) return;
   state.selectedSlot = currentProgress().draft.findIndex((piece, index) => !piece && !currentProgress().locks?.[index]);
   saveProgress(); render();
@@ -432,6 +480,7 @@ function announceHint(message) {
 }
 
 function revealDailyHint() {
+  if (isExample()) return;
   if (dateGuard() || isFinished()) return;
   const slot = revealHint(currentProgress(), currentChallenge());
   if (slot === null) return;
@@ -452,6 +501,7 @@ function toggleDailyEye(slot) {
 }
 
 function clearDraft() {
+  if (isExample()) return;
   if (dateGuard()) return;
   if (isFinished()) return;
   currentProgress().draft = applyLocks(Array(currentChallenge().size).fill(null), currentProgress().locks);
@@ -462,17 +512,11 @@ function clearDraft() {
 
 function applyCopy() {
   const strings = copy();
-  const reminder = document.querySelector('#home-tutorial-note');
-  reminder.hidden = !tutorialReminder;
-  reminder.textContent = tutorialReminder ? strings.tutorialReminder : '';
   document.documentElement.lang = state.locale;
   document.title = strings.gameTitle;
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const value = strings[element.dataset.i18n];
     if (typeof value === "string") element.textContent = value;
-  });
-  document.querySelectorAll("[data-challenge]").forEach((button) => {
-    button.setAttribute("aria-label", `${strings[button.dataset.challenge]}, ${levels[button.dataset.challenge].size} ${strings.heroes}`);
   });
   clearButton.setAttribute("aria-label", strings.clearRow);
   clearButton.title = strings.clearRow;
@@ -500,35 +544,24 @@ function applyHeroAppearance(element, hero) {
   element.style.setProperty("--hero-tint", `${hero.color}24`);
 }
 
-function makeCluePart(clue) {
-  const strings = copy();
-  const hero = HERO_BY_ID[clue.type];
-  const count = clue.kind === "pair" ? 2 : clue.kind === "trio" ? 3 : 1;
-  const chip = document.createElement("article");
-  chip.className = `clue-card clue-${clue.kind}`;
-  applyHeroAppearance(chip, hero);
-  const image = createPortrait(hero.image, localizedHero(hero.id));
-  const text = document.createElement("span");
-  text.className = "clue-text";
-  const kind = document.createElement("span");
-  kind.className = "clue-kind";
-  kind.textContent = PARTY_NAMES[state.locale][clue.kind][clue.type];
-  const title = document.createElement("strong");
-  title.textContent = localizedHero(clue.type);
-  const exact = document.createElement("small");
-  exact.textContent = state.locale === "pl"
-    ? `${strings.exactCount(count)} ${count === 1 ? localizedHero(clue.type).toLowerCase() : localizedPlural(clue.type)}.`
-    : `${strings.exactCount(count)} ${count === 1 ? localizedHero(clue.type) : strings.heroPlural[clue.type]}.`;
-  text.append(kind, title, exact);
-  chip.append(image, text);
-  return chip;
-}
-
 function renderClues(challenge) {
-  const isPartyRoll = challenge.id === "chaos";
-  document.querySelector(".clue-area").hidden = isPartyRoll;
-  document.querySelector(".clue-divider").hidden = isPartyRoll;
-  clueParts.replaceChildren(...challenge.clues.map(makeCluePart));
+  const roster = publicRoster(challenge);
+  document.querySelector('.clue-area').hidden = challenge.id === 'chaos';
+  document.querySelector('.clue-divider').hidden = challenge.id === 'chaos';
+  const chips = roster.known.map(clue => {
+    const chip = document.createElement('article'); chip.className = 'clue-card';
+    chip.append(createPortrait(HERO_BY_ID[clue.type].image, localizedHero(clue.type)));
+    const name = document.createElement('strong'); name.textContent = `${localizedHero(clue.type)} ×${clue.count}`;
+    chip.append(name); return chip;
+  });
+  if (roster.remaining > 0) { const other = document.createElement('p'); other.className = 'other-heroes'; other.textContent = copy().other(roster.remaining); chips.push(other); }
+  clueParts.replaceChildren(...chips);
+  document.querySelector('#formation-rules').hidden = isWarmup();
+  if (challenge.id !== 'chaos' && !isWarmup()) {
+    const names = PARTY_NAMES[state.locale];
+    const meanings = roster.known.map(clue => `${names[clue.kind][clue.type]} = ${localizedHero(clue.type)} ×${clue.count}`);
+    document.querySelector('#rule-note').textContent = meanings.join(' · ') + '. ' + copy().other(roster.remaining) + '.';
+  }
 }
 
 function renderFeedback(result) {
@@ -552,7 +585,8 @@ function renderFeedback(result) {
     dot.setAttribute("aria-hidden", "true");
     const number = document.createElement("b");
     number.textContent = String(count);
-    score.append(dot, number);
+    const words = document.createElement('span'); words.className = 'feedback-words'; words.textContent = legend;
+    score.append(dot, number, words);
     feedback.append(score);
   }
   return feedback;
@@ -609,7 +643,7 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
       tile.setAttribute("aria-label", type
         ? copy().filledPlace(index + 1, localizedHero(type))
         : copy().emptyPlace(index + 1));
-      tile.disabled = isFinished() || !!current.locks?.[index];
+      tile.disabled = isExample() || isFinished() || !!current.locks?.[index];
       if (current.locks?.[index]) { tile.dataset.locked = 'true'; tile.setAttribute('aria-label', copy().lockedPlace(index + 1, localizedHero(type))); }
       if (current.hints?.[index]) {
         tile.dataset.revealed = current.hints[index];
@@ -644,13 +678,14 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
         continue;
       }
       const lock = document.createElement('button'); lock.type = 'button'; lock.className = 'slot-lock-button'; lock.dataset.lockSlot = String(index);
-      lock.disabled = !type || isFinished(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
+      lock.disabled = !type || isFinished() || isExample(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
       const label = type ? (current.locks?.[index] ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
       lock.setAttribute('aria-label', label); lock.title = label;
-      const icon = document.createElement('img'); icon.src = current.locks?.[index] ? 'assets/decor/slot-lock-steel-v2.png' : 'assets/decor/slot-unlock-steel-v2.png'; icon.alt = ''; icon.width = 40; icon.height = 40; icon.draggable = false;
-      const fallback = document.createElement('span'); fallback.className = 'lock-fallback'; fallback.textContent = current.locks?.[index] ? '🔒' : '🔓'; fallback.setAttribute('aria-hidden', 'true');
-      icon.addEventListener('error', () => { icon.hidden = true; });
-      lock.append(icon, fallback); lock.addEventListener('click', () => lockSlot(index));
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', current.locks?.[index] ? 'M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5ZM12 15v3' : 'M7 11V7a5 5 0 0 1 10 0M5 11h14v10H5ZM12 15v3');
+      icon.append(path); lock.append(icon); lock.addEventListener('click', () => lockSlot(index));
       cell.append(lock, tile); lineup.append(cell);
     } else lineup.append(tile);
   }
@@ -667,7 +702,7 @@ function renderBoard(challenge, current) {
     row.setAttribute("aria-label", copy().rowLabel(index + 1));
     const number = document.createElement("span");
     number.className = "row-number";
-    number.textContent = String(index + 1).padStart(2, "0");
+    number.textContent = copy().rowLabel(index + 1);
     row.append(number);
 
     if (index < current.guesses.length) {
@@ -700,19 +735,24 @@ function renderBoard(challenge, current) {
     return row;
   });
   currentGuess.replaceChildren(...rows.filter(row => row.classList.contains("row-active")));
-  guessHistory.replaceChildren(...rows.filter(row => row.classList.contains("row-submitted")).reverse());
-  guessHistory.start = current.guesses.length;
+  guessHistory.replaceChildren(...rows.filter(row => row.classList.contains('row-submitted')));
+  guessHistory.start = 1;
+  const last = guessHistory.lastElementChild;
+  if (last) last.classList.add('latest-guess');
+  const explanation = document.querySelector('#feedback-explanation');
+  explanation.textContent = current.guesses.length ? copy().totals + (currentResult(current.guesses.at(-1), challenge).absent ? ' ' + copy().extra : '') : '';
+  explanation.hidden = !current.guesses.length;
 
 }
 
 function renderPicker() {
   const locked = isFinished();
-  const choices = HERO_CLASSES.map((hero, index) => {
+  const choices = (isWarmup() ? WARMUP_HEROES.map(id => HERO_BY_ID[id]) : HERO_CLASSES).map((hero, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "hero-choice";
     applyHeroAppearance(button, hero);
-    button.disabled = locked;
+    button.disabled = locked || isExample();
     button.setAttribute("aria-label", copy().heroChoice(localizedHero(hero.id), index + 1));
     const image = createPortrait(hero.image, localizedHero(hero.id));
     const name = document.createElement("span");
@@ -723,14 +763,14 @@ function renderPicker() {
     button.addEventListener("click", () => placeHero(hero.id));
     return button;
   });
-  const hint = document.createElement('button'); hint.type = 'button'; hint.id = 'daily-hint-button'; hint.className = 'hero-choice hint-choice';
+  const hint = document.createElement('button'); hint.type = 'button'; hint.id = 'daily-hint-button'; hint.className = 'hint-action-button';
   hint.setAttribute('aria-describedby', 'daily-hint-help');
-  const field = document.createElement('span'); field.className = 'portrait-frame hint-field'; field.append(makeEyeIcon());
-  const aperture = document.createElement('span'); aperture.className = 'hint-aperture'; aperture.setAttribute('aria-hidden', 'true'); field.append(aperture);
-  const countdown = document.createElement('span'); countdown.className = 'hint-cooldown'; countdown.setAttribute('aria-hidden', 'true'); field.append(countdown);
+  const field = makeEyeIcon(); field.classList.add('hint-icon');
+  const countdown = document.createElement('span'); countdown.className = 'hint-cooldown'; countdown.setAttribute('aria-hidden', 'true');
   const label = document.createElement('span'); label.className = 'hint-label';
-  hint.append(field, label); hint.addEventListener('click', revealDailyHint);
-  heroPicker.replaceChildren(...choices, hint);
+  hint.append(field, label, countdown); hint.addEventListener('click', revealDailyHint);
+  heroPicker.replaceChildren(...choices);
+  document.querySelector("#hint-action").replaceChildren(hint);
   let help = document.querySelector('#daily-hint-help');
   if (!help) { help = document.createElement('p'); help.id = 'daily-hint-help'; help.className = 'hint-help'; document.querySelector('#controls-help').append(help); }
   help.textContent = copy().hintHelp;
@@ -743,7 +783,7 @@ function updateHintButton() {
   if (!button) return;
   const remaining = Math.ceil(hintCooldownRemaining(currentProgress()) / 1000);
   const complete = (currentProgress().hints ?? []).filter(Boolean).length === currentChallenge().size;
-  button.disabled = isFinished() || complete || remaining > 0;
+  button.disabled = isExample() || isFinished() || complete || remaining > 0;
   button.dataset.ready = String(!button.disabled);
   const label = isFinished() ? copy().challengeComplete : complete ? copy().hintComplete : remaining > 0 ? copy().hintWaiting(remaining) : copy().hintReady;
   button.setAttribute('aria-label', label); button.title = label;
@@ -752,18 +792,85 @@ function updateHintButton() {
   countdown.hidden = complete || isFinished() || remaining === 0;
   countdown.textContent = countdown.hidden ? '' : `${remaining}s`;
 }
-setInterval(() => { if (state.screen === 'daily' && !document.hidden) updateHintButton(); }, 250);
+setInterval(() => { if (['daily', 'warmup'].includes(state.screen) && !document.hidden) updateHintButton(); }, 250);
 
+function renderLastCheck(challenge, current) {
+  const preview = document.querySelector('#last-check');
+  preview.hidden = !current.guesses.length || isFinished();
+  if (preview.hidden) return;
+  preview.style.setProperty('--party-size', challenge.size);
+  const guess = current.guesses.at(-1);
+  document.querySelector('#last-check-heading').textContent = `${state.locale === 'pl' ? 'Ostatnia sprawdzona próba' : 'Last checked guess'} · ${current.guesses.length}`;
+  const portraits = guess.map((hero, index) => {
+    const tile = document.createElement('span'); tile.className = 'last-check-portrait';
+    tile.setAttribute('role', 'img'); tile.setAttribute('aria-label', `${index + 1}: ${localizedHero(hero)}`);
+    applyHeroAppearance(tile, HERO_BY_ID[hero]); tile.append(createPortrait(HERO_BY_ID[hero].image, localizedHero(hero))); return tile;
+  });
+  preview.querySelector('.last-check-portraits').replaceChildren(...portraits);
+  const result = currentResult(guess, challenge);
+  document.querySelector('#last-check-totals').replaceChildren(renderFeedback(result));
+  const use = document.querySelector('#last-check-copy'); use.textContent = copy().copyRow;
+  use.setAttribute('aria-label', copy().copyRowLabel(current.guesses.length));
+  use.onclick = () => copyGuess(current.guesses.length - 1);
+  const historyLink = document.querySelector('#history-jump');
+  historyLink.textContent = state.locale === 'pl' ? `Wszystkie próby: ${current.guesses.length} ↓` : `All guesses (${current.guesses.length}) ↓`;
+  historyLink.onclick = () => {
+    document.querySelector('.board-panel').scrollIntoView({ block: 'start', behavior: 'instant' });
+    document.querySelector('#history-heading').focus({ preventScroll: true });
+  };
+  use.classList.toggle('suggested-action', isWarmup() && current.guesses.length === 1 && current.draft.every(piece => !piece));
+}
+
+function dailyStatus() {
+  return CHALLENGES.map(({ id }) => {
+    const summary = completionSummary(levels[id], progress[id]);
+    return { id, ...summary, medal: dailyMedal(id, summary.guesses) };
+  });
+}
+function updateDailyStatus() {
+  const entries = dailyStatus();
+  const summary = `${copy().solvedToday(entries.filter(item => item.solved).length)} · ${copy().newIn(nextPuzzleIn())}`;
+  document.querySelector('#daily-progress-summary').textContent = summary;
+  for (const element of document.querySelectorAll('.next-countdown')) element.textContent = copy().newIn(nextPuzzleIn());
+}
+setInterval(() => { if (!document.hidden) updateDailyStatus(); }, 30000);
 function renderMessage(challenge, current) {
-  gameMessage.className = "game-message";
-  if (!isFinished()) {
-    gameMessage.textContent = copy().unsolvedMessage;
-    return;
+  const solved = isFinished();
+  const result = document.querySelector('#daily-result'); result.hidden = !solved;
+  document.querySelector('.daily-dock').hidden = solved;
+  gameMessage.className = 'game-message';
+  if (!solved) return;
+  const summary = completionSummary(challenge, current);
+  document.querySelector('#result-title').textContent = copy().found;
+  gameMessage.textContent = localizedPartyName(challenge) + (isWarmup() ? '' : ` · ${copy()[state.difficulty]}`);
+  const medal = dailyMedal(challenge.id, summary.guesses);
+  const award = document.querySelector('#result-medal');
+  award.hidden = !medal;
+  award.dataset.medal = medal ?? '';
+  award.textContent = medal ? copy().medals[medal] : '';
+  const stats = document.querySelector('#result-stats');
+  stats.textContent = `${copy().attempts(summary.guesses)} · ${copy().revealsUsed(summary.reveals)}`;
+  const next = document.querySelector('#next-puzzle');
+  const entries = dailyStatus();
+  const start = CHALLENGES.findIndex(c => c.id === state.difficulty);
+  const nextId = Array.from({length: CHALLENGES.length}, (_, i) => CHALLENGES[(start + i + 1) % CHALLENGES.length].id).find(id => !entries.find(item => item.id === id).solved);
+  next.hidden = !isWarmup() && !nextId;
+  next.textContent = isWarmup() ? copy().firstDaily : nextId ? copy().next(copy()[nextId]) : '';
+  next.onclick = () => { const id = next.dataset.next || 'easy'; showScreen('daily'); chooseChallenge(id); focusScreen(); };
+  next.dataset.next = isWarmup() ? 'easy' : nextId ?? '';
+  if (!isWarmup() && !nextId) stats.textContent += ' · ' + copy().allDone;
+}
+
+function renderMedalTargets(strings) {
+  const targets = document.querySelector('#medal-targets');
+  targets.hidden = isWarmup();
+  if (targets.hidden) return;
+  const { gold, silver } = DAILY_MEDAL_LIMITS[state.difficulty];
+  const ranges = { gold: `1–${gold}`, silver: `${gold + 1}–${silver}`, bronze: `${silver + 1}+` };
+  for (const badge of targets.querySelectorAll('[data-medal]')) {
+    const tier = badge.dataset.medal;
+    badge.textContent = `${strings.medals[tier]} ${ranges[tier]}`;
   }
-  const solvedAt = current.guesses.findIndex((guess) => currentResult(guess, challenge).exact === challenge.size);
-  const party = localizedPartyName(challenge);
-  gameMessage.classList.add("success");
-  gameMessage.textContent = copy().solvedMessage(solvedAt + 1, party);
 }
 
 function render() {
@@ -782,11 +889,11 @@ function render() {
   document.querySelector("#mastermind-adventure-entry").hidden = state.screen !== "stories";
   document.querySelector("#mastermind-home").hidden = state.screen !== "home";
   document.querySelector("#mastermind-stories").hidden = state.screen !== "stories";
-  document.querySelector("#mastermind-daily").hidden = state.screen !== "daily";
-  document.querySelector(".intro-row").hidden = state.screen !== "daily";
-  document.querySelector(".page-footer").hidden = state.screen !== "daily";
+  document.querySelector("#mastermind-daily").hidden = !(["daily", "warmup"].includes(state.screen));
+  document.querySelector(".intro-row").hidden = !(["daily", "warmup"].includes(state.screen));
+  document.querySelector(".page-footer").hidden = true;
   document.querySelector("#mastermind-home-button").hidden = state.screen === "home";
-  todayDate.hidden = state.screen !== "daily";
+  todayDate.hidden = !(["daily", "warmup"].includes(state.screen));
   if (["home", "stories"].includes(state.screen)) document.querySelector('[data-i18n="brandKicker"]').textContent = state.locale === "pl" ? "ZAGADKI BOHATERÓW" : "HERO PUZZLES";
   partyName.textContent = localizedPartyName(challenge);
   missionLevel.textContent = strings[state.difficulty];
@@ -794,21 +901,48 @@ function render() {
   challengeTabs.forEach((button) => {
     const id = button.dataset.challenge;
     button.setAttribute("aria-pressed", String(id === state.difficulty));
-    const result = isFinished(id, progress[id].guesses);
+    const { guesses } = completionSummary(levels[id], progress[id]);
+    const medal = dailyMedal(id, guesses);
     const mark = button.querySelector(".difficulty-result");
-    mark.textContent = result ? "✓" : "";
+    mark.hidden = !medal;
+    mark.dataset.medal = medal ?? '';
+    mark.textContent = medal ? `✓ ${guesses}` : '';
+    mark.title = medal ? `${strings.medals[medal]} · ${strings.attempts(guesses)}` : '';
+    const label = `${strings[id]}, ${levels[id].size} ${strings.heroes}`;
+    button.setAttribute('aria-label', medal ? `${label}, ${mark.title}` : label);
   });
+  renderMedalTargets(strings);
   renderClues(challenge);
   renderBoard(challenge, current);
+  renderLastCheck(challenge, current);
   renderPicker();
   renderMessage(challenge, current);
-  document.querySelector('#share-result').hidden = !locked;
+  document.querySelector('#share-result').hidden = !locked || isWarmup();
   document.querySelector('#share-result').textContent = state.locale === 'pl' ? 'Udostępnij wynik' : 'Share result';
   renderDailyNotice();
   document.querySelector('#settings-open').textContent = state.locale === 'pl' ? 'Ustawienia' : 'Settings';
-  clearButton.disabled = locked || current.draft.every((type, slot) => type === null || current.locks?.[slot]);
+  clearButton.disabled = isExample() || locked || current.draft.every((type, slot) => type === null || current.locks?.[slot]);
   submitButton.disabled = locked || !completeDraft;
-  submitButton.querySelector("[data-i18n]").textContent = locked ? strings.challengeComplete : strings.submitGuess;
+  submitButton.querySelector('[data-i18n]').textContent = completeDraft ? strings.submitGuess : strings.fill(challenge.size);
+  document.querySelector('#help-open').textContent = strings.help;
+  document.querySelector('.warmup-heading').hidden = !isWarmup();
+  document.querySelector('#warmup-instruction').textContent = isExample() ? strings.example : strings.practice;
+  document.querySelector('#warmup-skip').textContent = strings.skip;
+  document.querySelector('.difficulty-tabs').hidden = isWarmup();
+  document.querySelector('#daily-progress-summary').hidden = isWarmup();
+  document.querySelector('#daily-title').textContent = isWarmup() ? strings.warmup : strings.dailyBoardTitle;
+  document.querySelector('#current-guess').classList.toggle('worked-example', isExample());
+  document.querySelector('.picker-panel').hidden = isExample();
+  document.querySelector('#hint-action').hidden = isExample();
+  document.querySelector('#clear-button').hidden = isExample();
+  document.querySelector('#board-subtitle').hidden = isWarmup();
+  document.querySelector('#controls-help').hidden = isWarmup();
+  const meta = document.querySelector('[data-challenge=chaos] .difficulty-meta');
+  meta.textContent = state.locale === 'pl' ? 'Bez wskazówek' : 'No clues';
+  if (isWarmup()) document.querySelector('[data-i18n="todaysParty"]').textContent = state.locale === 'pl' ? 'DRUŻYNA DO ĆWICZEŃ' : 'PRACTICE PARTY';
+  document.querySelector('.board-panel').hidden = !current.guesses.length;
+  document.documentElement.dataset.screen = state.screen;
+  updateDailyStatus();
 }
 
 challengeTabs.forEach((button) => button.addEventListener("click", () => chooseChallenge(button.dataset.challenge)));
@@ -825,22 +959,24 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") celebration.clear();
   if (tutorial.active) { tutorial.keydown(event); return; }
   if (adventures.active) { adventures.keydown(event); return; }
-  if (state.screen !== "daily") return;
+  if (!["daily", "warmup"].includes(state.screen)) return;
   if (event.key === "Escape") { portraitDrag.cancel(); return; }
   if (event.altKey || event.ctrlKey || event.metaKey) return;
   if (event.target instanceof HTMLElement && (
-    ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A", "SUMMARY"].includes(event.target.tagName)
+    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)
     || event.target.isContentEditable
   )) return;
   if (/^[1-7]$/.test(event.key)) {
     event.preventDefault();
-    placeHero(HERO_CLASSES[Number(event.key) - 1].id);
-  } else if (event.key === "Enter") {
+    const hero = (isWarmup() ? WARMUP_HEROES.map(id => HERO_BY_ID[id]) : HERO_CLASSES)[Number(event.key) - 1];
+    if (hero) placeHero(hero.id);
+  } else if (event.key === "Enter" && (!event.target.closest("button, a, summary") || event.target.closest(".row-active .guess-tile"))) {
     event.preventDefault();
     submitGuess();
   } else if (event.key === "Backspace" && !isFinished()) {
     event.preventDefault();
-    selectSlot(state.selectedSlot);
+    const focused = event.target.closest?.('.row-active .guess-tile[data-slot]');
+    selectSlot(focused ? Number(focused.dataset.slot) : state.selectedSlot);
   }
 });
 
@@ -848,12 +984,14 @@ window.advanceTime = ms => { celebration.advanceTime(ms); if (!tutorial.active &
 window.render_game_to_text = () => {
   if (tutorial.active) return JSON.stringify({ ...tutorial.snapshot(), celebration: celebration.snapshot() });
   if (adventures.active) return JSON.stringify({ ...adventures.snapshot(), celebration: celebration.snapshot() });
-  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "Guild of Wits", mode: state.screen, locale: state.locale, date: dateKey, firstRun: firstRun?.snapshot(), campaign: state.screen === "stories" ? adventures.campaignSnapshot() : undefined, choices: state.screen === "home" ? [copy().playDaily, copy().playStories] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
+  if (["home", "stories"].includes(state.screen)) return JSON.stringify({ game: "Guild of Wits", mode: state.screen, locale: state.locale, date: dateKey,  campaign: state.screen === "stories" ? adventures.campaignSnapshot() : undefined, choices: state.screen === "home" ? [copy().playDaily, copy().playStories] : [...document.querySelectorAll("#mastermind-adventure-entry button")].map(button => button.textContent.trim()) });
   const challenge = currentChallenge();
   const current = currentProgress();
   const solvedAt = current.guesses.findIndex((guess) => currentResult(guess, challenge).exact === challenge.size);
   return JSON.stringify({
     game: "Guild of Wits",
+    mode: isWarmup() ? "warmup" : "daily",
+    warmupStage: isWarmup() ? isFinished() ? "complete" : isExample() ? "example" : "practice" : undefined,
     date: dateKey,
     locale: state.locale,
     difficulty: challenge.id,
@@ -865,8 +1003,10 @@ window.render_game_to_text = () => {
     locks: current.locks ?? Array(challenge.size).fill(null),
     hints: current.hints ?? Array(challenge.size).fill(null),
     hintCooldownSeconds: Math.ceil(hintCooldownRemaining(current) / 1000),
-    hintAvailable: !isFinished() && hintCooldownRemaining(current) === 0 && (current.hints ?? []).filter(Boolean).length < challenge.size,
+    hintAvailable: !isExample() && !isFinished() && hintCooldownRemaining(current) === 0 && (current.hints ?? []).filter(Boolean).length < challenge.size,
     guesses: current.guesses.map((guess) => ({ heroes: guess, ...currentResult(guess, challenge) })),
+    completion: completionSummary(challenge, current),
+    dailyProgress: dailyStatus(),
     guessLimit: null,
     guessesRemaining: null,
     drag: portraitDrag.snapshot(),
@@ -877,7 +1017,7 @@ window.render_game_to_text = () => {
 
 portraitDrag = installPortraitDrag({
   board: guessBoard,
-  canDrag: () => state.screen === "daily" && !isFinished(),
+  canDrag: () => ["daily", "warmup"].includes(state.screen) && !isFinished() && !isExample(),
   onDrop: ({ hero, sourceSlot, targetSlot, copy: clone }) => {
     if (dateGuard()) return;
     const draft = currentProgress().draft;
@@ -920,28 +1060,32 @@ document.addEventListener('visibilitychange', () => {
 setInterval(() => { if (!document.hidden) checkDate(); }, 15000);
 document.querySelector('#share-result').addEventListener('click', async () => {
   if (dateGuard()) return;
-  const text = dailyShareText(currentChallenge(), currentProgress().guesses, state.locale);
+  const text = dailyShareText(currentChallenge(), currentProgress().guesses, state.locale, "Guild of Wits", (currentProgress().hints ?? []).filter(Boolean).length);
   if (!text) return;
   const locale = state.locale;
   const result = await shareText(text);
   if (result === 'manual') showShareText(text, locale);
   if (result === 'copied') { dailyNotice = 'copied'; renderDailyNotice(); }
 });
-installSettings({ getLocale: () => state.locale, reset: kind => {
+installSettings({ getLocale: () => state.locale, onHelp: openHelp, reset: kind => {
   for (const key of storage.keys()) {
     if (!key.startsWith('heroguesser:')) continue;
     if (kind === 'all' || kind === 'stories' && key.startsWith('heroguesser:story:') || kind === 'dailies' && /^heroguesser:v1:/.test(key)) storage.removeItem(key);
   }
   if (kind === 'stories' || kind === 'all') adventures.reset();
   if (kind === 'dailies' || kind === 'all') { state.selectedSlot = 0; dailyNotice = null; invalidDaily = false; progress = Object.fromEntries(CHALLENGES.map(c => [c.id, restoreProgress(c)])); }
-  if (kind === 'all') { state.difficulty = 'easy'; state.locale = 'en'; tutorial.leave(); }
+  if (kind === 'all') { warmup = newWarmup(); state.difficulty = 'easy'; state.locale = 'en'; tutorial.leave(); }
   showScreen('home');
 }});
-firstRun = installFirstRun({
-  store: storage, getLocale: () => state.locale,
-  onTutorial: () => tutorial.start(),
-  onSkip: () => { tutorialReminder = true; render(); focusScreen(); },
-});
+function replayWarmup() {
+  clearModeParams();
+  warmup = newWarmup(); saveWarmup(storage, warmup); showScreen('warmup'); state.selectedSlot = 0; render();
+}
+function openHelp() { showHelp({ locale: state.locale, onWarmup: replayWarmup, onPrelude: () => tutorial.start() }); }
+document.querySelector('#help-open').onclick = openHelp;
+document.querySelector('#daily-nav').onclick = () => showScreen('daily');
+document.querySelector('.brand-lockup').onclick = event => { event.preventDefault(); showScreen('home'); };
+document.querySelector('#warmup-skip').onclick = () => { warmup.status = 'skipped'; saveWarmup(storage, warmup); showScreen('daily'); chooseChallenge('easy'); };
 storageWarning();
 if (new URLSearchParams(location.search).get("daily") === "1") state.screen = "daily";
 render();
@@ -953,6 +1097,13 @@ if (!tutorial.active && ADVENTURES.some((_, index) => adventureParam === String(
 const modeParams = new URLSearchParams(location.search);
 const directMode = modeParams.get("tutorial") === "1" || modeParams.get("daily") === "1" ||
   ADVENTURES.some((_, index) => modeParams.get("adventure") === String(index + 1));
-if (!directMode) firstRun.offer();
+if (!directMode && isWarmup()) saveWarmup(storage, warmup);
 // Refresh browser-history views without discarding saved chapters.
 addEventListener("pageshow", event => { if (event.persisted) render(); });
+
+// Large text and short screens use document flow rather than an obscuring dock.
+const dock = document.querySelector('.daily-dock');
+const sizeDock = () => dock.classList.toggle('flow-layout', innerHeight < 650 || parseFloat(getComputedStyle(document.documentElement).fontSize) > 20 || dock.getBoundingClientRect().height > innerHeight * .55);
+new ResizeObserver(sizeDock).observe(dock);
+addEventListener('resize', sizeDock);
+sizeDock();

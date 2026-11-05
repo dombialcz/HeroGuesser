@@ -26,7 +26,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await page.clock.install({ time: new Date('2026-10-26T12:00:00+01:00') });
       await page.goto(`${base}/index.html`);
       await page.waitForFunction(() => window.render_game_to_text);
-      const click = selector => page.locator(selector).click();
+      const click = async selector => { if (['#home-play-stories','#home-play-daily'].includes(selector) && !await page.locator(selector).isVisible()) await page.locator('#mastermind-home-button').click(); await page.locator(selector).click(); };
       const state = () => page.evaluate(() => JSON.parse(render_game_to_text()));
       const fill = async heroes => { for (const hero of heroes) await click(`.hero-choice[data-hero="${hero}"]`); };
       const partyRoll = () => click('[data-challenge="chaos"]');
@@ -35,7 +35,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await click('.hero-choice[data-hero="thief"]');
       const easyDraft = (await state()).draft;
       await partyRoll();
-      const localizedName = locale === 'pl' ? 'Drużyna z przypadku' : 'Party Roll';
+      const localizedName = locale === 'pl' ? 'Ekspert' : 'Expert';
       assert.equal((await state()).partyName, localizedName);
       assert.equal(await page.locator('[data-challenge="chaos"] .difficulty-name').innerText(), localizedName);
       assert.equal((await state()).partySize, 5);
@@ -46,7 +46,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal(await page.locator('.hero-choice').count(), 7);
       assert.equal(await page.locator('#current-guess .guess-tile').count(), 5);
       if (!await page.locator('#formation-rules').evaluate(el => el.open)) await page.locator('#formation-rules summary').click();
-      assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /pięć razy/ : /five of the same/);
+      assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /dowolną liczbę/ : /any number/);
       await click('.hero-choice[data-hero="mage"]');
       await click('#mastermind-home-button'); await click('#home-play-daily');
       assert.equal((await state()).difficulty, 'chaos');
@@ -73,11 +73,11 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await partyRoll();
       await click(`[data-locale="${locale === 'pl' ? 'en' : 'pl'}"]`);
       if (!await page.locator('#formation-rules').evaluate(el => el.open)) await page.locator('#formation-rules summary').click();
-      assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /seven heroes/ : /siedmiu bohaterów/);
+      assert.match(await page.locator('#rule-note').innerText(), locale === 'pl' ? /Any hero/ : /dowolny bohater/);
       await click(`[data-locale="${locale}"]`);
       await fill(puzzle.code); await click('#submit-button');
       assert.equal((await state()).result, 'solved');
-      assert.equal(await page.locator('[data-challenge="chaos"] .difficulty-result').innerText(), '✓');
+      assert.equal(await page.locator('[data-challenge="chaos"] .difficulty-result').innerText(), '✓ 2');
       assert.equal(await page.locator('#submit-button').isDisabled(), true);
       await page.evaluate(() => Object.defineProperty(navigator, 'share', { configurable: true, value: async data => { window.sharedResult = data.text; } }));
       await click('#share-result');

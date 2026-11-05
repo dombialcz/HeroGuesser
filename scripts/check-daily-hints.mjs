@@ -38,7 +38,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${engine}/${profile}/${suffix}: no overflow`);
         await page.screenshot({ path: `${output}/${engine}-${profile}-${suffix}.png`, fullPage: true });
       };
-      assert.equal(await page.locator('#hero-picker > button').count(), 8);
+      assert.equal(await page.locator('#hero-picker > button').count(), 7);
       assert.equal(await hint().isEnabled(), true);
       await shot('ready');
       const code = generateChallenge((await state()).date, 'easy').code;
@@ -98,7 +98,7 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       assert.equal((await state()).hints[1], 'open', 'second hint reveals a different place');
       await eye(0).click();
       await shot('open-closed-history');
-      assert.equal(await eye(0).evaluate(el => getComputedStyle(el.querySelector('svg')).filter !== 'none'), true, 'closed eye keeps its faint glow');
+      assert.notEqual(await eye(0).evaluate(el => getComputedStyle(el.querySelector('svg')).filter), 'none', 'closed eye keeps its faint magical glow');
       assert.equal(await tile(1).locator('.portrait-frame').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion stops shimmering');
       await page.reload(); await enlarge();
       assert.equal((await state()).hints[1], 'open');
