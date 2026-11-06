@@ -30,7 +30,7 @@ try {
         assert.equal(result.exact + result.misplaced + result.absent, challenge.size);
         if (index === 0) assert.equal(result.absent, challenge.size, "an entirely wrong class is grey");
         if (index === 1) assert.equal(result.absent, challenge.size - 3, "extra copies are grey too");
-        const feedback = page.locator("#guess-history .row-feedback").last();
+        const feedback = page.locator("#guess-history .row-feedback").first();
         assert.equal(await feedback.locator(".feedback-score").count(), 3);
         assert.equal(await feedback.locator(".absent-score b").textContent(), String(result.absent));
         assert.match(await feedback.getAttribute("aria-label"), /absent or extra/);
@@ -47,9 +47,10 @@ try {
       await page.locator(`[data-challenge="${difficulty}"]`).click();
       assert.equal((await state()).guesses.length, 3, "existing saved rows recompute grey totals");
       assert.equal(await page.locator("#guess-history .absent-score").count(), 3);
+      assert.deepEqual(await page.locator('#guess-history > li').evaluateAll(rows => rows.map(row => row.value)), [3, 2, 1]);
       await page.locator('[data-locale="pl"]').click();
       assert.match(await page.locator('#feedback-explanation').textContent(), /nadmiarową kopię/);
-      assert.match(await page.locator("#guess-history .row-feedback").last().getAttribute("aria-label"), /poza drużyną/);
+      assert.match(await page.locator("#guess-history .row-feedback").first().getAttribute("aria-label"), /poza drużyną/);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       await page.locator("#guess-history").scrollIntoViewIfNeeded();
       await page.waitForFunction(() => [...document.querySelectorAll("#guess-history img")].every(img => img.complete && img.naturalWidth > 0));
@@ -58,7 +59,8 @@ try {
       for (const hero of challenge.code) await page.locator(`.hero-choice[data-hero="${hero}"]`).click();
       await page.locator("#submit-button").click();
       assert.equal((await state()).result, "solved");
-      assert.equal(await page.locator("#guess-history .absent-score b").last().textContent(), "0", "solved rows keep a visible zero grey count");
+      assert.deepEqual(await page.locator('#guess-history > li').evaluateAll(rows => rows.map(row => row.value)), [4, 3, 2, 1]);
+      assert.equal(await page.locator("#guess-history .absent-score b").first().textContent(), "0", "solved rows keep a visible zero grey count");
     }
     assert.deepEqual(errors, []);
     await page.close();

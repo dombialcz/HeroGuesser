@@ -17,7 +17,8 @@ for(const [engine,type] of Object.entries({chromium,webkit})) {
    await page.locator('#settings-open').click();await page.locator('#settings-help').click();await page.locator('#help-close').click();
    await page.locator('#submit-button').click();assert.deepEqual((await state()).guesses[0],{heroes:['knight','thief','cleric'],exact:1,misplaced:1,absent:1});
    assert.deepEqual((await state()).draft,[null,null,null]);assert.ok(await page.locator('.suggested-action').isVisible());
-   await page.locator('#last-check-copy').click();assert.deepEqual((await state()).draft,['knight','thief','cleric']);
+   const exampleCopy = page.locator('#guess-history .suggested-action[data-copy-guess="0"]');
+   await exampleCopy.click();assert.deepEqual((await state()).draft,['knight','thief','cleric']);
    await page.locator('#current-guess [data-slot="1"]').click();await page.reload();assert.equal((await state()).draft[1],null);
    await page.locator('#clear-button').click();for(const hero of ['knight','bard','thief'])await page.locator(`.hero-choice[data-hero="${hero}"]`).click();
    await page.locator('#submit-button').click();assert.equal((await state()).warmupStage,'complete');

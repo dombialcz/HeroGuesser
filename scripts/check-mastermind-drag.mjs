@@ -124,7 +124,8 @@ try {
     assert.equal((await state()).result, "playing");
 
     if (touch) {
-      const swipeSource = page.locator('[data-history-row="0"][data-slot="0"]');
+      // Use a middle row so the upward swipe can scroll down from its start point.
+      const swipeSource = page.locator('[data-history-row="6"][data-slot="0"]');
       await swipeSource.evaluate(el => el.scrollIntoView({ block: "center", behavior: "instant" }));
       const point = await swipeSource.boundingBox();
       const scroll = await page.evaluate(() => scrollY);

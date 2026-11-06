@@ -546,3 +546,14 @@ The following entries describe earlier development; current source and README ta
 - Solved difficulty tabs show the check mark and attempt count in gold, silver or bronze. The targets below the tabs follow the selected difficulty. The result card names the medal. The Expert tab uses the requested Party Roll cutoffs.
 - Medals come from the saved solve attempt. Existing saves display medals without a storage migration. Shared and copied results use `Hints: N` or `Wskazówki: N`, including zero. A reveal counts once even if its eye is later closed.
 - Unit tests cover both boundaries on all four difficulties and the zero-hint share line. Chromium and WebKit checks cover all three medals from existing saves, a live Expert solve, clipboard copying after closing a reveal eye, and unclipped tabs at 320px and enlarged Polish text. The web and iPhone simulator builds pass.
+
+## 2026-11-06 — Newest-first guess history and portrait reuse
+
+- Combined the separate latest-guess preview and history into one list below the controls. Each guess appears once, newest first, with its original number and feedback. Check scrolls to the new row and announces its totals. The first warm-up guess still highlights Use this guess.
+- Every history portrait uses the roster's placement action, including portraits in the newest row. Whole-row copy and hold-and-drag remain available. Help now describes tapping a portrait from an earlier guess.
+- Verified newest-first order before and after solving, saved history, selected-slot reuse with clicks and taps, locked slots, drag and mobile scroll. Unit tests, focused Chromium and WebKit suites, and web and offline iOS asset builds passed.
+
+## 2026-11-06 — Restore steel padlocks
+
+- Restored the original open and closed steel padlock artwork and gave manually locked portraits a clearer grey background. Hint reveals keep their animated magical material and glowing eye.
+- Checked the artwork, background, hint coexistence, save restoration and unlocking in Chromium and WebKit on desktop and 320px phones. The existing row tools and hint suites passed. Web and offline iOS asset builds include both lock images.

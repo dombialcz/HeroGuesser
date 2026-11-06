@@ -12,7 +12,8 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       ['desktop', 1440, 1000, 'en', false], ['phone', 390, 844, 'en', false],
       ['small-phone', 320, 740, 'en', false], ['large-pl', 320, 740, 'pl', true],
     ]) {
-      const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+      const touch = width < 500;
+      const page = await browser.newPage({ viewport: { width, height }, hasTouch: touch, reducedMotion: 'reduce' });
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
@@ -47,8 +48,18 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await check();
       assert.deepEqual((await state()).draft, ['bard', null, null, null, null], 'next attempt repopulates locked hero');
       assert.equal(await page.locator('#clear-button').isDisabled(), true);
-      await page.locator('#guess-history [data-history-row="0"][data-slot="0"]').click();
+      const addFromHistory = index => {
+        const tile = page.locator(`#guess-history [data-history-row="${index}"][data-slot="0"]`);
+        return touch ? tile.tap() : tile.click();
+      };
+      await addFromHistory(0);
       assert.deepEqual((await state()).draft, ['bard', 'knight', null, null, null], 'individual copies skip locks');
+      await page.locator('#current-guess [data-slot="3"]').click();
+      await addFromHistory(1);
+      assert.deepEqual((await state()).draft, ['bard', 'knight', null, 'bard', null], 'newest portrait fills the selected place');
+      await page.locator('#current-guess [data-slot="2"]').click();
+      await addFromHistory(0);
+      assert.deepEqual((await state()).draft, ['bard', 'knight', 'knight', 'bard', null], 'older portraits also fill the selected place');
       await clear(); assert.equal((await state()).draft[0], 'bard');
       if (profile === 'desktop') {
         const source = page.locator('#guess-history [data-history-row="0"][data-slot="0"]');

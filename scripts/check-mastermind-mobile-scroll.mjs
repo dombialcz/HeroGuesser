@@ -11,12 +11,12 @@ for(const [engine,type] of Object.entries({chromium,webkit})) {
    await page.locator('#current-guess').scrollIntoViewIfNeeded();
    for(let i=0;i<5;i++)await page.locator('.hero-choice[data-hero=knight]').click();await page.locator('#submit-button').click();
    await page.waitForTimeout(100);
-   const geometry=await page.evaluate(()=>({dock:document.querySelector('.daily-dock').getBoundingClientRect().toJSON(),result:document.querySelector('#last-check').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
+   const geometry=await page.evaluate(()=>({result:document.querySelector('#guess-history > li').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
    assert.ok(geometry.check.bottom<=geometry.vh+1,`${engine}/${width}/${count}: Check visible`);
    assert.ok(geometry.result.top>=-1&&geometry.result.bottom<=geometry.vh+1,`${engine}/${width}/${count}: last checked guess visible ${JSON.stringify(geometry)}`);
    const stable=await page.evaluate(()=>({y:scrollY,height:document.documentElement.scrollHeight}));await page.waitForTimeout(100);assert.deepEqual(await page.evaluate(()=>({y:scrollY,height:document.documentElement.scrollHeight})),stable);
    await page.locator('#guess-history').evaluate(el=>el.scrollIntoView({block:'start'}));const height=await page.evaluate(()=>document.documentElement.scrollHeight);await page.evaluate(()=>scrollBy(0,200));await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight),height);
-   if(count===8)await page.screenshot({path:`output/mastermind-mobile-scroll/${engine}-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);await page.close();console.log(`${engine}/${width}/${count}: chronological history, visible result/controls and stable scroll pass`);
+   if(count===8)await page.screenshot({path:`output/mastermind-mobile-scroll/${engine}-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);await page.close();console.log(`${engine}/${width}/${count}: newest-first history, visible result/controls and stable scroll pass`);
   }
  }finally{await browser.close();}
 }

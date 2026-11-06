@@ -75,7 +75,7 @@ const COPY = {
     dateLocale: "en-GB",
     unsolvedMessage: "Choose a hero to fill the highlighted row. Select a filled place to change it.",
     solvedMessage: (attempts, party) => `Solved in ${attempts} ${attempts === 1 ? "guess" : "guesses"}. The hidden party was ${party}.`,
-    dragHint: "Hold a portrait, then drag to move or swap it. Drag from an earlier guess to copy a hero, or use Copy for the whole attempt. Padlocks keep heroes in place after checking, clearing or copying. Unlock above a slot to edit it. Unlimited guesses.",
+    dragHint: "Tap a hero from a previous guess to add it to your formation. Hold and drag a portrait to move, swap or copy it. Use this guess copies the whole attempt. Padlocks keep heroes in place after checking, clearing or copying. Unlock above a slot to edit it. Unlimited guesses.",
     copyRow: 'Copy', copyRowLabel: n => `Copy guess ${n}; keep locked heroes`,
     lockPlace: (n, hero) => `Lock ${hero} in place ${n} for later attempts`,
     unlockPlace: (n, hero) => `Unlock ${hero} in place ${n}`,
@@ -90,7 +90,7 @@ const COPY = {
     eyeClosed: n => `Eye closed at place ${n}. You can change this hero.`,
     eyeOpened: (n, hero) => `Eye open at place ${n}. ${hero} restored and protected.`,
     lockedPlace: (n, hero) => `Place ${n}: ${hero}, locked. Unlock using the padlock above.`,
-    copyHero: (hero) => `Copy ${hero} to the next open place, or hold and drag to a place.`,
+    copyHero: (hero) => `Add ${hero} to your formation, or hold and drag to a place.`,
     heroNames: {
       knight: "Knight", thief: "Thief", bard: "Bard", cleric: "Cleric",
       barbarian: "Barbarian", ranger: "Ranger", mage: "Mage",
@@ -155,7 +155,7 @@ const COPY = {
     dateLocale: "pl-PL",
     unsolvedMessage: "Wybierz klasę, aby wypełnić podświetlony wiersz. Naciśnij zajęte miejsce, aby je zmienić.",
     solvedMessage: (attempts, party) => `Rozszyfrowano w ${attempts} ${attempts === 1 ? "próbie" : "próbach"}. Ukryta drużyna: ${party}.`,
-    dragHint: "Przytrzymaj portret i przeciągnij, aby przenieść lub zamienić bohaterów. Kopiuj odtwarza całą próbę, zachowując zablokowanych bohaterów. Kłódka zachowuje bohatera po sprawdzeniu i czyszczeniu. Odblokuj miejsce, aby je zmienić. Bez limitu prób.",
+    dragHint: "Dotknij bohatera z poprzedniej próby, aby dodać go do układu. Przytrzymaj portret i przeciągnij, aby przenieść, zamienić lub skopiować bohatera. Użyj tej próby odtwarza cały układ. Kłódka zachowuje bohatera po sprawdzeniu, czyszczeniu i kopiowaniu. Odblokuj miejsce, aby je zmienić. Bez limitu prób.",
     copyRow: 'Kopiuj', copyRowLabel: n => `Skopiuj próbę ${n}; zachowaj zablokowanych bohaterów`,
     lockPlace: (n, hero) => `Zablokuj: ${hero}, na miejscu ${n} w kolejnych próbach`,
     unlockPlace: (n, hero) => `Odblokuj: ${hero}, na miejscu ${n}`,
@@ -170,7 +170,7 @@ const COPY = {
     eyeClosed: n => `Oko nad miejscem ${n} zamknięte. Możesz zmienić bohatera.`,
     eyeOpened: (n, hero) => `Oko nad miejscem ${n} otwarte. Przywrócono i zablokowano: ${hero}.`,
     lockedPlace: (n, hero) => `Miejsce ${n}: ${hero}, zablokowane. Odblokuj kłódką powyżej.`,
-    copyHero: (hero) => `Skopiuj: ${hero}, na kolejne wolne miejsce lub przytrzymaj i przeciągnij.`,
+    copyHero: (hero) => `Dodaj do układu: ${hero}. Możesz też przytrzymać portret i go przeciągnąć.`,
     heroNames: {
       knight: "Rycerz", thief: "Złodziej", bard: "Bard", cleric: "Kleryk",
       barbarian: "Barbarzyńca", ranger: "Łowca", mage: "Mag",
@@ -184,7 +184,7 @@ const COPY = {
 
 Object.assign(COPY.en, {
   currentFormation: 'Your formation', dailyBoardTitle: 'Daily', dailyTitle: "Today's puzzles", dailyDescription: 'A fresh party for every difficulty. Solve one today, or try all four.',
-  historyLabel: 'Previous guesses, oldest first', chaos: 'Expert', heroes: 'places',
+  chaos: 'Expert', heroes: 'places',
   partyRollSubtitle: 'No clues · repeats allowed', partyRollRule: 'Any hero can appear in any place, any number of times. Use the whole-guess feedback to discover the party.',
   todaysParty: "TODAY’S PARTY", guessBoard: 'Your guesses', boardSubtitle: 'Locks keep your choices; revealed eyes confirm a hero.',
   submitGuess: 'Check', exactLegend: 'Right hero, right place', misplacedLegend: 'Right hero, wrong place', absentLegend: 'Not in the party, or one copy too many',
@@ -202,7 +202,7 @@ Object.assign(COPY.en, {
 });
 Object.assign(COPY.pl, {
   currentFormation: 'Twój układ', dailyBoardTitle: 'Codzienne', dailyTitle: 'Dzisiejsze zagadki', dailyDescription: 'Nowa drużyna na każdym poziomie. Rozwiąż jedną zagadkę lub spróbuj wszystkich czterech.',
-  historyLabel: 'Wcześniejsze próby, od najstarszej', chaos: 'Ekspert', heroes: 'miejsc',
+  chaos: 'Ekspert', heroes: 'miejsc',
   partyRollSubtitle: 'Bez wskazówek · dowolne powtórzenia', partyRollRule: 'Na każdym miejscu może stanąć dowolny bohater, dowolną liczbę razy. Odkryj drużynę dzięki wynikom całych prób.',
   todaysParty: 'DZISIEJSZA DRUŻYNA', guessBoard: 'Twoje próby', boardSubtitle: 'Kłódka zachowuje twój wybór. Otwarte oko potwierdza bohatera.',
   submitGuess: 'Sprawdź', exactLegend: 'Dobry bohater, dobre miejsce', misplacedLegend: 'Dobry bohater, złe miejsce', absentLegend: 'Poza drużyną lub o jednego za dużo',
@@ -443,11 +443,13 @@ function submitGuess() {
   state.selectedSlot = current.draft.findIndex(type => type === null);
   saveProgress();
   render();
-  const latest = guessHistory.lastElementChild;
-  animateResultStamp(latest?.querySelector('.row-feedback'), { inset: true });
-  latest?.classList.add('just-checked');
+  const latest = guessHistory.firstElementChild;
+  const feedback = latest.querySelector('.row-feedback');
+  animateResultStamp(feedback, { inset: true });
+  latest.classList.add('just-checked');
+  document.querySelector('#guess-feedback-status').textContent = `${copy().rowLabel(current.guesses.length)}. ${feedback.getAttribute('aria-label')}`;
   requestAnimationFrame(() => {
-    const result = document.querySelector(isFinished() ? '#daily-result' : '#last-check');
+    const result = isFinished() ? document.querySelector('#daily-result') : latest;
     result?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
   });
   if (isFinished()) { celebration.play({ kind: "daily" }); playCompletionSound(); }
@@ -622,7 +624,8 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
       tile.disabled = isFinished();
       tile.dataset.slot = String(index);
       tile.dataset.historyRow = String(rowIndex);
-      tile.setAttribute("aria-label", copy().copyHero(localizedHero(type)));
+      tile.title = copy().copyHero(localizedHero(type));
+      tile.setAttribute("aria-label", tile.title);
       tile.addEventListener("click", () => placeHero(type));
       tile.className = "guess-tile";
       applyHeroAppearance(tile, HERO_BY_ID[type]);
@@ -678,14 +681,18 @@ function makeLineup(challenge, guess, currentRow = false, rowIndex = 0, current 
         continue;
       }
       const lock = document.createElement('button'); lock.type = 'button'; lock.className = 'slot-lock-button'; lock.dataset.lockSlot = String(index);
-      lock.disabled = !type || isFinished() || isExample(); lock.setAttribute('aria-pressed', String(!!current.locks?.[index]));
-      const label = type ? (current.locks?.[index] ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
+      const locked = !!current.locks?.[index];
+      lock.disabled = !type || isFinished() || isExample();
+      lock.setAttribute('aria-pressed', String(locked));
+      const label = type ? (locked ? copy().unlockPlace : copy().lockPlace)(index + 1, localizedHero(type)) : copy().emptyLock(index + 1);
       lock.setAttribute('aria-label', label); lock.title = label;
-      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', current.locks?.[index] ? 'M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5ZM12 15v3' : 'M7 11V7a5 5 0 0 1 10 0M5 11h14v10H5ZM12 15v3');
-      icon.append(path); lock.append(icon); lock.addEventListener('click', () => lockSlot(index));
+      const icon = document.createElement('img');
+      icon.alt = ''; icon.width = 40; icon.height = 40; icon.draggable = false;
+      icon.addEventListener('error', () => { icon.hidden = true; });
+      icon.src = locked ? 'assets/decor/slot-lock-steel-v2.png' : 'assets/decor/slot-unlock-steel-v2.png';
+      const fallback = document.createElement('span');
+      fallback.className = 'lock-fallback'; fallback.textContent = locked ? '🔒' : '🔓'; fallback.setAttribute('aria-hidden', 'true');
+      lock.append(icon, fallback); lock.addEventListener('click', () => lockSlot(index));
       cell.append(lock, tile); lineup.append(cell);
     } else lineup.append(tile);
   }
@@ -716,6 +723,7 @@ function renderBoard(challenge, current) {
       const clone = document.createElement('button'); clone.type = 'button'; clone.className = 'guess-copy-row'; clone.dataset.copyGuess = String(index);
       clone.textContent = copy().copyRow; clone.setAttribute('aria-label', copy().copyRowLabel(index + 1)); clone.disabled = locked;
       clone.title = copy().copyRowLabel(index + 1);
+      if (isWarmup() && current.guesses.length === 1 && current.draft.every(piece => !piece)) clone.classList.add('suggested-action');
       const copyIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       copyIcon.setAttribute('viewBox', '0 0 20 20'); copyIcon.setAttribute('aria-hidden', 'true'); copyIcon.setAttribute('focusable', 'false');
       const copyShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -735,10 +743,9 @@ function renderBoard(challenge, current) {
     return row;
   });
   currentGuess.replaceChildren(...rows.filter(row => row.classList.contains("row-active")));
-  guessHistory.replaceChildren(...rows.filter(row => row.classList.contains('row-submitted')));
-  guessHistory.start = 1;
-  const last = guessHistory.lastElementChild;
-  if (last) last.classList.add('latest-guess');
+  guessHistory.replaceChildren(...rows.filter(row => row.classList.contains('row-submitted')).reverse());
+  guessHistory.firstElementChild?.classList.add('latest-guess');
+  document.querySelector('#guess-feedback-status').textContent = '';
   const explanation = document.querySelector('#feedback-explanation');
   explanation.textContent = current.guesses.length ? copy().totals + (currentResult(current.guesses.at(-1), challenge).absent ? ' ' + copy().extra : '') : '';
   explanation.hidden = !current.guesses.length;
@@ -793,33 +800,6 @@ function updateHintButton() {
   countdown.textContent = countdown.hidden ? '' : `${remaining}s`;
 }
 setInterval(() => { if (['daily', 'warmup'].includes(state.screen) && !document.hidden) updateHintButton(); }, 250);
-
-function renderLastCheck(challenge, current) {
-  const preview = document.querySelector('#last-check');
-  preview.hidden = !current.guesses.length || isFinished();
-  if (preview.hidden) return;
-  preview.style.setProperty('--party-size', challenge.size);
-  const guess = current.guesses.at(-1);
-  document.querySelector('#last-check-heading').textContent = `${state.locale === 'pl' ? 'Ostatnia sprawdzona próba' : 'Last checked guess'} · ${current.guesses.length}`;
-  const portraits = guess.map((hero, index) => {
-    const tile = document.createElement('span'); tile.className = 'last-check-portrait';
-    tile.setAttribute('role', 'img'); tile.setAttribute('aria-label', `${index + 1}: ${localizedHero(hero)}`);
-    applyHeroAppearance(tile, HERO_BY_ID[hero]); tile.append(createPortrait(HERO_BY_ID[hero].image, localizedHero(hero))); return tile;
-  });
-  preview.querySelector('.last-check-portraits').replaceChildren(...portraits);
-  const result = currentResult(guess, challenge);
-  document.querySelector('#last-check-totals').replaceChildren(renderFeedback(result));
-  const use = document.querySelector('#last-check-copy'); use.textContent = copy().copyRow;
-  use.setAttribute('aria-label', copy().copyRowLabel(current.guesses.length));
-  use.onclick = () => copyGuess(current.guesses.length - 1);
-  const historyLink = document.querySelector('#history-jump');
-  historyLink.textContent = state.locale === 'pl' ? `Wszystkie próby: ${current.guesses.length} ↓` : `All guesses (${current.guesses.length}) ↓`;
-  historyLink.onclick = () => {
-    document.querySelector('.board-panel').scrollIntoView({ block: 'start', behavior: 'instant' });
-    document.querySelector('#history-heading').focus({ preventScroll: true });
-  };
-  use.classList.toggle('suggested-action', isWarmup() && current.guesses.length === 1 && current.draft.every(piece => !piece));
-}
 
 function dailyStatus() {
   return CHALLENGES.map(({ id }) => {
@@ -914,7 +894,6 @@ function render() {
   renderMedalTargets(strings);
   renderClues(challenge);
   renderBoard(challenge, current);
-  renderLastCheck(challenge, current);
   renderPicker();
   renderMessage(challenge, current);
   document.querySelector('#share-result').hidden = !locked || isWarmup();

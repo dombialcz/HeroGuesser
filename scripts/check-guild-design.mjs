@@ -24,25 +24,29 @@ for(const [engine,type] of Object.entries({chromium,webkit})) {
     assert.equal(await page.locator('#hero-picker .hero-choice').count(),7);assert.equal(await page.locator('#hero-picker #daily-hint-button').count(),0);
     const sizes=await page.locator('.hero-choice > span:not(.portrait-frame), .guess-copy-row, .clue-card strong').evaluateAll(els=>els.map(e=>parseFloat(getComputedStyle(e).fontSize)));assert.ok(sizes.every(s=>s>=13));
     for(const hero of Array(c.size).fill(absent))await page.locator(`.hero-choice[data-hero=${hero}]`).click();await page.locator('#submit-button').click();await page.waitForTimeout(100);
-    const previewGeometry = await page.locator('#last-check .last-check-portrait').evaluateAll(tiles => tiles.map(tile => { const r = tile.getBoundingClientRect(); return { width: r.width, height: r.height }; }));
-    assert.equal(previewGeometry.length, c.size);
-    assert.ok(previewGeometry.every(tile => tile.width >= (width >= 1024 ? 48 : 30) && Math.abs(tile.width - tile.height) < 1), `${engine}/${profile}/${difficulty}: portraits have real square dimensions ${JSON.stringify(previewGeometry)}`);
-    assert.equal(await page.locator('#last-check-totals .feedback-score').count(), 3);
-    assert.equal(await page.locator('#last-check-totals .feedback-words:visible').count(), 3);
-    assert.ok(await page.locator('#last-check-totals .feedback-dot, #guess-history .feedback-dot').evaluateAll(dots => dots.every(dot => dot.offsetWidth >= 14 && dot.offsetHeight >= 14)), 'feedback symbols cannot collapse');
+    const latest = page.locator('#guess-history > li').first();
+    const geometry = await latest.locator('.guess-tile').evaluateAll(tiles => tiles.map(tile => { const r = tile.getBoundingClientRect(); return { width: r.width, height: r.height }; }));
+    assert.equal(geometry.length, c.size);
+    assert.ok(geometry.every(tile => {
+     const expectedHeight = width <= 760 ? Math.max(44, tile.width) : tile.width;
+     return tile.width >= (width >= 1024 ? 48 : 30) && Math.abs(expectedHeight - tile.height) < 1;
+    }), `${engine}/${profile}/${difficulty}: history portraits have square frames and a minimum phone tap height ${JSON.stringify(geometry)}`);
+    assert.equal(await latest.locator('.feedback-score').count(), 3);
+    assert.equal(await latest.locator('.feedback-words:visible').count(), 3);
+    assert.ok(await latest.locator('.feedback-dot').evaluateAll(dots => dots.every(dot => dot.offsetWidth >= 14 && dot.offsetHeight >= 14)), 'feedback symbols cannot collapse');
     assert.equal((await state()).guesses.at(-1).absent,c.size);assert.ok(await page.locator('#feedback-explanation').isVisible());
     assert.ok(await page.evaluate(()=>document.querySelector('.board-panel').getBoundingClientRect().top>document.querySelector('#current-guess').getBoundingClientRect().bottom), 'history stays below the primary playing field');
     const flow = await page.evaluate(() => {
-     const boxes = ['.picker-panel', '#current-guess', '.board-footer', '#last-check', '.board-panel'].map(selector => document.querySelector(selector).getBoundingClientRect().toJSON());
+     const boxes = ['.picker-panel', '#current-guess', '.board-footer', '.board-panel'].map(selector => document.querySelector(selector).getBoundingClientRect().toJSON());
      const picker = document.querySelector('.picker-panel');
      return { boxes, domOrder: !!(picker.compareDocumentPosition(document.querySelector('#current-guess')) & Node.DOCUMENT_POSITION_FOLLOWING), pickerTops: [...document.querySelectorAll('#hero-picker .hero-choice')].map(el => el.getBoundingClientRect().top) };
     });
     assert.ok(flow.domOrder, 'picker comes before the formation for keyboard and screen-reader navigation');
-    assert.ok(flow.boxes.every((box, index) => index === 0 || box.top >= flow.boxes[index - 1].bottom - 1), `${engine}/${profile}/${difficulty}: picker, formation, actions, latest result and history follow without interleaving`);
+    assert.ok(flow.boxes.every((box, index) => index === 0 || box.top >= flow.boxes[index - 1].bottom - 1), `${engine}/${profile}/${difficulty}: picker, formation, actions and history follow without interleaving`);
     if (width > 760) assert.ok(flow.pickerTops.every(top => Math.abs(top - flow.pickerTops[0]) < 1), 'desktop picker stays on one row above the slots');
     assert.equal(await page.locator('#board-heading.guild-ribbon, #picker-heading.guild-ribbon, #daily-title.guild-ribbon').count(),3);
     if(width<=760&&!large&&height>=740) {
-     const geometry=await page.evaluate(()=>({feedback:document.querySelector('#last-check').getBoundingClientRect().toJSON(),dock:document.querySelector('.daily-dock').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
+     const geometry=await page.evaluate(()=>({feedback:document.querySelector('#guess-history > li').getBoundingClientRect().toJSON(),check:document.querySelector('#submit-button').getBoundingClientRect().toJSON(),vh:innerHeight}));
      assert.ok(geometry.feedback.top>=-1&&geometry.feedback.bottom<=geometry.vh+1,`${engine}/${profile}/${difficulty}: last checked guess visible beside controls ${JSON.stringify(geometry)}`);
      assert.ok(geometry.check.bottom<=geometry.vh+1,`${engine}/${profile}: Check visible`);
     }

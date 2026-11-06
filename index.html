@@ -137,13 +137,13 @@
           <h2 id="board-heading" class="guild-ribbon active-board-heading" data-i18n="currentFormation">Your formation</h2>
           <ol class="guess-board" id="current-guess" aria-label="Current formation"></ol>
           <div class="board-footer"><button class="icon-button clear-button" id="clear-button" type="button" aria-label="Clear current row"><span aria-hidden="true">↺</span></button><button class="submit-button" id="submit-button" type="button" disabled><span data-i18n="submitGuess">Check</span></button><div id="hint-action"></div></div>
-          <section id="last-check" class="last-check" hidden aria-labelledby="last-check-heading"><h3 id="last-check-heading"></h3><div class="last-check-portraits"></div><div id="last-check-totals" role="status" aria-live="polite" aria-atomic="true"></div><button type="button" id="last-check-copy" class="quiet-button"></button><button type="button" id="history-jump" class="quiet-button"></button></section>
         </section>
         <section class="board-panel" aria-labelledby="history-heading">
           <div class="board-header"><h2 id="history-heading" class="guild-ribbon" tabindex="-1" data-i18n="guessBoard">Your guesses</h2><span class="guess-counter" id="guess-counter"></span></div>
           <p id="board-subtitle" data-i18n="boardSubtitle"></p>
           <p id="daily-guess-tools-status" class="tools-status" role="status" aria-live="polite"></p>
-          <ol class="guess-board guess-history" id="guess-history" aria-label="Previous guesses, oldest first"></ol>
+          <p id="guess-feedback-status" class="sr-only" role="status" aria-atomic="true"></p>
+          <ol class="guess-board guess-history" id="guess-history" aria-label="Previous guesses, newest first" reversed></ol>
           <p id="feedback-explanation"></p>
           <div class="board-legend" aria-label="Feedback legend" hidden></div>
         </section>
