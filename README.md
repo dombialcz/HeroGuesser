@@ -42,7 +42,7 @@ The story learning curve grows from a three-place adjacency puzzle to six-place 
 
 New daily puzzles follow the device's calendar date, including resume/date changes. Previous boards save before the date switches; stories are not interrupted. Saves older than 90 days are pruned, with no archive browser in v1. Dates/timezones changed backwards restore matching retained progress. Web and iPhone saves are separate; clearing browser data or uninstalling can remove them. Storage failures visibly mark the session temporary.
 
-Solved Daily tabs show the check mark, attempt count and medal. The active difficulty shows its medal targets below the tabs. Gold and silver end at 5 and 8 guesses on Easy, 6 and 10 on Medium, 8 and 11 on Hard, and 10 and 14 on Expert. Any later solve earns bronze. Shared results include the number of hints used, including zero.
+Solved Daily tabs show the check mark, attempt count and a small medal graphic. Matching gold, silver and bronze medal graphics mark the guess ranges below the tabs and the award on the result card. Localized names remain available to assistive technology and through tooltips. Gold and silver end at 5 and 8 guesses on Easy, 6 and 10 on Medium, 8 and 11 on Hard, and 10 and 14 on Expert. Any later solve earns bronze. Shared results include the number of hints used, including zero.
 
 Tap to place/clear, hold-drag to move/swap, copy earlier daily portraits and use keyboard shortcuts. EN/PL, enlarged text, descriptive feedback, focus announcements and reduced-motion celebration are supported. Home removes direct-mode query parameters. Existing `?tutorial=1`, `?adventure=1` through `4`, and `?daily=1` links continue to work; adventure links resume their chapter.
 

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 44">
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff1b4"/>
+      <stop offset=".4" stop-color="#ecc35e"/>
+      <stop offset=".72" stop-color="#9a5c1c"/>
+      <stop offset="1" stop-color="#ecc35e"/>
+    </linearGradient>
+    <linearGradient id="cloth" x2="1" y2=".4">
+      <stop stop-color="#447c99"/><stop offset="1" stop-color="#173b59"/>
+    </linearGradient>
+    <linearGradient id="enamel" x2="0" y2="1">
+      <stop stop-color="#377c69"/><stop offset="1" stop-color="#182f36"/>
+    </linearGradient>
+  </defs>
+  <path d="m7 9 10 3-5 29-4-5-6 2Z" fill="url(#cloth)" stroke="#142a3b"/>
+  <path d="m29 9-10 3 5 29 4-5 6 2Z" fill="url(#cloth)" stroke="#142a3b"/>
+  <path d="m6 34 4 3 4-21m16 18-4 3-4-21" fill="none" stroke="#8bb3c2" stroke-width=".6"/>
+  <path d="M18 7 31 12 29 27Q27 35 18 42 9 35 7 27L5 12Z" fill="#171411" opacity=".5" transform="translate(0 1)"/>
+  <path d="M18 6 31 11 29 26Q27 34 18 41 9 34 7 26L5 11Z" fill="url(#metal)" stroke="#9a5c1c" stroke-width="1.2"/>
+  <path d="M18 10 27 14 25 26Q23 32 18 36 13 32 11 26L9 14Z" fill="url(#enamel)" stroke="#fff1b9" stroke-width=".9"/>
+  <path d="m10 12-2-9 6 4 4-6 4 6 6-4-2 9Z" fill="url(#metal)" stroke="#9a5c1c" stroke-linejoin="round"/>
+  <path d="M11 11h14M18 3v6" fill="none" stroke="#fff1b9" stroke-width=".8"/>
+  <path d="m18 16 6 7-6 9-6-9Z" fill="#12524d" stroke="#fff1b9" stroke-linejoin="round"/>
+  <path d="m18 17 5 6-5 2-5-2Z" fill="#a1f7bd"/>
+  <path d="m18 17-1 6 1 7-5-7Z" fill="#ffffff" opacity=".42"/>
+  <path d="m18 25 5-2-5 7Z" fill="#377c69"/>
+  <path d="m8 17 2 10 4 6M28 17l-2 10-4 6" fill="none" stroke="#fff1b9" stroke-width=".9" stroke-linecap="round"/>
+</svg>

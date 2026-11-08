@@ -56,7 +56,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})) {
     const badge = page.locator(`[data-challenge=${difficulty}] .difficulty-result`);
     assert.equal(await badge.innerText(), '✓ 2');
     assert.equal(await badge.getAttribute('data-medal'), 'gold');
-    assert.equal(await page.locator('#result-medal').innerText(), locale === 'pl' ? 'Złoto' : 'Gold');
+    assert.equal(await page.locator('#result-medal img').getAttribute('alt'), locale === 'pl' ? 'Złoto' : 'Gold');
     await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async ({text})=>{window.shared=text}}));await page.locator('#share-result').click();assert.match(await page.evaluate(()=>window.shared),locale==='pl'?/Wskazówki: 0/:/Hints: 0/);
    }
    assert.equal(await page.locator('#next-puzzle').isVisible(),false);assert.ok((await state()).dailyProgress.every(c=>c.solved));

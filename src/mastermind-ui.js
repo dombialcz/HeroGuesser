@@ -19,6 +19,11 @@ import { showHelp } from './how-to-play.js';
 import { PARTY_NAMES } from "./mastermind-names.js";
 
 const HERO_BY_ID = Object.fromEntries(HERO_CLASSES.map((hero) => [hero.id, hero]));
+const MEDAL_IMAGES = {
+  gold: 'assets/decor/medal-gold.svg',
+  silver: 'assets/decor/medal-silver.svg',
+  bronze: 'assets/decor/medal-bronze.svg',
+};
 const COPY = {
   en: {
     home: "Home", homeKicker: "THE PARTY IS A PUZZLE", homeSubtitle: "Read the clues. Find your party.",
@@ -829,7 +834,7 @@ function renderMessage(challenge, current) {
   const award = document.querySelector('#result-medal');
   award.hidden = !medal;
   award.dataset.medal = medal ?? '';
-  award.textContent = medal ? copy().medals[medal] : '';
+  award.replaceChildren(...(medal ? [createMedalIcon(medal, copy().medals[medal])] : []));
   const stats = document.querySelector('#result-stats');
   stats.textContent = `${copy().attempts(summary.guesses)} · ${copy().revealsUsed(summary.reveals)}`;
   const next = document.querySelector('#next-puzzle');
@@ -843,6 +848,17 @@ function renderMessage(challenge, current) {
   if (!isWarmup() && !nextId) stats.textContent += ' · ' + copy().allDone;
 }
 
+function createMedalIcon(tier, label = '') {
+  const image = document.createElement('img');
+  image.className = 'medal-icon';
+  image.src = MEDAL_IMAGES[tier];
+  image.alt = label;
+  image.width = 24;
+  image.height = 30;
+  image.draggable = false;
+  return image;
+}
+
 function renderMedalTargets(strings) {
   const targets = document.querySelector('#medal-targets');
   targets.hidden = isWarmup();
@@ -851,7 +867,10 @@ function renderMedalTargets(strings) {
   const ranges = { gold: `1–${gold}`, silver: `${gold + 1}–${silver}`, bronze: `${silver + 1}+` };
   for (const badge of targets.querySelectorAll('[data-medal]')) {
     const tier = badge.dataset.medal;
-    badge.textContent = `${strings.medals[tier]} ${ranges[tier]}`;
+    badge.replaceChildren(createMedalIcon(tier), document.createTextNode(ranges[tier]));
+    badge.setAttribute('role', 'img');
+    badge.setAttribute('aria-label', `${strings.medals[tier]}, ${strings.attempts(ranges[tier])}`);
+    badge.title = badge.getAttribute('aria-label');
   }
 }
 
@@ -888,7 +907,7 @@ function render() {
     const mark = button.querySelector(".difficulty-result");
     mark.hidden = !medal;
     mark.dataset.medal = medal ?? '';
-    mark.textContent = medal ? `✓ ${guesses}` : '';
+    mark.replaceChildren(...(medal ? [createMedalIcon(medal), document.createTextNode(`✓ ${guesses}`)] : []));
     mark.title = medal ? `${strings.medals[medal]} · ${strings.attempts(guesses)}` : '';
     const label = `${strings[id]}, ${levels[id].size} ${strings.heroes}`;
     button.setAttribute('aria-label', medal ? `${label}, ${mark.title}` : label);

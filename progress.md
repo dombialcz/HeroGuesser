@@ -562,3 +562,8 @@ The following entries describe earlier development; current source and README ta
 
 - Phone history keeps the three labels on the first submitted guess. Later guesses show only the shapes and totals in one row. The symbol guide above history expands on demand and explains the whole-row totals and excess copies. Full accessible descriptions remain on every result.
 - Verified all four difficulties in Chromium and WebKit across desktop, 390px and 320px phones, including Polish at 200% text. Checked guide toggling with Enter, first-guess labels after reload, compact row height, warm-up progression and stable scrolling with long histories. Inspected gameplay screenshots and text output. Web and offline iOS asset builds passed.
+
+## 2026-11-08 — Medal graphics
+
+- Replaced the medal names beside guess ranges with small gold, silver and bronze graphics on blue ribbons. The solved tabs and result card use matching graphics. Names remain available through localized accessible labels and tooltips.
+- All 56 unit tests and 14 responsive layout profiles passed. Focused Chromium and WebKit checks verify the three graphics, range text, existing awards, reloads and accessible names at desktop and phone sizes, including 320px Polish at 200% text. Inspected gameplay screenshots and text output. Web and offline iOS builds include the three SVG assets.

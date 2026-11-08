@@ -1208,26 +1208,24 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
 .difficulty-tab { grid-template-columns: minmax(0, 1fr); align-content: start; }
 .difficulty-result { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 5px; }
 .medal-badge, .difficulty-result[data-medal] {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
   max-width: 100%;
-  padding: 2px 6px;
-  border: 1px solid var(--medal-border);
-  border-radius: 3px;
-  background: var(--medal-surface);
-  color: var(--medal-ink);
+  color: var(--text);
   font-size: .8125rem;
   font-weight: 700;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-[data-medal="gold"] { --medal-surface: #f6d77e; --medal-ink: #422c08; --medal-border: #a46e1c; }
-[data-medal="silver"] { --medal-surface: #dfe8f0; --medal-ink: #263747; --medal-border: #657c90; }
-[data-medal="bronze"] { --medal-surface: #eab18e; --medal-ink: #432319; --medal-border: #955737; }
+.difficulty-result[data-medal] { color: var(--quest-text); }
+.medal-icon { display: block; width: 1.5rem; height: 1.875rem; flex: none; object-fit: contain; }
 .medal-targets {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 6px;
+  align-items: center;
+  gap: 4px 12px;
   margin: -4px 0 10px;
   color: var(--text);
   font-size: .8125rem;
