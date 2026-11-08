@@ -557,3 +557,8 @@ The following entries describe earlier development; current source and README ta
 
 - Restored the original open and closed steel padlock artwork and gave manually locked portraits a clearer grey background. Hint reveals keep their animated magical material and glowing eye.
 - Checked the artwork, background, hint coexistence, save restoration and unlocking in Chromium and WebKit on desktop and 320px phones. The existing row tools and hint suites passed. Web and offline iOS asset builds include both lock images.
+
+## 2026-11-08 — Compact phone feedback
+
+- Phone history keeps the three labels on the first submitted guess. Later guesses show only the shapes and totals in one row. The symbol guide above history expands on demand and explains the whole-row totals and excess copies. Full accessible descriptions remain on every result.
+- Verified all four difficulties in Chromium and WebKit across desktop, 390px and 320px phones, including Polish at 200% text. Checked guide toggling with Enter, first-guess labels after reload, compact row height, warm-up progression and stable scrolling with long histories. Inspected gameplay screenshots and text output. Web and offline iOS asset builds passed.

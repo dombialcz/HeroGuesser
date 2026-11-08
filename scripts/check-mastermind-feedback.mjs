@@ -36,6 +36,8 @@ try {
         assert.match(await feedback.getAttribute("aria-label"), /absent or extra/);
         assert.equal(await feedback.getAttribute("role"), "group");
         assert.equal(await feedback.getByRole('button').count(), 1, 'row copy remains exposed to assistive technology');
+        assert.equal(await feedback.locator('.feedback-words:visible').count(), width <= 760 && index > 0 ? 0 : 3);
+        assert.equal(await page.locator('#guess-history .explained-guess .feedback-words:visible').count(), 3, 'first guess retains the explanation');
         const fits = await feedback.evaluate(el => {
           const row = el.closest(".guess-row").getBoundingClientRect(), box = el.getBoundingClientRect();
           return box.left >= row.left && box.right <= row.right && [...el.children].every(child => { const r = child.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1; });
@@ -43,6 +45,11 @@ try {
         assert.ok(fits, `${name}/${difficulty}: all three counters fit their feedback column`);
       }
       assert.match(await page.locator('#feedback-explanation').textContent(), /one copy too many/);
+      await page.locator('#feedback-help summary').click();
+      assert.equal(await page.locator('.board-legend .feedback-dot:visible').count(), 3);
+      assert.equal(await page.locator('#feedback-explanation').isVisible(), true);
+      await page.locator('#feedback-help summary').click();
+      assert.equal(await page.locator('#feedback-explanation').isVisible(), false);
       await page.reload();
       await page.locator(`[data-challenge="${difficulty}"]`).click();
       assert.equal((await state()).guesses.length, 3, "existing saved rows recompute grey totals");

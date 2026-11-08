@@ -1297,16 +1297,22 @@ button.guess-tile[aria-current="true"] { border-color: var(--accent-light); box-
 .guess-history .feedback-words { display: inline; font-size: .875rem; }
 .guess-history .guess-copy-row { justify-self: start; margin: 0; padding-inline: 0; color: var(--text); }
 .guess-history .row-solved { border-color: var(--exact); }
+.feedback-help { margin-bottom: 12px; color: var(--muted); font-size: .875rem; line-height: 1.5; }
+.feedback-help summary { min-height: 44px; padding-block: 10px; cursor: pointer; }
+.feedback-help .board-legend { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 8px 0; font-size: .875rem; }
 @media (max-width: 760px) {
   .guess-history .guess-row { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px 4px; }
   .guess-history .row-lineup { grid-column: 1; max-width: none; gap: 1px; }
-  .guess-history .row-feedback { grid-column: 1; }
+  .guess-history .row-feedback { grid-column: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; }
+  .guess-history .guess-copy-row { grid-column: 1 / -1; }
   .guess-history .row-number, .guess-history .row-feedback { padding-inline: 6px; }
-  .guess-history .feedback-words { font-size: .8125rem; }
+  .guess-history .feedback-words { display: none; font-size: .8125rem; }
+  .guess-history .explained-guess .row-feedback { grid-template-columns: 1fr; }
+  .guess-history .explained-guess .feedback-words { display: inline; }
 }
 .guess-history .guess-tile:disabled { opacity: 1; cursor: default; }
 
-.row-feedback .feedback-dot { display: inline-block; flex: 0 0 14px; width: 14px; height: 14px; }
-.row-feedback .feedback-dot.exact { background: var(--exact); border: 0; border-radius: 2px; transform: none; }
-.row-feedback .feedback-dot.misplaced { background: var(--misplaced); border: 0; border-radius: 0; transform: rotate(45deg); }
-.row-feedback .feedback-dot.absent { background: transparent; border: 2px solid var(--absent); border-radius: 50%; transform: none; }
+.row-feedback .feedback-dot, .board-legend .feedback-dot { display: inline-block; flex: 0 0 14px; width: 14px; height: 14px; }
+.row-feedback .feedback-dot.exact, .board-legend .feedback-dot.exact { background: var(--exact); border: 0; border-radius: 2px; transform: none; }
+.row-feedback .feedback-dot.misplaced, .board-legend .feedback-dot.misplaced { background: var(--misplaced); border: 0; border-radius: 0; transform: rotate(45deg); }
+.row-feedback .feedback-dot.absent, .board-legend .feedback-dot.absent { background: transparent; border: 2px solid var(--absent); border-radius: 50%; transform: none; }

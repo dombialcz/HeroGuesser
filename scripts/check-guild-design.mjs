@@ -34,7 +34,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})) {
     assert.equal(await latest.locator('.feedback-score').count(), 3);
     assert.equal(await latest.locator('.feedback-words:visible').count(), 3);
     assert.ok(await latest.locator('.feedback-dot').evaluateAll(dots => dots.every(dot => dot.offsetWidth >= 14 && dot.offsetHeight >= 14)), 'feedback symbols cannot collapse');
-    assert.equal((await state()).guesses.at(-1).absent,c.size);assert.ok(await page.locator('#feedback-explanation').isVisible());
+    assert.equal((await state()).guesses.at(-1).absent,c.size);assert.ok(await page.locator('#feedback-help summary').isVisible());
     assert.ok(await page.evaluate(()=>document.querySelector('.board-panel').getBoundingClientRect().top>document.querySelector('#current-guess').getBoundingClientRect().bottom), 'history stays below the primary playing field');
     const flow = await page.evaluate(() => {
      const boxes = ['.picker-panel', '#current-guess', '.board-footer', '.board-panel'].map(selector => document.querySelector(selector).getBoundingClientRect().toJSON());

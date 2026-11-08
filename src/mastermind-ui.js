@@ -194,6 +194,7 @@ Object.assign(COPY.en, {
   help: 'Help', warmup: 'Warm-up', skip: "Skip to today’s puzzle", example: 'A practice guess, ready to Check. The roster tells you which heroes belong.',
   practice: 'Use the example guess below, then change it. The result describes the whole guess, not individual places.',
   totals: 'Totals describe the whole guess, not individual places.', extra: 'A grey ring can mean an absent hero or one copy too many.',
+  feedbackGuide: 'What do the symbols mean?',
   other: n => `${n} other ${n === 1 ? 'hero' : 'heroes'}, each used once`,
   fill: n => `Fill all ${n} places`, found: 'Party found!', firstDaily: "Play today’s Easy", allDone: 'All four puzzles solved today. Come back tomorrow!',
   solvedToday: n => `${n} of 4 solved`, revealsUsed: n => `${n} ${n === 1 ? 'place revealed' : 'places revealed'}`,
@@ -212,6 +213,7 @@ Object.assign(COPY.pl, {
   help: 'Jak grać', warmup: 'Rozgrzewka', skip: 'Pomiń — dzisiejsza zagadka', example: 'Przykładowa próba jest gotowa. Naciśnij Sprawdź. Wskazówki podają skład drużyny.',
   practice: 'Użyj przykładowej próby i zmień układ. Wynik dotyczy całej próby, nie poszczególnych miejsc.',
   totals: 'Wynik dotyczy całej próby, nie poszczególnych miejsc.', extra: 'Szare kółko oznacza bohatera spoza drużyny lub nadmiarową kopię.',
+  feedbackGuide: 'Co oznaczają symbole?',
   other: n => `${n} ${n === 1 ? 'inny bohater' : 'innych bohaterów'}, każdy tylko raz`,
   fill: n => `Zapełnij wszystkie ${n} ${n === 3 ? "miejsca" : "miejsc"}`, found: 'Drużyna odnaleziona!', firstDaily: 'Zagraj w dzisiejszą łatwą zagadkę', allDone: 'Wszystkie cztery zagadki rozwiązane. Wróć jutro!',
   solvedToday: n => `Rozwiązane: ${n} z 4`, revealsUsed: n => `Odkryte miejsca: ${n}`,
@@ -717,6 +719,7 @@ function renderBoard(challenge, current) {
       const result = currentResult(guess, challenge);
       const solved = result.exact === challenge.size;
       row.classList.add("row-submitted");
+      if (index === 0) row.classList.add('explained-guess');
       if (solved) row.classList.add("row-solved");
       row.append(makeLineup(challenge, guess, false, index));
       const feedback = renderFeedback(result);
@@ -747,8 +750,7 @@ function renderBoard(challenge, current) {
   guessHistory.firstElementChild?.classList.add('latest-guess');
   document.querySelector('#guess-feedback-status').textContent = '';
   const explanation = document.querySelector('#feedback-explanation');
-  explanation.textContent = current.guesses.length ? copy().totals + (currentResult(current.guesses.at(-1), challenge).absent ? ' ' + copy().extra : '') : '';
-  explanation.hidden = !current.guesses.length;
+  explanation.textContent = `${copy().totals} ${copy().extra}`;
 
 }
 

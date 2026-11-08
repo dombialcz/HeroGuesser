@@ -142,10 +142,17 @@
           <div class="board-header"><h2 id="history-heading" class="guild-ribbon" tabindex="-1" data-i18n="guessBoard">Your guesses</h2><span class="guess-counter" id="guess-counter"></span></div>
           <p id="board-subtitle" data-i18n="boardSubtitle"></p>
           <p id="daily-guess-tools-status" class="tools-status" role="status" aria-live="polite"></p>
+          <details class="feedback-help" id="feedback-help">
+            <summary data-i18n="feedbackGuide">What do the symbols mean?</summary>
+            <div class="board-legend" role="group" aria-label="Feedback legend">
+              <span><i class="feedback-dot exact" aria-hidden="true"></i><span data-i18n="exactLegend">Right hero, right place</span></span>
+              <span><i class="feedback-dot misplaced" aria-hidden="true"></i><span data-i18n="misplacedLegend">Right hero, wrong place</span></span>
+              <span><i class="feedback-dot absent" aria-hidden="true"></i><span data-i18n="absentLegend">Not in the party, or one copy too many</span></span>
+            </div>
+            <p id="feedback-explanation"></p>
+          </details>
           <p id="guess-feedback-status" class="sr-only" role="status" aria-atomic="true"></p>
           <ol class="guess-board guess-history" id="guess-history" aria-label="Previous guesses, newest first" reversed></ol>
-          <p id="feedback-explanation"></p>
-          <div class="board-legend" aria-label="Feedback legend" hidden></div>
         </section>
         <section id="daily-result" class="result-card" hidden aria-labelledby="result-title"><h2 id="result-title" tabindex="-1"></h2><p class="game-message" id="game-message" role="status" aria-live="polite"></p><p id="result-summary"><span class="medal-badge" id="result-medal" hidden></span> <span id="result-stats"></span></p><button id="share-result" class="story-button" type="button" hidden>Share result</button><button id="next-puzzle" class="story-button secondary" type="button"></button><p class="next-countdown"></p></section>
       </div>
